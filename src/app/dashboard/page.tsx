@@ -1,10 +1,9 @@
-
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, Dumbbell, Info, Utensils, CheckCircle2, Calendar } from "lucide-react";
+import { TrendingUp, Info, Utensils, CheckCircle2, Calendar } from "lucide-react";
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, query, collection, orderBy, limit, setDoc } from "firebase/firestore";
 import { format, differenceInDays, addDays, subDays, startOfDay } from 'date-fns';
@@ -20,7 +19,7 @@ export default function DashboardPage() {
 
   const weightQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(db, 'users', user.uid, 'weightLogs'), orderBy('date', 'desc'), limit(1));
+    return query(collection(db, 'users', user.uid, 'weightLogs'), orderBy('date', 'desc'), orderBy('createdAt', 'desc'), limit(1));
   }, [db, user]);
   const { data: latestWeight } = useCollection(weightQuery);
 

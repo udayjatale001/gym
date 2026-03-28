@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -8,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Scale, Plus, History, Loader2 } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, limit } from "firebase/firestore";
+import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, doc } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 import { format } from "date-fns";
@@ -20,11 +19,13 @@ export default function WeightPage() {
   const [newWeight, setNewWeight] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
+  const { data: profile } = useDoc(userRef);
+
   const weightQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
       collection(db, 'users', user.uid, 'weightLogs'),
-      // Order by date first, then by createdAt to handle multiple logs per day
       orderBy('date', 'desc'),
       orderBy('createdAt', 'desc'),
       limit(20)
@@ -47,11 +48,10 @@ export default function WeightPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'weightLogs');
 
-    // Non-blocking mutation for optimistic UI experience
+    // Optimistically clear input
+    setNewWeight("");
+
     addDoc(logsRef, weightData)
-      .then(() => {
-        setNewWeight("");
-      })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: logsRef.path,
@@ -59,6 +59,8 @@ export default function WeightPage() {
           requestResourceData: weightData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        // Put value back if error occurs
+        setNewWeight(weightVal.toString());
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -72,8 +74,8 @@ export default function WeightPage() {
       }))
     : [];
 
-  // The latest log is the first item in our descending query
-  const currentWeight = logs?.[0]?.weight || 0;
+  // The latest log or profile weight
+  const currentWeight = logs?.[0]?.weight || profile?.currentWeight || 0;
 
   return (
     <div className="p-4 space-y-6">
