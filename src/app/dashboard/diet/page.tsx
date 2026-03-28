@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -50,7 +49,6 @@ export default function DietPage() {
       return;
     }
     
-    // Prevent empty input or missing type
     if (!selectedType || !mealName.trim()) {
       toast({ variant: "destructive", title: "Missing Information", description: "Please enter a meal name." });
       return;
@@ -68,14 +66,14 @@ export default function DietPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'mealLogs');
 
-    // Initiate write - Firestore will handle local/optimistic update
+    // Initiate write - UI will update instantly via useCollection
     addDoc(logsRef, mealData)
       .then(() => {
         toast({
           title: "Meal Logged",
           description: `${selectedType}: ${mealName.trim()} logged successfully.`,
         });
-        // Reset and close UI immediately on success
+        // Reset and close UI
         setStep(1);
         setSelectedType(null);
         setMealName("");
@@ -88,12 +86,6 @@ export default function DietPage() {
           requestResourceData: mealData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-        
-        toast({
-          variant: "destructive",
-          title: "Submission Failed",
-          description: "Could not save your meal. Please try again.",
-        });
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -147,7 +139,6 @@ export default function DietPage() {
         )}
       </section>
 
-      {/* Add Meal Dialog */}
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
         <DialogTrigger asChild>
           <Button 
@@ -222,7 +213,6 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Checklist Sheet */}
       {viewingMeal && (
         <ChecklistSheet 
           meal={viewingMeal} 
@@ -284,7 +274,6 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
             <SheetDescription>Track your consistency over a 30-day period.</SheetDescription>
           </SheetHeader>
 
-          {/* Monthly Insight */}
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
@@ -312,7 +301,6 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
             </CardContent>
           </Card>
 
-          {/* 30 Day Grid */}
           <div className="grid grid-cols-5 gap-2">
             {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
               const status = getDayStatus(day);
