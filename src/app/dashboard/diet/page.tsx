@@ -34,7 +34,7 @@ export default function DietPage() {
     return query(
       collection(db, 'users', user.uid, 'mealLogs'),
       orderBy('timestamp', 'desc'),
-      limit(30)
+      limit(50)
     );
   }, [db, user]);
 
@@ -58,7 +58,7 @@ export default function DietPage() {
     addDoc(logsRef, mealData)
       .then(() => {
         toast({
-          title: "Meal Logged",
+          title: "Meal Tracked!",
           description: `${mealData.mealType}: ${mealData.mealName}`,
         });
         setIsLogOpen(false);
@@ -80,16 +80,16 @@ export default function DietPage() {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 pb-24">
       <div className="space-y-1">
         <h2 className="text-xl font-bold flex items-center gap-2 text-primary">
           <Utensils className="h-6 w-6" />
           Log Your Diet
         </h2>
-        <p className="text-xs text-muted-foreground">Monitor consistency and track your daily meals.</p>
+        <p className="text-xs text-muted-foreground">Log your meals and track consistency for each.</p>
       </div>
 
-      <section className="space-y-3 pb-24">
+      <section className="space-y-3">
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />)}
@@ -111,7 +111,7 @@ export default function DietPage() {
                       {meal.mealType}: {meal.mealName}
                     </h4>
                     <p className="text-[10px] text-muted-foreground">
-                      Logged at {format(new Date(meal.timestamp), 'h:mm a')} • {format(new Date(meal.timestamp), 'MMM dd')}
+                      {format(new Date(meal.timestamp), 'h:mm a • MMM dd')}
                     </p>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ export default function DietPage() {
           <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
             <Utensils className="h-10 w-10 text-muted-foreground mx-auto opacity-20 mb-3" />
             <p className="text-sm font-medium text-muted-foreground">No meals tracked yet.</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Tap the + button to log your first meal.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Click the + button below to log a meal.</p>
           </div>
         )}
       </section>
@@ -169,7 +169,7 @@ export default function DietPage() {
               <div className="space-y-2">
                 <p className="text-xs font-bold text-muted-foreground uppercase">What did you eat?</p>
                 <Input 
-                  placeholder="e.g., Sprouts, Oats, Salad" 
+                  placeholder="e.g., Sprouts, Salad, Oats" 
                   value={mealName}
                   onChange={(e) => setMealName(e.target.value)}
                   autoFocus
@@ -257,14 +257,14 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
               </Button>
               <SheetTitle className="text-xl">{meal.mealType}: {meal.mealName}</SheetTitle>
             </div>
-            <SheetDescription>Track your discipline over a 30-day consistency period.</SheetDescription>
+            <SheetDescription>Track manual consistency for this meal type.</SheetDescription>
           </SheetHeader>
 
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                Consistency Report
+                Monthly Report
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 flex items-center justify-between">
@@ -281,7 +281,7 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
               {totalSkipped > 3 && (
                 <div className="bg-destructive/10 text-destructive p-2 rounded-lg flex items-center gap-2 max-w-[140px]">
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  <p className="text-[8px] font-bold leading-tight uppercase">High Skip Rate Detected</p>
+                  <p className="text-[8px] font-bold leading-tight uppercase">Consistency Gaps Found</p>
                 </div>
               )}
             </CardContent>
