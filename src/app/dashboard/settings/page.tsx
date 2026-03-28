@@ -30,7 +30,7 @@ export default function SettingsPage() {
       });
 
       // 2. Clear subcollections
-      const subcollections = ['weightLogs', 'workoutLogs', 'dietLogs'];
+      const subcollections = ['weightLogs', 'workoutLogs'];
       
       for (const sub of subcollections) {
         const querySnapshot = await getDocs(collection(db, 'users', user.uid, sub));
