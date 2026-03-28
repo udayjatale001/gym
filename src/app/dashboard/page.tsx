@@ -1,9 +1,8 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Activity, Flame, Scale, TrendingUp, Dumbbell, Info } from "lucide-react";
+import { Scale, TrendingUp, Dumbbell, Info } from "lucide-react";
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, query, collection, orderBy, limit } from "firebase/firestore";
 
@@ -20,48 +19,13 @@ export default function DashboardPage() {
   }, [db, user]);
   const { data: latestWeight } = useCollection(weightQuery);
 
-  const dietQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    const today = new Date().toISOString().split('T')[0];
-    return query(collection(db, 'users', user.uid, 'dietLogs'), orderBy('date', 'desc'));
-  }, [db, user]);
-  const { data: dietLogs } = useCollection(dietQuery);
-
   const currentWeight = latestWeight?.[0]?.weight || profile?.currentWeight || 0;
   const targetWeight = profile?.targetWeight || 0;
   
-  // Simple stats calculation from real logs
-  const todayCalories = dietLogs?.reduce((sum, item) => sum + (item.calories || 0), 0) || 0;
-  const todayProtein = dietLogs?.reduce((sum, item) => sum + (item.protein || 0), 0) || 0;
-
   const progress = targetWeight > 0 ? Math.min(100, Math.max(0, (currentWeight / targetWeight) * 100)) : 0;
 
   return (
     <div className="p-4 space-y-6">
-      {/* Daily Summary */}
-      <section className="grid grid-cols-2 gap-4">
-        <Card className="bg-primary text-primary-foreground border-none">
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
-            <Flame className="h-6 w-6" />
-            <div className="space-y-0.5">
-              <p className="text-xs opacity-80 uppercase font-semibold">Calories Today</p>
-              <p className="text-2xl font-bold">{todayCalories}</p>
-              <p className="text-[10px] opacity-70">based on your logs</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-secondary text-secondary-foreground border-none">
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
-            <Activity className="h-6 w-6" />
-            <div className="space-y-0.5">
-              <p className="text-xs opacity-80 uppercase font-semibold">Protein</p>
-              <p className="text-2xl font-bold">{todayProtein}g</p>
-              <p className="text-[10px] opacity-70">daily intake</p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       {/* Goal Progress */}
       <Card>
         <CardHeader className="pb-2">
@@ -96,13 +60,13 @@ export default function DashboardPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Info className="h-5 w-5 text-accent" />
             <p className="text-xs text-muted-foreground">
-              Your dashboard is empty. Head over to the Weight or Diet tabs to start logging real data!
+              Your dashboard is empty. Head over to the Weight or Workout tabs to start logging real data!
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Today's Plan (Static for now, but placeholder for real logs) */}
+      {/* Today's Plan */}
       <section className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 px-1">
           <Dumbbell className="h-4 w-4" />

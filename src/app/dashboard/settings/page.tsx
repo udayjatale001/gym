@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Trash2, AlertTriangle, RefreshCcw } from "lucide-react";
 import { useFirestore, useUser } from '@/firebase';
-import { doc, deleteDoc, collection, getDocs, writeBatch, updateDoc } from 'firebase/firestore';
+import { doc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
-  const { db } = useFirestore();
+  const db = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   const [isResetting, setIsResetting] = useState(false);
@@ -30,7 +29,7 @@ export default function SettingsPage() {
         goal: ""
       });
 
-      // 2. Clear subcollections (Note: Client-side deletion for small collections)
+      // 2. Clear subcollections
       const subcollections = ['weightLogs', 'workoutLogs', 'dietLogs'];
       
       for (const sub of subcollections) {
@@ -78,7 +77,7 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <h4 className="text-sm font-bold">Full System Reset</h4>
             <p className="text-xs text-muted-foreground">
-              Deletes all weight logs, workouts, and diet history. Resets your profile goals to zero.
+              Deletes all weight logs and workout history. Resets your profile goals to zero.
             </p>
             <Button 
               variant="destructive" 
