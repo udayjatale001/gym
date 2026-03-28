@@ -24,7 +24,6 @@ export default function DietPage() {
   
   // UI States
   const [isLogOpen, setIsLogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<MealType | null>(null);
   const [mealName, setMealName] = useState("");
@@ -44,17 +43,7 @@ export default function DietPage() {
   const { data: meals, loading } = useCollection(mealLogsQuery);
 
   const handleLogMeal = () => {
-    if (!user) {
-      toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
-      return;
-    }
-    
-    if (!selectedType || !mealName.trim()) {
-      toast({ variant: "destructive", title: "Missing Information", description: "Please enter a meal name." });
-      return;
-    }
-
-    setIsSubmitting(true);
+    if (!user || !selectedType || !mealName.trim()) return;
 
     const mealData = {
       mealType: selectedType,
@@ -66,18 +55,18 @@ export default function DietPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'mealLogs');
 
-    // Initiate write - UI will update instantly via useCollection
+    // 1. Instantly close UI for responsiveness (Optimistic UI)
+    setIsLogOpen(false);
+    setStep(1);
+    setMealName("");
+
+    // 2. Fire and forget the write
     addDoc(logsRef, mealData)
       .then(() => {
         toast({
           title: "Meal Logged",
-          description: `${selectedType}: ${mealName.trim()} logged successfully.`,
+          description: `${mealData.mealType}: ${mealData.mealName}`,
         });
-        // Reset and close UI
-        setStep(1);
-        setSelectedType(null);
-        setMealName("");
-        setIsLogOpen(false);
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -86,9 +75,6 @@ export default function DietPage() {
           requestResourceData: mealData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
       });
   };
 
@@ -147,6 +133,7 @@ export default function DietPage() {
             onClick={() => {
               setStep(1);
               setMealName("");
+              setSelectedType(null);
             }}
           >
             <Plus className="h-8 w-8" />
@@ -181,31 +168,22 @@ export default function DietPage() {
                 value={mealName}
                 onChange={(e) => setMealName(e.target.value)}
                 autoFocus
-                disabled={isSubmitting}
-                onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogMeal()}
               />
               <div className="flex gap-2">
                 <Button 
                   variant="ghost" 
                   className="flex-1" 
                   onClick={() => setStep(1)}
-                  disabled={isSubmitting}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
                 <Button 
                   className="flex-2 w-full" 
                   onClick={handleLogMeal} 
-                  disabled={!mealName.trim() || isSubmitting}
+                  disabled={!mealName.trim()}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Confirm Meal'
-                  )}
+                  Confirm Meal
                 </Button>
               </div>
             </div>
