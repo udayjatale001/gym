@@ -1,31 +1,50 @@
 
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Scale, Plus, Calendar } from "lucide-react";
+import { Scale, Plus, Calendar, History } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from "recharts";
-
-const mockWeightData = [
-  { day: "Mon", weight: 79.2 },
-  { day: "Tue", weight: 79.0 },
-  { day: "Wed", weight: 78.8 },
-  { day: "Thu", weight: 78.9 },
-  { day: "Fri", weight: 78.6 },
-  { day: "Sat", weight: 78.5 },
-  { day: "Sun", weight: 78.4 },
-];
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit } from "firebase/firestore";
 
 export default function WeightPage() {
-  const [currentWeight, setCurrentWeight] = useState("78.5");
-  const [mounted, setMounted] = useState(false);
+  const db = useFirestore();
+  const { user } = useUser();
+  const [newWeight, setNewWeight] = useState("");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const weightQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'weightLogs'),
+      orderBy('date', 'desc'),
+      limit(20)
+    );
+  }, [db, user]);
+
+  const { data: logs, loading } = useCollection(weightQuery);
+
+  const handleAddWeight = async () => {
+    if (!user || !newWeight) return;
+    const weightVal = parseFloat(newWeight);
+    if (isNaN(weightVal)) return;
+
+    await addDoc(collection(db, 'users', user.uid, 'weightLogs'), {
+      weight: weightVal,
+      date: new Date().toISOString().split('T')[0],
+      createdAt: serverTimestamp()
+    });
+    setNewWeight("");
+  };
+
+  const chartData = logs 
+    ? [...logs].reverse().map(l => ({ day: l.date.split('-').slice(1).join('/'), weight: l.weight }))
+    : [];
+
+  const currentWeight = logs?.[0]?.weight || 0;
 
   return (
     <div className="p-4 space-y-6">
@@ -34,29 +53,41 @@ export default function WeightPage() {
           <Scale className="h-5 w-5 text-primary" />
           Weight Tracker
         </h2>
-        <Button size="sm" className="rounded-full shadow-lg h-9 w-9 p-0">
-          <Plus className="h-5 w-5" />
-        </Button>
       </div>
 
       <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="p-6 text-center">
-          <p className="text-sm text-muted-foreground mb-1">Current Average</p>
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-4xl font-black text-primary">78.5</span>
-            <span className="text-lg font-bold text-primary/60">kg</span>
+        <CardContent className="p-6 text-center space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">Latest Entry</p>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-4xl font-black text-primary">{currentWeight || '--'}</span>
+              <span className="text-lg font-bold text-primary/60">kg</span>
+            </div>
           </div>
-          <p className="text-[10px] text-primary font-bold uppercase mt-2">−0.8kg since last week</p>
+          <div className="flex gap-2">
+            <Input 
+              type="number" 
+              placeholder="75.0" 
+              className="h-10 text-center"
+              value={newWeight}
+              onChange={(e) => setNewWeight(e.target.value)}
+            />
+            <Button onClick={handleAddWeight} className="gap-2">
+              <Plus className="h-4 w-4" /> Log
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
       <section className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Weekly Trend</h3>
-        <Card className="p-4 h-[250px]">
-          {mounted ? (
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Trend Graph</h3>
+        <Card className="p-4 h-[250px] flex items-center justify-center">
+          {loading ? (
+            <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
+          ) : chartData.length > 0 ? (
             <ChartContainer config={{ weight: { label: "Weight", color: "hsl(var(--primary))" } }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockWeightData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
                   <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                   <YAxis domain={['dataMin - 1', 'dataMax + 1']} axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
@@ -73,30 +104,32 @@ export default function WeightPage() {
               </ResponsiveContainer>
             </ChartContainer>
           ) : (
-            <div className="w-full h-full bg-muted animate-pulse rounded-lg" />
+            <div className="text-center space-y-2">
+              <History className="h-8 w-8 text-muted-foreground mx-auto opacity-20" />
+              <p className="text-xs text-muted-foreground">No data to display yet.</p>
+            </div>
           )}
         </Card>
       </section>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Recent Logs</h3>
-          <span className="text-[10px] text-primary flex items-center gap-1 font-bold">
-            <Calendar className="h-3 w-3" /> Last 7 Days
-          </span>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Recent History</h3>
         </div>
         <div className="space-y-2">
-          {mockWeightData.slice().reverse().map((log, idx) => (
+          {logs?.map((log, idx) => (
             <Card key={idx} className="border-none shadow-sm">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold">{log.day}</p>
-                  <p className="text-[10px] text-muted-foreground">Oct {24 - idx}, 2023</p>
+                  <p className="text-sm font-bold">{log.date}</p>
                 </div>
                 <p className="text-lg font-black text-primary">{log.weight} kg</p>
               </CardContent>
             </Card>
           ))}
+          {(!logs || logs.length === 0) && !loading && (
+            <p className="text-center text-xs text-muted-foreground py-10 italic">Start tracking your weight to see history.</p>
+          )}
         </div>
       </section>
     </div>
