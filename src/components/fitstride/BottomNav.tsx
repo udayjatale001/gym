@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Dumbbell, Scale } from 'lucide-react';
+import { Home, Dumbbell, Scale, Utensils } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'Home', icon: Home, href: '/dashboard' },
   { label: 'Workout', icon: Dumbbell, href: '/dashboard/workout' },
+  { label: 'Diet', icon: Utensils, href: '/dashboard/diet' },
   { label: 'Weight', icon: Scale, href: '/dashboard/weight' },
 ];
 

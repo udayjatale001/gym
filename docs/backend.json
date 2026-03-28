@@ -49,6 +49,17 @@
         }
       },
       "required": ["date", "description"]
+    },
+    "MealLog": {
+      "title": "Meal Log",
+      "description": "A simple meal log entry for consistency tracking.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "date": { "type": "string", "format": "date" },
+        "note": { "type": "string" }
+      },
+      "required": ["timestamp", "date"]
     }
   },
   "auth": {
@@ -66,6 +77,10 @@
     "/users/{userId}/workoutLogs/{logId}": {
       "schema": "WorkoutLog",
       "description": "Workout history for the user."
+    },
+    "/users/{userId}/mealLogs/{logId}": {
+      "schema": "MealLog",
+      "description": "Meal consistency history."
     }
   }
 }
