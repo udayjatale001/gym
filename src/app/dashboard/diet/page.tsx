@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Utensils, Plus, CheckCircle2, XCircle, Calendar, Info, History, Flame } from "lucide-react";
+import { Utensils, Plus, CheckCircle2, XCircle, History, Flame, Info } from "lucide-react";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, query, orderBy, limit, serverTimestamp } from "firebase/firestore";
-import { format, subDays, isSameDay, startOfDay } from 'date-fns';
+import { format, subDays, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 export default function DietPage() {
   const db = useFirestore();
@@ -28,16 +30,29 @@ export default function DietPage() {
 
   const { data: logs, loading } = useCollection(mealLogsQuery);
 
-  const handleAddMeal = async () => {
-    if (!user) return;
+  const handleAddMeal = () => {
+    if (!user || !db) return;
     const now = new Date();
-    
-    addDoc(collection(db, 'users', user.uid, 'mealLogs'), {
+    const dateStr = format(now, 'yyyy-MM-dd');
+    const mealData = {
       timestamp: now.toISOString(),
-      date: format(now, 'yyyy-MM-dd'),
-      note: mealNote || "Meal Logged",
+      date: dateStr,
+      note: mealNote.trim() || "Meal Logged",
       createdAt: serverTimestamp()
-    });
+    };
+
+    const mealLogsRef = collection(db, 'users', user.uid, 'mealLogs');
+
+    // Non-blocking mutation for optimistic UI
+    addDoc(mealLogsRef, mealData)
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: mealLogsRef.path,
+          operation: 'create',
+          requestResourceData: mealData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
     
     setMealNote("");
     setIsDialogOpen(false);
@@ -52,12 +67,16 @@ export default function DietPage() {
   
   const streak = (() => {
     let count = 0;
-    for (let i = 0; i < last30Days.length; i++) {
+    // Check backwards from today to find the streak
+    for (let i = 0; i < 30; i++) {
         const checkDay = subDays(new Date(), i);
-        if (loggedDates.has(format(checkDay, 'yyyy-MM-dd'))) {
+        const dateStr = format(checkDay, 'yyyy-MM-dd');
+        if (loggedDates.has(dateStr)) {
             count++;
         } else {
-            if (i === 0) continue; // Allow today to be missed in streak if not over yet
+            // If today is missing, we don't break the streak yet (allow time to log today)
+            // unless yesterday is also missing.
+            if (i === 0) continue; 
             break;
         }
     }
@@ -79,14 +98,13 @@ export default function DietPage() {
         )}
       </div>
 
-      {/* Monthly Insight */}
       <Card className="bg-primary/5 border-primary/20">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <History className="h-4 w-4" />
-            Monthly Insight
+            Consistency Insight
           </CardTitle>
-          <CardDescription className="text-xs">Based on the last 30 days</CardDescription>
+          <CardDescription className="text-xs">Performance over the last 30 days</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-center">
@@ -102,15 +120,14 @@ export default function DietPage() {
           {totalDaysSkipped > 5 && (
             <div className="flex items-start gap-2 bg-destructive/10 text-destructive p-3 rounded-lg text-xs leading-tight">
               <Info className="h-4 w-4 shrink-0" />
-              <p>You skipped {totalDaysSkipped} days — there might be a consistency issue here. Try to log at least one meal daily.</p>
+              <p>You missed {totalDaysSkipped} days recently. Consistency is key to reaching your goals!</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Consistency Checklist */}
       <section className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Checklist System</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">30-Day Checklist</h3>
         <Card className="p-4">
           <div className="grid grid-cols-7 gap-2">
             {last30Days.map((day, idx) => {
@@ -139,16 +156,11 @@ export default function DietPage() {
               );
             })}
           </div>
-          <div className="mt-4 flex justify-between text-[10px] font-medium text-muted-foreground">
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-primary/20 border border-primary/40"></div> Meal Taken</div>
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-muted/30 border border-muted"></div> No Entry</div>
-          </div>
         </Card>
       </section>
 
-      {/* Recent History */}
-      <section className="space-y-3 pb-10">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Daily Logs</h3>
+      <section className="space-y-3 pb-24">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Meal History</h3>
         <div className="space-y-2">
           {logs?.map((log, idx) => (
             <div key={idx} className="flex gap-3">
@@ -169,12 +181,14 @@ export default function DietPage() {
             </div>
           ))}
           {(!logs || logs.length === 0) && !loading && (
-            <p className="text-center text-xs text-muted-foreground py-10 italic">No meals logged yet. Start your journey today!</p>
+            <div className="text-center py-10 px-4">
+               <Utensils className="h-8 w-8 text-muted-foreground mx-auto opacity-20 mb-2" />
+               <p className="text-xs text-muted-foreground italic">No meals logged. Tap the button below to start tracking consistency.</p>
+            </div>
           )}
         </div>
       </section>
 
-      {/* Floating Add Button */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button 
@@ -188,15 +202,16 @@ export default function DietPage() {
           <DialogHeader>
             <DialogTitle>Log Meal</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
             <Input 
-              placeholder="What did you eat? (e.g., Breakfast, Snack)"
+              placeholder="E.g., Breakfast, Post-workout meal"
               value={mealNote}
               onChange={(e) => setMealNote(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddMeal()}
               autoFocus
             />
-            <p className="text-[10px] text-muted-foreground mt-2 px-1">
-              Logging a meal confirms your consistency for today.
+            <p className="text-[10px] text-muted-foreground px-1">
+              Logging a meal confirms you've maintained your diet consistency for today.
             </p>
           </div>
           <DialogFooter>
