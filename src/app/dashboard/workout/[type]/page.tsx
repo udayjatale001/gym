@@ -2,9 +2,9 @@
 "use client";
 
 import { use } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Dumbbell, Calendar, Info } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Calendar, Info } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -50,7 +50,10 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         </CardHeader>
         <CardContent className="p-4 pt-2 flex items-center justify-between">
           <div>
-            <p className="text-2xl font-black text-primary">{completedDays.length}<span className="text-xs text-muted-foreground font-medium ml-1">/ 30 Days</span></p>
+            <p className="text-2xl font-black text-primary">
+              {completedDays.length}
+              <span className="text-xs text-muted-foreground font-medium ml-1">/ 30 Days</span>
+            </p>
           </div>
           <div className="bg-white/50 px-3 py-1 rounded-full border border-primary/10">
             <p className="text-[10px] font-bold text-primary">
@@ -86,7 +89,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
       <div className="p-4 bg-muted/30 rounded-xl flex items-start gap-3 border border-dashed border-muted-foreground/20">
         <Info className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Tap on a day to log your exercises. Days with logged workouts will be highlighted in green.
+          Tap on a day to log your exercises. Days with logged workouts will be highlighted in green with a checkmark.
         </p>
       </div>
     </div>

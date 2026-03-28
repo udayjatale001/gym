@@ -2,20 +2,18 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Plus, Save, Trash2, Dumbbell, History, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, History, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, addDoc, serverTimestamp, setDoc, doc, getDocs, deleteDoc } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 
 interface Exercise {
-  id?: string;
   name: string;
   sets: number;
   reps: number;
@@ -32,20 +30,17 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch existing workout for this day
+  const docId = `${type}-day-${day}`;
+
   useEffect(() => {
     async function fetchWorkout() {
       if (!user) return;
       setIsLoading(true);
       try {
-        const q = query(
-          collection(db, 'users', user.uid, 'workoutLogs'),
-          where('workoutType', '==', type),
-          where('day', '==', parseInt(day))
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const data = snapshot.docs[0].data();
+        const docRef = doc(db, 'users', user.uid, 'workoutLogs', docId);
+        const snapshot = await getDoc(docRef);
+        if (snapshot.exists()) {
+          const data = snapshot.data();
           setExercises(data.exercises || []);
         }
       } catch (e) {
@@ -55,7 +50,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       }
     }
     fetchWorkout();
-  }, [db, user, type, day]);
+  }, [db, user, type, day, docId]);
 
   const addExercise = () => {
     setExercises([...exercises, { name: "", sets: 0, reps: 0, weight: 0 }]);
@@ -71,52 +66,46 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     setExercises(newExercises);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!user) return;
     setIsSaving(true);
 
+    const validExercises = exercises.filter(ex => ex.name.trim() !== "");
     const logData = {
       workoutType: type,
       day: parseInt(day),
-      exercises: exercises.filter(ex => ex.name.trim() !== ""),
+      exercises: validExercises,
       timestamp: new Date().toISOString(),
       updatedAt: serverTimestamp()
     };
 
-    try {
-      // Find existing log to update or create new
-      const q = query(
-        collection(db, 'users', user.uid, 'workoutLogs'),
-        where('workoutType', '==', type),
-        where('day', '==', parseInt(day))
-      );
-      const snapshot = await getDocs(q);
-      
-      if (!snapshot.empty) {
-        const logDoc = snapshot.docs[0];
-        await setDoc(doc(db, 'users', user.uid, 'workoutLogs', logDoc.id), logData, { merge: true });
-      } else {
-        await addDoc(collection(db, 'users', user.uid, 'workoutLogs'), logData);
-      }
+    const logRef = doc(db, 'users', user.uid, 'workoutLogs', docId);
 
-      toast({
-        title: "Workout Saved",
-        description: `Successfully logged your ${type} workout for Day ${day}.`,
+    setDoc(logRef, logData, { merge: true })
+      .then(() => {
+        toast({
+          title: "Workout Saved",
+          description: `Successfully logged Day ${day}: ${type}.`,
+        });
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: logRef.path,
+          operation: 'write',
+          requestResourceData: logData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
-    } catch (e) {
-      const permissionError = new FirestorePermissionError({
-        path: `users/${user.uid}/workoutLogs`,
-        operation: 'write',
-        requestResourceData: logData,
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   return (
-    <div className="p-0 flex flex-col min-h-full bg-[#fdfdfd]">
+    <div className="flex flex-col min-h-full bg-[#fdfdfd] relative">
+      {/* Paper texture overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
+      
       <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
           <Link href={`/dashboard/workout/${type}`}>
@@ -131,7 +120,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         </div>
         <Button 
           size="sm" 
-          className="gap-2 font-bold shadow-lg" 
+          className="gap-2 font-bold shadow-lg bg-primary hover:bg-primary/90" 
           onClick={handleSave}
           disabled={isSaving}
         >
@@ -140,38 +129,39 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         </Button>
       </div>
 
-      <div className="flex-1 p-4 pb-32">
+      <div className="flex-1 p-4 pb-32 relative">
+        {/* Notebook Lines Effect */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className="h-12 border-b border-black w-full" />
+          ))}
+          <div className="absolute top-0 left-8 h-full w-[1px] bg-red-400 opacity-20" />
+        </div>
+
         {isLoading ? (
           <div className="space-y-4 pt-10">
-            {[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />)}
           </div>
         ) : (
-          <div className="space-y-6 relative">
-            {/* Notepad Lines Effect */}
-            <div className="absolute inset-0 pointer-events-none opacity-5">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="h-12 border-b border-black w-full" />
-              ))}
-            </div>
-
+          <div className="space-y-6">
             {exercises.map((ex, idx) => (
-              <Card key={idx} className="border-none shadow-md bg-white/80 backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+              <Card key={idx} className="border-none shadow-md bg-white/90 backdrop-blur-sm relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
                 <CardContent className="p-4 space-y-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-[10px] font-black text-muted-foreground mb-1 uppercase">Exercise {idx + 1}</p>
+                      <p className="text-[10px] font-black text-muted-foreground mb-1 uppercase tracking-widest">Exercise {idx + 1}</p>
                       <Input 
                         placeholder="e.g. Bench Press" 
                         value={ex.name}
                         onChange={(e) => updateExercise(idx, 'name', e.target.value)}
-                        className="font-bold border-none bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
+                        className="font-bold border-none bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary h-11"
                       />
                     </div>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="text-destructive hover:bg-destructive/10 mt-5"
+                      className="text-destructive hover:bg-destructive/10 mt-5 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => removeExercise(idx)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -180,33 +170,33 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                   
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase">Sets</p>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase text-center">Sets</p>
                       <Input 
                         type="number" 
-                        placeholder="3" 
+                        placeholder="0" 
                         value={ex.sets || ""}
                         onChange={(e) => updateExercise(idx, 'sets', parseInt(e.target.value) || 0)}
-                        className="text-center font-bold"
+                        className="text-center font-bold h-10"
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase">Reps</p>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase text-center">Reps</p>
                       <Input 
                         type="number" 
-                        placeholder="12" 
+                        placeholder="0" 
                         value={ex.reps || ""}
                         onChange={(e) => updateExercise(idx, 'reps', parseInt(e.target.value) || 0)}
-                        className="text-center font-bold"
+                        className="text-center font-bold h-10"
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase">Weight (kg)</p>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase text-center">Kg</p>
                       <Input 
                         type="number" 
-                        placeholder="60" 
+                        placeholder="0" 
                         value={ex.weight || ""}
                         onChange={(e) => updateExercise(idx, 'weight', parseFloat(e.target.value) || 0)}
-                        className="text-center font-bold"
+                        className="text-center font-bold h-10"
                       />
                     </div>
                   </div>
@@ -216,17 +206,17 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
             <Button 
               variant="outline" 
-              className="w-full h-16 border-dashed border-2 gap-2 text-muted-foreground bg-transparent hover:bg-primary/5 hover:border-primary hover:text-primary transition-all"
+              className="w-full h-16 border-dashed border-2 gap-2 text-muted-foreground bg-white/50 hover:bg-primary/5 hover:border-primary hover:text-primary transition-all group"
               onClick={addExercise}
             >
-              <Plus className="h-5 w-5" />
-              Add Exercise
+              <Plus className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              <span className="font-bold uppercase tracking-widest text-xs">Add Exercise</span>
             </Button>
 
             {exercises.length === 0 && (
               <div className="text-center py-20 opacity-30 flex flex-col items-center gap-4">
                 <History className="h-16 w-16" />
-                <p className="font-bold uppercase tracking-widest text-sm">Log Empty</p>
+                <p className="font-bold uppercase tracking-widest text-sm">Start your session</p>
               </div>
             )}
           </div>
