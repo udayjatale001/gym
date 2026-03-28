@@ -27,6 +27,7 @@ export default function DietPage() {
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<MealType | null>(null);
   const [mealName, setMealName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Checklist States
   const [viewingMeal, setViewingMeal] = useState<any>(null);
@@ -45,6 +46,8 @@ export default function DietPage() {
   const handleLogMeal = () => {
     if (!user || !selectedType || !mealName.trim()) return;
 
+    setIsSubmitting(true);
+
     const mealData = {
       mealType: selectedType,
       mealName: mealName.trim(),
@@ -55,18 +58,18 @@ export default function DietPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'mealLogs');
 
-    // 1. Instantly close UI for responsiveness (Optimistic UI)
-    setIsLogOpen(false);
-    setStep(1);
-    setMealName("");
-
-    // 2. Fire and forget the write
+    // Fire the write
     addDoc(logsRef, mealData)
       .then(() => {
         toast({
-          title: "Meal Logged",
+          title: "Meal Logged Successfully",
           description: `${mealData.mealType}: ${mealData.mealName}`,
         });
+        // Reset and close UI
+        setIsLogOpen(false);
+        setStep(1);
+        setMealName("");
+        setSelectedType(null);
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -75,6 +78,9 @@ export default function DietPage() {
           requestResourceData: mealData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
 
@@ -106,7 +112,9 @@ export default function DietPage() {
                     <Utensils className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm">{meal.mealType}: {meal.mealName}</h4>
+                    <h4 className="font-bold text-sm">
+                      {meal.mealType}: {meal.mealName}
+                    </h4>
                     <p className="text-[10px] text-muted-foreground">
                       Logged on {format(new Date(meal.timestamp), 'MMM dd, h:mm a')}
                     </p>
@@ -168,21 +176,23 @@ export default function DietPage() {
                 value={mealName}
                 onChange={(e) => setMealName(e.target.value)}
                 autoFocus
-                onKeyDown={(e) => e.key === 'Enter' && handleLogMeal()}
+                onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
               />
               <div className="flex gap-2">
                 <Button 
                   variant="ghost" 
                   className="flex-1" 
                   onClick={() => setStep(1)}
+                  disabled={isSubmitting}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
                 <Button 
                   className="flex-2 w-full" 
                   onClick={handleLogMeal} 
-                  disabled={!mealName.trim()}
+                  disabled={!mealName.trim() || isSubmitting}
                 >
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Confirm Meal
                 </Button>
               </div>
