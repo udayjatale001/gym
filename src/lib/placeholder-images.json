@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-fitness",
+      "description": "Person working out in a gym",
+      "imageUrl": "https://picsum.photos/seed/fit-hero/800/400",
+      "imageHint": "gym workout"
+    },
+    {
+      "id": "healthy-meal",
+      "description": "Healthy meal with proteins and vegetables",
+      "imageUrl": "https://picsum.photos/seed/fit-meal/600/400",
+      "imageHint": "healthy food"
+    },
+    {
+      "id": "weight-tracking",
+      "description": "A scale on a bathroom floor",
+      "imageUrl": "https://picsum.photos/seed/fit-scale/600/400",
+      "imageHint": "weight scale"
+    }
+  ]
 }
