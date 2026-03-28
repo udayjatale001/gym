@@ -1,0 +1,88 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Core physical and goal data for the user.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "age": { "type": "number" },
+        "currentWeight": { "type": "number" },
+        "targetWeight": { "type": "number" },
+        "height": { "type": "number" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "activityLevel": { "type": "string", "enum": ["sedentary", "lightly active", "moderately active", "very active", "extremely active"] },
+        "goal": { "type": "string" }
+      },
+      "required": ["displayName", "currentWeight", "targetWeight"]
+    },
+    "WeightLog": {
+      "title": "Weight Log",
+      "description": "Daily weight tracking entry.",
+      "type": "object",
+      "properties": {
+        "weight": { "type": "number" },
+        "date": { "type": "string", "format": "date" }
+      },
+      "required": ["weight", "date"]
+    },
+    "WorkoutLog": {
+      "title": "Workout Log",
+      "description": "A single workout session history.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "intensity": { "type": "string", "enum": ["low", "medium", "high"] },
+        "exercises": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "sets": { "type": "number" },
+              "reps": { "type": "number" },
+              "weight": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["date", "description"]
+    },
+    "DietLog": {
+      "title": "Diet Log",
+      "description": "Daily calorie and protein record.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "foodName": { "type": "string" },
+        "calories": { "type": "number" },
+        "protein": { "type": "number" }
+      },
+      "required": ["date", "foodName", "calories"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data."
+    },
+    "/users/{userId}/weightLogs/{logId}": {
+      "schema": "WeightLog",
+      "description": "Weight history for the user."
+    },
+    "/users/{userId}/workoutLogs/{logId}": {
+      "schema": "WorkoutLog",
+      "description": "Workout history for the user."
+    },
+    "/users/{userId}/dietLogs/{logId}": {
+      "schema": "DietLog",
+      "description": "Dietary logs for the user."
+    }
+  }
+}
