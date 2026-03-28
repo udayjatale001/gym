@@ -2,14 +2,35 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dumbbell, Clock, Zap, ArrowRight, Play, History } from "lucide-react";
+import { Dumbbell, ChevronRight, Zap, Target, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-const plans = [
-  { name: "Push Day", focus: "Chest, Delts, Tris", duration: "60m", intensity: "High", color: "bg-primary" },
-  { name: "Pull Day", focus: "Back, Rear Delts, Bis", duration: "55m", intensity: "Med", color: "bg-secondary" },
-  { name: "Leg Day", focus: "Quads, Hams, Calves", duration: "70m", intensity: "High", color: "bg-accent" },
+const categories = [
+  { 
+    id: "push", 
+    name: "Push", 
+    focus: "Chest, Shoulders, Triceps", 
+    color: "bg-primary", 
+    icon: Flame,
+    description: "Focus on pushing movements and upper body strength."
+  },
+  { 
+    id: "pull", 
+    name: "Pull", 
+    focus: "Back, Biceps, Rear Delts", 
+    color: "bg-secondary", 
+    icon: Target,
+    description: "Focus on pulling movements and back definition."
+  },
+  { 
+    id: "legs", 
+    name: "Legs", 
+    focus: "Quads, Hams, Glutes, Calves", 
+    color: "bg-accent", 
+    icon: Zap,
+    description: "Complete lower body workout for power and stability."
+  },
 ];
 
 export default function WorkoutPage() {
@@ -20,76 +41,35 @@ export default function WorkoutPage() {
           <Dumbbell className="h-6 w-6" />
           Workout Tracker
         </h2>
-        <p className="text-xs text-muted-foreground">Log your sessions or start a plan.</p>
+        <p className="text-xs text-muted-foreground">Select your split to start tracking your 30-day journey.</p>
       </div>
 
-      <Tabs defaultValue="plans" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1">
-          <TabsTrigger value="plans" className="rounded-md">Plans</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-md">History</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="plans" className="mt-4 space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Your Library</h3>
-          {plans.map((plan, idx) => (
-            <Card key={idx} className="overflow-hidden group hover:border-primary transition-all">
-              <CardContent className="p-0 flex items-stretch">
-                <div className={`${plan.color} w-2`}></div>
-                <div className="p-4 flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-lg">{plan.name}</h4>
-                      <p className="text-xs text-muted-foreground">{plan.focus}</p>
+      <div className="space-y-4">
+        {categories.map((cat) => (
+          <Link key={cat.id} href={`/dashboard/workout/${cat.id}`}>
+            <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98] mb-4">
+              <CardContent className="p-0 flex items-stretch h-32">
+                <div className={`${cat.color} w-3`}></div>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-2 rounded-lg ${cat.color}/10`}>
+                          <cat.icon className={`h-5 w-5 ${cat.color.replace('bg-', 'text-')}`} />
+                        </div>
+                        <h4 className="font-bold text-xl">{cat.name} Day</h4>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                    <Button size="icon" variant="ghost" className="rounded-full group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                      <Play className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="mt-4 flex items-center gap-4 text-[10px] font-bold">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {plan.duration}
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Zap className="h-3 w-3 text-secondary" />
-                      {plan.intensity} Intensity
-                    </div>
+                    <p className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-tight">{cat.focus}</p>
+                    <p className="text-[10px] text-muted-foreground/80 mt-1 line-clamp-1">{cat.description}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-          <Button variant="outline" className="w-full rounded-full border-dashed border-2 py-8 flex flex-col gap-1 text-muted-foreground">
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-              <ArrowRight className="h-4 w-4 rotate-45" />
-            </div>
-            <span className="text-xs">Create Custom Plan</span>
-          </Button>
-        </TabsContent>
-
-        <TabsContent value="history" className="mt-4 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground px-1">
-            <History className="h-4 w-4" />
-            October 2023
-          </div>
-          <div className="space-y-2">
-            {[1, 2, 3].map((item) => (
-              <Card key={item} className="border-none shadow-sm">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-bold">Push Day (A)</p>
-                    <p className="text-[10px] text-muted-foreground">Oct {24 - item}, 07:30 AM</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-primary">6 Exercises</p>
-                    <p className="text-[10px] text-muted-foreground">425 kcal burned</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
