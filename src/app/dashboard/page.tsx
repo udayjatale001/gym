@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Activity, Flame, Scale, TrendingUp } from "lucide-react";
+import { Activity, Flame, Scale, TrendingUp, Dumbbell } from "lucide-react";
 
 export default function DashboardPage() {
   return (
@@ -78,23 +77,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </section>
-
-      {/* Weekly Insight */}
-      <section className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-        <div className="flex items-start gap-4">
-          <div className="bg-primary/20 p-2 rounded-xl">
-            <Scale className="h-5 w-5 text-primary" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-primary">AI Insight</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              You've stayed consistent for 5 days straight! Based on your current deficit, you're on track to lose 0.5kg this week.
-            </p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
-
-import { Dumbbell } from "lucide-react";

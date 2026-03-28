@@ -1,9 +1,8 @@
-
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Dumbbell, Utensils, Scale, TrendingUp } from 'lucide-react';
+import { Home, Dumbbell, Utensils, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,7 +10,6 @@ const navItems = [
   { label: 'Workout', icon: Dumbbell, href: '/dashboard/workout' },
   { label: 'Diet', icon: Utensils, href: '/dashboard/diet' },
   { label: 'Weight', icon: Scale, href: '/dashboard/weight' },
-  { label: 'AI Predict', icon: TrendingUp, href: '/dashboard/progress' },
 ];
 
 export function BottomNav() {
