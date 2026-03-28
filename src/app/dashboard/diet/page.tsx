@@ -22,14 +22,11 @@ export default function DietPage() {
   const { user } = useUser();
   const { toast } = useToast();
   
-  // UI States
   const [isLogOpen, setIsLogOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<MealType | null>(null);
   const [mealName, setMealName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Checklist States
   const [viewingMeal, setViewingMeal] = useState<any>(null);
 
   const mealLogsQuery = useMemoFirebase(() => {
@@ -37,7 +34,7 @@ export default function DietPage() {
     return query(
       collection(db, 'users', user.uid, 'mealLogs'),
       orderBy('timestamp', 'desc'),
-      limit(20)
+      limit(30)
     );
   }, [db, user]);
 
@@ -58,14 +55,12 @@ export default function DietPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'mealLogs');
 
-    // Fire the write
     addDoc(logsRef, mealData)
       .then(() => {
         toast({
-          title: "Meal Logged Successfully",
+          title: "Meal Logged",
           description: `${mealData.mealType}: ${mealData.mealName}`,
         });
-        // Reset and close UI
         setIsLogOpen(false);
         setStep(1);
         setMealName("");
@@ -91,7 +86,7 @@ export default function DietPage() {
           <Utensils className="h-6 w-6" />
           Log Your Diet
         </h2>
-        <p className="text-xs text-muted-foreground">Track your meals and maintain consistency.</p>
+        <p className="text-xs text-muted-foreground">Monitor consistency and track your daily meals.</p>
       </div>
 
       <section className="space-y-3 pb-24">
@@ -103,7 +98,7 @@ export default function DietPage() {
           meals.map((meal) => (
             <Card 
               key={meal.id} 
-              className="hover:border-primary transition-all cursor-pointer group shadow-sm"
+              className="hover:border-primary transition-all cursor-pointer group shadow-sm overflow-hidden"
               onClick={() => setViewingMeal(meal)}
             >
               <CardContent className="p-4 flex items-center justify-between">
@@ -116,7 +111,7 @@ export default function DietPage() {
                       {meal.mealType}: {meal.mealName}
                     </h4>
                     <p className="text-[10px] text-muted-foreground">
-                      Logged on {format(new Date(meal.timestamp), 'MMM dd, h:mm a')}
+                      Logged at {format(new Date(meal.timestamp), 'h:mm a')} • {format(new Date(meal.timestamp), 'MMM dd')}
                     </p>
                   </div>
                 </div>
@@ -127,8 +122,8 @@ export default function DietPage() {
         ) : (
           <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
             <Utensils className="h-10 w-10 text-muted-foreground mx-auto opacity-20 mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">No meals logged yet.</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Tap the + button to add your first meal.</p>
+            <p className="text-sm font-medium text-muted-foreground">No meals tracked yet.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Tap the + button to log your first meal.</p>
           </div>
         )}
       </section>
@@ -171,13 +166,16 @@ export default function DietPage() {
             </div>
           ) : (
             <div className="py-4 space-y-4">
-              <Input 
-                placeholder="Enter meal name (e.g., Sprouts, Salad)" 
-                value={mealName}
-                onChange={(e) => setMealName(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
-              />
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase">What did you eat?</p>
+                <Input 
+                  placeholder="e.g., Sprouts, Oats, Salad" 
+                  value={mealName}
+                  onChange={(e) => setMealName(e.target.value)}
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
+                />
+              </div>
               <div className="flex gap-2">
                 <Button 
                   variant="ghost" 
@@ -259,37 +257,37 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
               </Button>
               <SheetTitle className="text-xl">{meal.mealType}: {meal.mealName}</SheetTitle>
             </div>
-            <SheetDescription>Track your consistency over a 30-day period.</SheetDescription>
+            <SheetDescription>Track your discipline over a 30-day consistency period.</SheetDescription>
           </SheetHeader>
 
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                Monthly Insight
+                Consistency Report
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 flex items-center justify-between">
-              <div className="flex gap-4">
+              <div className="flex gap-6">
                 <div className="text-center">
                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Taken</p>
-                  <p className="text-xl font-black text-primary">{totalTaken}</p>
+                  <p className="text-2xl font-black text-primary">{totalTaken}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Skipped</p>
-                  <p className="text-xl font-black text-destructive">{totalSkipped}</p>
+                  <p className="text-2xl font-black text-destructive">{totalSkipped}</p>
                 </div>
               </div>
               {totalSkipped > 3 && (
-                <div className="bg-destructive/10 text-destructive p-2 rounded-md flex items-center gap-2 max-w-[150px]">
+                <div className="bg-destructive/10 text-destructive p-2 rounded-lg flex items-center gap-2 max-w-[140px]">
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  <p className="text-[8px] font-bold leading-tight">Consistency Issue Detected</p>
+                  <p className="text-[8px] font-bold leading-tight uppercase">High Skip Rate Detected</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-2 pb-10">
             {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
               const status = getDayStatus(day);
               return (
@@ -299,15 +297,16 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
                       variant="outline"
                       className={cn(
                         "h-16 flex flex-col items-center justify-center p-0 transition-all border-2",
-                        status === 'taken' && "bg-primary/10 border-primary text-primary",
+                        status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
                         status === 'skipped' && "bg-destructive/10 border-destructive text-destructive",
-                        !status && "bg-muted/30 border-muted text-muted-foreground",
+                        !status && "bg-muted/30 border-muted/50 text-muted-foreground",
                         isUpdating === day && "animate-pulse"
                       )}
                     >
-                      <span className="text-[10px] font-black opacity-50">{day}</span>
+                      <span className="text-[10px] font-black mb-1">{day}</span>
                       {status === 'taken' && <CheckCircle2 className="h-4 w-4" />}
                       {status === 'skipped' && <XCircle className="h-4 w-4" />}
+                      {!status && <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-xs">
