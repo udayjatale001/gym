@@ -5,24 +5,27 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle } from "lucide-react";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2 } from "lucide-react";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, query, orderBy, limit, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { useToast } from '@/hooks/use-toast';
 
 type MealType = 'Breakfast' | 'Snacks' | 'Lunch' | 'Dinner';
 
 export default function DietPage() {
   const db = useFirestore();
   const { user } = useUser();
+  const { toast } = useToast();
   
   // UI States
   const [isLogOpen, setIsLogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<MealType | null>(null);
   const [mealName, setMealName] = useState("");
@@ -42,7 +45,13 @@ export default function DietPage() {
   const { data: meals, loading } = useCollection(mealLogsQuery);
 
   const handleLogMeal = () => {
-    if (!user || !selectedType || !mealName.trim()) return;
+    if (!user) {
+      toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
+      return;
+    }
+    if (!selectedType || !mealName.trim()) return;
+
+    setIsSubmitting(true);
 
     const mealData = {
       mealType: selectedType,
@@ -55,6 +64,17 @@ export default function DietPage() {
     const logsRef = collection(db, 'users', user.uid, 'mealLogs');
 
     addDoc(logsRef, mealData)
+      .then(() => {
+        toast({
+          title: "Meal Logged",
+          description: `${selectedType} (${mealName}) added successfully.`,
+        });
+        // Reset and close
+        setStep(1);
+        setSelectedType(null);
+        setMealName("");
+        setIsLogOpen(false);
+      })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: logsRef.path,
@@ -62,13 +82,16 @@ export default function DietPage() {
           requestResourceData: mealData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        
+        toast({
+          variant: "destructive",
+          title: "Submission Failed",
+          description: "Could not save your meal. Please try again.",
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-
-    // Reset and close
-    setStep(1);
-    setSelectedType(null);
-    setMealName("");
-    setIsLogOpen(false);
   };
 
   return (
@@ -124,7 +147,10 @@ export default function DietPage() {
           <Button 
             className="fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-2xl z-50 p-0"
             size="icon"
-            onClick={() => setStep(1)}
+            onClick={() => {
+              setStep(1);
+              setMealName("");
+            }}
           >
             <Plus className="h-8 w-8" />
           </Button>
@@ -158,14 +184,31 @@ export default function DietPage() {
                 value={mealName}
                 onChange={(e) => setMealName(e.target.value)}
                 autoFocus
-                onKeyDown={(e) => e.key === 'Enter' && handleLogMeal()}
+                disabled={isSubmitting}
+                onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
               />
               <div className="flex gap-2">
-                <Button variant="ghost" className="flex-1" onClick={() => setStep(1)}>
+                <Button 
+                  variant="ghost" 
+                  className="flex-1" 
+                  onClick={() => setStep(1)}
+                  disabled={isSubmitting}
+                >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
-                <Button className="flex-2 w-full" onClick={handleLogMeal} disabled={!mealName.trim()}>
-                  Confirm Meal
+                <Button 
+                  className="flex-2 w-full" 
+                  onClick={handleLogMeal} 
+                  disabled={!mealName.trim() || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Confirm Meal'
+                  )}
                 </Button>
               </div>
             </div>
@@ -173,7 +216,7 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Checklist Sheet (New Screen) */}
+      {/* Checklist Sheet */}
       {viewingMeal && (
         <ChecklistSheet 
           meal={viewingMeal} 
