@@ -13,7 +13,8 @@
         "height": { "type": "number" },
         "gender": { "type": "string", "enum": ["male", "female", "other"] },
         "activityLevel": { "type": "string", "enum": ["sedentary", "lightly active", "moderately active", "very active", "extremely active"] },
-        "goal": { "type": "string" }
+        "goal": { "type": "string" },
+        "workoutStartDate": { "type": "string", "format": "date", "description": "The date the 3-day PPL cycle started." }
       },
       "required": ["displayName", "currentWeight", "targetWeight"]
     },

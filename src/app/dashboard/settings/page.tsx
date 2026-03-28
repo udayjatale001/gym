@@ -1,18 +1,46 @@
+
 'use client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, RefreshCcw } from "lucide-react";
+import { Trash2, AlertTriangle, RefreshCcw, Calendar, History } from "lucide-react";
 import { useFirestore, useUser } from '@/firebase';
-import { doc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 export default function SettingsPage() {
   const db = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   const [isResetting, setIsResetting] = useState(false);
+  const [isCycling, setIsCycling] = useState(false);
+
+  const handleResetCycle = async () => {
+    if (!user || !db) return;
+    setIsCycling(true);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    
+    try {
+      await setDoc(doc(db, 'users', user.uid), { 
+        workoutStartDate: todayStr 
+      }, { merge: true });
+      
+      toast({
+        title: "Workout Cycle Reset",
+        description: "Your PPL cycle has been restarted from today (Day 1: Push).",
+      });
+    } catch (e) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to reset workout cycle.",
+      });
+    } finally {
+      setIsCycling(false);
+    }
+  };
 
   const handleFullReset = async () => {
     if (!user || !db) return;
@@ -26,11 +54,12 @@ export default function SettingsPage() {
       batch.update(userRef, {
         currentWeight: 0,
         targetWeight: 0,
-        goal: ""
+        goal: "",
+        workoutStartDate: format(new Date(), 'yyyy-MM-dd')
       });
 
       // 2. Clear subcollections
-      const subcollections = ['weightLogs', 'workoutLogs'];
+      const subcollections = ['weightLogs', 'workoutLogs', 'mealLogs'];
       
       for (const sub of subcollections) {
         const querySnapshot = await getDocs(collection(db, 'users', user.uid, sub));
@@ -43,7 +72,7 @@ export default function SettingsPage() {
       
       toast({
         title: "System Reset Complete",
-        description: "All your fitness data has been permanently cleared.",
+        description: "All your fitness and diet data has been permanently cleared.",
       });
     } catch (error) {
       toast({
@@ -63,6 +92,33 @@ export default function SettingsPage() {
         <p className="text-xs text-muted-foreground">Manage your account and data.</p>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            Workout Preferences
+          </CardTitle>
+          <CardDescription>Adjust your workout cycle timing.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold">PPL Cycle Reset</h4>
+            <p className="text-xs text-muted-foreground">
+              Restarts your Push-Pull-Legs split from Today (makes today Day 1).
+            </p>
+            <Button 
+              variant="outline" 
+              className="w-full gap-2" 
+              onClick={handleResetCycle}
+              disabled={isCycling}
+            >
+              {isCycling ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+              Set Today as Day 1
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="border-destructive/20 bg-destructive/5">
         <CardHeader>
           <div className="flex items-center gap-2 text-destructive">
@@ -77,7 +133,7 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <h4 className="text-sm font-bold">Full System Reset</h4>
             <p className="text-xs text-muted-foreground">
-              Deletes all weight logs and workout history. Resets your profile goals to zero.
+              Deletes all weight logs, diet logs, and workout history.
             </p>
             <Button 
               variant="destructive" 

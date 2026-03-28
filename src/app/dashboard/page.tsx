@@ -1,15 +1,19 @@
+
 'use client';
 
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, Dumbbell, Info, Utensils, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Dumbbell, Info, Utensils, CheckCircle2, Calendar } from "lucide-react";
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, query, collection, orderBy, limit } from "firebase/firestore";
-import { format } from 'date-fns';
+import { doc, query, collection, orderBy, limit, setDoc } from "firebase/firestore";
+import { format, differenceInDays, addDays, subDays, startOfDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const db = useFirestore();
   const { user } = useUser();
+  const [suggestion, setSuggestion] = useState<{ today: string; yesterday: string; tomorrow: string } | null>(null);
 
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(userRef);
@@ -22,7 +26,6 @@ export default function DashboardPage() {
 
   const mealQuery = useMemoFirebase(() => {
     if (!user) return null;
-    const today = format(new Date(), 'yyyy-MM-dd');
     return query(collection(db, 'users', user.uid, 'mealLogs'), orderBy('timestamp', 'desc'), limit(5));
   }, [db, user]);
   const { data: recentMeals } = useCollection(mealQuery);
@@ -33,14 +36,73 @@ export default function DashboardPage() {
   const progress = targetWeight > 0 ? Math.min(100, Math.max(0, (currentWeight / targetWeight) * 100)) : 0;
   const hasLoggedMealToday = recentMeals?.some(m => m.date === format(new Date(), 'yyyy-MM-dd'));
 
+  // Workout Cycle Logic
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    let startDate: Date;
+    if (profile.workoutStartDate) {
+      startDate = startOfDay(new Date(profile.workoutStartDate));
+    } else {
+      // Initialize start date if it doesn't exist
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      startDate = startOfDay(new Date());
+      setDoc(doc(db, 'users', user.uid), { workoutStartDate: todayStr }, { merge: true });
+    }
+
+    const today = startOfDay(new Date());
+    const cycle = ["Push", "Pull", "Legs"];
+
+    const getWorkout = (date: Date) => {
+      const diff = differenceInDays(date, startDate);
+      // Handle negative diff if startDate is in future
+      const index = ((diff % 3) + 3) % 3;
+      return cycle[index];
+    };
+
+    setSuggestion({
+      today: getWorkout(today),
+      yesterday: getWorkout(subDays(today, 1)),
+      tomorrow: getWorkout(addDays(today, 1))
+    });
+  }, [user, profile, db]);
+
   return (
     <div className="p-4 space-y-6">
+      {/* Workout Suggestion Card */}
+      <Card className="bg-primary text-primary-foreground border-none shadow-lg">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 opacity-90">
+            <Calendar className="h-4 w-4" />
+            Daily Workout Split
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col items-center text-center py-2">
+            <p className="text-xs opacity-70 mb-1">Today's Focus</p>
+            <h3 className="text-3xl font-black tracking-tighter uppercase">
+              {suggestion ? suggestion.today : "Calculating..."}
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-2 border-t border-primary-foreground/20 pt-4">
+            <div className="text-left">
+              <p className="text-[10px] opacity-60 font-bold uppercase">Yesterday</p>
+              <p className="text-sm font-bold">{suggestion?.yesterday || '--'}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] opacity-60 font-bold uppercase">Tomorrow</p>
+              <p className="text-sm font-bold">{suggestion?.tomorrow || '--'}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Goal Progress */}
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
+              <TrendingUp className="h-4 w-4" />
               Weight Goal Progress
             </CardTitle>
             <span className="text-xs font-medium text-primary">
@@ -90,24 +152,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Today's Plan */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 px-1">
-          <Dumbbell className="h-4 w-4" />
-          Active Training
-        </h2>
-        <Card className="overflow-hidden border-l-4 border-l-primary">
-          <CardContent className="p-4">
-             <h3 className="font-bold">Log your sessions</h3>
-             <p className="text-xs text-muted-foreground">Switch to the Workout tab to record your sets and reps.</p>
-          </CardContent>
-        </Card>
-      </section>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }
