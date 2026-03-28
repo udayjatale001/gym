@@ -49,7 +49,12 @@ export default function DietPage() {
       toast({ variant: "destructive", title: "Error", description: "You must be logged in." });
       return;
     }
-    if (!selectedType || !mealName.trim()) return;
+    
+    // Prevent empty input or missing type
+    if (!selectedType || !mealName.trim()) {
+      toast({ variant: "destructive", title: "Missing Information", description: "Please enter a meal name." });
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -63,13 +68,14 @@ export default function DietPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'mealLogs');
 
+    // Initiate write - Firestore will handle local/optimistic update
     addDoc(logsRef, mealData)
       .then(() => {
         toast({
           title: "Meal Logged",
-          description: `${selectedType} (${mealName}) added successfully.`,
+          description: `${selectedType}: ${mealName.trim()} logged successfully.`,
         });
-        // Reset and close
+        // Reset and close UI immediately on success
         setStep(1);
         setSelectedType(null);
         setMealName("");
