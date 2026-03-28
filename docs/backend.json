@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -52,14 +53,25 @@
     },
     "MealLog": {
       "title": "Meal Log",
-      "description": "A simple meal log entry for consistency tracking.",
+      "description": "Detailed meal entry with specific type and consistency checklist.",
       "type": "object",
       "properties": {
+        "mealType": { "type": "string", "enum": ["Breakfast", "Snacks", "Lunch", "Dinner"] },
+        "mealName": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" },
-        "date": { "type": "string", "format": "date" },
-        "note": { "type": "string" }
+        "date": { "type": "string", "format": "date" }
       },
-      "required": ["timestamp", "date"]
+      "required": ["mealType", "mealName", "timestamp", "date"]
+    },
+    "ChecklistEntry": {
+      "title": "Checklist Entry",
+      "description": "A manual status for a specific day in a 30-day cycle.",
+      "type": "object",
+      "properties": {
+        "day": { "type": "number" },
+        "status": { "type": "string", "enum": ["taken", "skipped"] }
+      },
+      "required": ["day", "status"]
     }
   },
   "auth": {
@@ -78,9 +90,13 @@
       "schema": "WorkoutLog",
       "description": "Workout history for the user."
     },
-    "/users/{userId}/mealLogs/{logId}": {
+    "/users/{userId}/mealLogs/{mealId}": {
       "schema": "MealLog",
-      "description": "Meal consistency history."
+      "description": "Detailed meal history."
+    },
+    "/users/{userId}/mealLogs/{mealId}/checklist/{dayId}": {
+      "schema": "ChecklistEntry",
+      "description": "30-day consistency data for a specific meal."
     }
   }
 }
