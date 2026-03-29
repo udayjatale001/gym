@@ -44,7 +44,7 @@ export default function WeightPage() {
 
     setIsSubmitting(true);
     
-    // Professional delay simulation
+    // Professional delay simulation for tactile feedback
     setTimeout(() => {
       const weightVal = parseFloat(trimmedWeight);
       const newEntry: LocalWeightLog = {
@@ -82,86 +82,93 @@ export default function WeightPage() {
 
   return (
     <div className="p-4 space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header Section */}
-      <div className="flex items-center gap-4 pt-4 px-1">
-        <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20 rotate-3">
-          <Scale className="h-8 w-8" />
+      {/* High-Impact Header Section */}
+      <div className="flex items-center gap-4 pt-6 px-1">
+        <div className="h-16 w-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 -rotate-2 border-b-4 border-primary-foreground/20">
+          <Scale className="h-9 w-9" />
         </div>
         <div className="space-y-0.5">
-          <h2 className="text-3xl font-black text-primary uppercase tracking-tighter italic leading-none">
+          <h2 className="text-4xl font-black text-primary uppercase tracking-tighter italic leading-none">
             Weight Log
           </h2>
-          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
-            Progress Tracking Precision
+          <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-60">
+            Progress Precision
           </p>
         </div>
       </div>
 
-      {/* Input Card */}
-      <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
-        <CardContent className="p-8 space-y-6">
-          <div className="space-y-3">
-            <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Record Body Mass (KG)</p>
+      {/* Massive Input Card */}
+      <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[3rem] overflow-hidden bg-white relative">
+        <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
+        <CardContent className="p-10 space-y-8 relative z-10">
+          <div className="space-y-4">
+            <p className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.25em] px-1">Body Mass Metric (KG)</p>
             <div className="relative group">
               <Input 
                 type="number" 
                 inputMode="decimal"
                 placeholder="00.0" 
-                className="h-20 text-4xl font-black border-4 border-muted/50 rounded-[1.5rem] focus-visible:ring-primary focus-visible:border-primary transition-all shadow-inner pl-6 pr-16"
+                className="h-24 text-5xl font-black border-4 border-muted/30 rounded-[2rem] focus-visible:ring-primary focus-visible:border-primary transition-all shadow-inner pl-8 pr-20 bg-muted/5 placeholder:text-muted-foreground/20"
                 value={newWeight}
                 onChange={(e) => setNewWeight(e.target.value)}
                 disabled={isSubmitting}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddWeight()}
               />
-              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xl font-black text-muted-foreground/40 italic">KG</span>
+              <span className="absolute right-8 top-1/2 -translate-y-1/2 text-2xl font-black text-primary/30 italic tracking-tighter">KG</span>
             </div>
           </div>
           <Button 
             onClick={handleAddWeight} 
-            className="w-full h-16 text-lg font-black uppercase tracking-[0.15em] italic rounded-[1.2rem] shadow-xl shadow-primary/20 active:scale-[0.97] transition-all"
+            className="w-full h-20 text-xl font-black uppercase tracking-[0.2em] italic rounded-[1.8rem] shadow-2xl shadow-primary/30 active:scale-[0.96] transition-all bg-primary hover:bg-primary/95 group"
             disabled={isSubmitting || !newWeight.trim()}
           >
-            {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <Plus className="h-6 w-6 mr-2" />}
-            Confirm Entry
+            {isSubmitting ? (
+              <Loader2 className="h-7 w-7 animate-spin" />
+            ) : (
+              <span className="flex items-center gap-3">
+                <Plus className="h-7 w-7 transition-transform group-hover:rotate-90" />
+                Confirm Entry
+              </span>
+            )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* History List */}
-      <section className="space-y-4">
+      {/* History List - Professional Badges */}
+      <section className="space-y-5">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-[12px] font-black uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2">
-            <History className="h-4 w-4" /> Entry History
+          <h3 className="text-[13px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2.5">
+            <History className="h-4 w-4 text-primary" /> Logged History
           </h3>
           {logs.length > 0 && (
-            <span className="text-[10px] font-black text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-widest border border-primary/20">
-              {logs.length} Logs
+            <span className="text-[11px] font-black text-primary bg-primary/10 px-4 py-1.5 rounded-full uppercase tracking-widest border-2 border-primary/10">
+              {logs.length} Entries
             </span>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {logs.length > 0 ? (
             logs.map((log) => (
               <Card 
                 key={log.id} 
-                className="border-none shadow-md hover:shadow-lg transition-all rounded-[1.5rem] overflow-hidden group active:scale-[0.98]"
+                className="border-none shadow-xl hover:shadow-2xl transition-all rounded-[2rem] overflow-hidden group active:scale-[0.98] bg-white border-l-[6px] border-l-primary"
               >
-                <CardContent className="p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    <div className="h-14 w-14 rounded-2xl bg-muted/50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-inner">
-                      <Scale className="h-7 w-7" />
+                <CardContent className="p-6 flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="h-16 w-16 rounded-2xl bg-muted/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-inner">
+                      <Scale className="h-8 w-8" />
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-3xl font-black text-primary italic leading-none tracking-tighter">
-                        {log.weight} <span className="text-xs uppercase not-italic tracking-widest opacity-40">kg</span>
+                    <div className="space-y-1">
+                      <p className="text-4xl font-black text-primary italic leading-none tracking-tighter">
+                        {log.weight} <span className="text-xs uppercase not-italic tracking-[0.2em] opacity-30 font-bold">kg</span>
                       </p>
-                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1.5">
-                        <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-md">
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="flex items-center gap-2 bg-muted/40 px-3 py-1 rounded-lg text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                           <Calendar className="h-3.5 w-3.5" /> 
-                          {format(new Date(log.timestamp), 'MMM dd, yyyy')}
+                          {format(new Date(log.timestamp), 'MMM dd')}
                         </span>
-                        <span className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-md">
+                        <span className="flex items-center gap-2 bg-muted/40 px-3 py-1 rounded-lg text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                           <Clock className="h-3.5 w-3.5" /> 
                           {format(new Date(log.timestamp), 'h:mm a')}
                         </span>
@@ -171,22 +178,22 @@ export default function WeightPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    className="h-12 w-12 rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all active:scale-90"
                     onClick={() => handleDeleteLog(log.id)}
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash2 className="h-6 w-6" />
                   </Button>
                 </CardContent>
               </Card>
             ))
           ) : (
-            <div className="text-center py-24 bg-muted/20 rounded-[2.5rem] border-4 border-dashed border-muted/50 flex flex-col items-center justify-center space-y-4">
-              <div className="h-16 w-16 rounded-full bg-muted/30 flex items-center justify-center">
-                <Scale className="h-8 w-8 text-muted-foreground/40" />
+            <div className="text-center py-28 bg-muted/10 rounded-[3.5rem] border-4 border-dashed border-muted/30 flex flex-col items-center justify-center space-y-5">
+              <div className="h-20 w-20 rounded-full bg-muted/20 flex items-center justify-center">
+                <Scale className="h-10 w-10 text-muted-foreground/30" />
               </div>
-              <div>
-                <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">No Weight History</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1 font-bold uppercase tracking-widest">Logs appear here after entry</p>
+              <div className="space-y-1">
+                <p className="text-base font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40 italic">Zero Data Found</p>
+                <p className="text-[11px] text-muted-foreground/30 font-bold uppercase tracking-widest">Your progress logs will appear here</p>
               </div>
             </div>
           )}
