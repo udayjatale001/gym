@@ -144,11 +144,12 @@ export default function WeightPage() {
                         <Card className="bg-accent/5 border-2 border-accent/20 rounded-[2rem] p-6 text-center shadow-lg">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Goal</p>
                           <Input 
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="SET GOAL"
                             value={targetWeight}
-                            onChange={(e) => setTargetWeight(e.target.value)}
-                            className="text-center font-black text-2xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent"
+                            onChange={(e) => setTargetWeight(e.target.value.replace(/[^0-9.]/g, ''))}
+                            className="text-center font-black text-2xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent placeholder:text-accent/20"
                           />
                         </Card>
                       </div>
@@ -204,12 +205,12 @@ export default function WeightPage() {
             <p className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.25em] px-1">Record Body Mass (KG)</p>
             <div className="relative group">
               <Input 
-                type="number" 
+                type="text" 
                 inputMode="decimal"
                 placeholder="00.0" 
                 className="h-24 text-5xl font-black border-4 border-muted/30 rounded-[2rem] focus-visible:ring-primary focus-visible:border-primary transition-all shadow-inner pl-8 pr-20 bg-muted/5 placeholder:text-muted-foreground/20"
                 value={newWeight}
-                onChange={(e) => setNewWeight(e.target.value)}
+                onChange={(e) => setNewWeight(e.target.value.replace(/[^0-9.]/g, ''))}
                 disabled={isSubmitting}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddWeight()}
               />
