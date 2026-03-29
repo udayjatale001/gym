@@ -9,6 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label';
 import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -17,16 +22,53 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const auth = useAuth();
+  const db = useFirestore();
+  const { toast } = useToast();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Passwords mismatch",
+        description: "Please make sure both passwords are the same.",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // Direct navigation to dashboard without saving to Firebase
-    setTimeout(() => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create initial user profile in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        displayName: name,
+        email: email,
+        currentWeight: 0,
+        targetWeight: 0,
+        goal: "",
+        workoutStartDate: format(new Date(), 'yyyy-MM-dd'),
+        createdAt: new Date().toISOString()
+      });
+
+      toast({
+        title: "Account Created!",
+        description: "Your fitness journey starts now.",
+      });
+      
       router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Signup Failed",
+        description: error.message || "An error occurred during account creation.",
+      });
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -78,6 +120,7 @@ export default function SignupPage() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -89,6 +132,7 @@ export default function SignupPage() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required

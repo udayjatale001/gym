@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -11,6 +12,10 @@ import { ToastAction } from "@/components/ui/toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, addDoc, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 
 const defaultCategories = [
   { 
@@ -39,23 +44,20 @@ const defaultCategories = [
   },
 ];
 
-type WorkoutSplit = {
-  id: string;
-  name: string;
-  focus: string;
-  description: string;
-  color: string;
-  icon: any;
-};
-
 export default function WorkoutPage() {
   const { toast } = useToast();
+  const db = useFirestore();
+  const { user } = useUser();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Track all splits in local state (starts with defaults)
-  const [activeSplits, setActiveSplits] = useState<WorkoutSplit[]>(defaultCategories);
+  const splitsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(db, 'users', user.uid, 'workoutSplits'));
+  }, [db, user]);
+
+  const { data: customSplits, loading } = useCollection(splitsQuery);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -66,58 +68,90 @@ export default function WorkoutPage() {
 
   const handleAddSplit = () => {
     const { name, focus, description } = formData;
-    if (!name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
+    if (!user || !name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
+    const splitData = {
+      name: name.trim(),
+      focus: focus.trim(),
+      description: description.trim(),
+      createdAt: serverTimestamp()
+    };
 
-    // Simulate a brief delay for UX feel, then update local state only
-    setTimeout(() => {
-      const newSplit: WorkoutSplit = {
-        id: `custom-${Date.now()}`,
-        name: name.trim(),
-        focus: focus.trim(),
-        description: description.trim(),
-        color: "bg-muted-foreground",
-        icon: Dumbbell,
-      };
+    const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
 
-      setActiveSplits(prev => [...prev, newSplit]);
-      
-      toast({
-        title: "Split Added",
-        description: `${name} is now in your list.`,
+    addDoc(splitsRef, splitData)
+      .then(() => {
+        toast({
+          title: "Split Added",
+          description: `${name} has been saved to your plan.`,
+        });
+        setIsAddOpen(false);
+        setFormData({ name: "", focus: "", description: "" });
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: splitsRef.path,
+          operation: 'create',
+          requestResourceData: splitData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      
-      setIsAddOpen(false);
-      setFormData({ name: "", focus: "", description: "" });
-      setIsSubmitting(false);
-    }, 300);
   };
 
-  const handleDeleteSplit = (e: React.MouseEvent, splitId: string) => {
-    e.preventDefault(); // Prevent navigation
-    e.stopPropagation(); // Prevent card click
+  const handleDeleteSplit = (e: React.MouseEvent, splitId: string, splitName: string, splitData: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    const splitToDelete = activeSplits.find(s => s.id === splitId);
-    if (!splitToDelete) return;
+    if (!user) return;
 
-    // Capture current state for undo
-    const previousSplits = [...activeSplits];
-    
-    setActiveSplits(prev => prev.filter(s => s.id !== splitId));
-    
-    toast({
-      title: "Split Removed",
-      description: `${splitToDelete.name} has been deleted.`,
-      action: (
-        <ToastAction altText="Undo" onClick={() => setActiveSplits(previousSplits)}>
-          Undo
-        </ToastAction>
-      ),
-    });
+    const splitRef = doc(db, 'users', user.uid, 'workoutSplits', splitId);
+
+    deleteDoc(splitRef)
+      .then(() => {
+        toast({
+          title: "Split Removed",
+          description: `${splitName} has been deleted permanently.`,
+          action: (
+            <ToastAction altText="Undo" onClick={() => {
+              // Restore data if undo is clicked
+              setDoc(splitRef, splitData);
+            }}>
+              Undo
+            </ToastAction>
+          ),
+        });
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: splitRef.path,
+          operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
+
+  // Combine defaults (static) and custom (from DB)
+  // Note: For full "permanent delete" of defaults, we'd need to seed them into the DB on signup.
+  // For now, we display defaults as permanent entries and custom splits as manageable ones.
+  const allSplits = [
+    ...defaultCategories.map(c => ({ ...c, isDefault: true })),
+    ...(customSplits?.map(s => ({ 
+      id: s.id, 
+      name: s.name, 
+      focus: s.focus, 
+      description: s.description, 
+      color: "bg-muted-foreground", 
+      icon: Dumbbell,
+      isDefault: false,
+      raw: s
+    })) || [])
+  ];
 
   return (
     <div className="p-4 space-y-6 pb-24">
@@ -127,7 +161,7 @@ export default function WorkoutPage() {
             <Dumbbell className="h-6 w-6" />
             Workout Tracker
           </h2>
-          <p className="text-xs text-muted-foreground">Manage your training splits locally.</p>
+          <p className="text-xs text-muted-foreground">Manage your custom training splits.</p>
         </div>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -185,7 +219,7 @@ export default function WorkoutPage() {
                 disabled={!isFormValid || isSubmitting}
               >
                 {isSubmitting ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Adding...</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...</>
                 ) : (
                   'Save Split'
                 )}
@@ -196,8 +230,12 @@ export default function WorkoutPage() {
       </div>
 
       <div className="space-y-4">
-        {activeSplits.length > 0 ? (
-          activeSplits.map((cat) => (
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+          </div>
+        ) : allSplits.length > 0 ? (
+          allSplits.map((cat) => (
             <div key={cat.id} className="relative group">
               <Link href={`/dashboard/workout/${cat.id}`}>
                 <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
@@ -213,14 +251,16 @@ export default function WorkoutPage() {
                             <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full"
-                              onClick={(e) => handleDeleteSplit(e, cat.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {!cat.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full"
+                                onClick={(e) => handleDeleteSplit(e, cat.id, cat.name, (cat as any).raw)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                           </div>
                         </div>
@@ -250,20 +290,6 @@ export default function WorkoutPage() {
           </div>
         )}
       </div>
-      
-      {activeSplits.length < defaultCategories.length && (
-        <div className="flex justify-center pt-4">
-           <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-[10px] font-bold uppercase tracking-widest gap-2 opacity-50 hover:opacity-100"
-            onClick={() => setActiveSplits(defaultCategories)}
-           >
-             <RotateCcw className="h-3 w-3" />
-             Reset to Defaults
-           </Button>
-        </div>
-      )}
     </div>
   );
 }
