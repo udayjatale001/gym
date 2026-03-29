@@ -9,6 +9,7 @@ import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCirc
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { format } from 'date-fns';
 
 export default function WorkoutLogPage({ params }: { params: Promise<{ type: string, day: string }> }) {
   const { type, day } = use(params);
@@ -70,6 +71,21 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     toast({ title: "Deleted", description: "Session record removed." });
   };
 
+  const handleDeleteExercise = (exIdx: number) => {
+    if (!savedWorkout || !savedWorkout.exercises) return;
+    const newExercises = savedWorkout.exercises.filter((_: any, i: number) => i !== exIdx);
+    
+    if (newExercises.length === 0) {
+      handleDeleteSession();
+    } else {
+      const updatedWorkout = { ...savedWorkout, exercises: newExercises };
+      localStorage.setItem(storageKey, JSON.stringify(updatedWorkout));
+      setSavedWorkout(updatedWorkout);
+      setExercises(newExercises);
+      toast({ title: "Movement Removed", description: "Exercise deleted from session." });
+    }
+  };
+
   if (!isLoaded) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" /></div>;
 
   const showView = savedWorkout && !isEditing;
@@ -123,11 +139,16 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                  <Trash2 className="h-6 w-6" />
                </Button>
             </Card>
-            {!savedWorkout.status === 'skipped' && savedWorkout.exercises.map((ex: any, i: number) => (
+            {savedWorkout.status === 'completed' && savedWorkout.exercises.map((ex: any, i: number) => (
               <Card key={i} className="border-none shadow-xl rounded-[2.5rem] bg-white border-l-8 border-l-primary p-6 space-y-5">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center"><Dumbbell className="h-6 w-6 text-primary" /></div>
-                  <h4 className="font-black text-2xl uppercase italic tracking-tighter">{ex.name}</h4>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center"><Dumbbell className="h-6 w-6 text-primary" /></div>
+                    <h4 className="font-black text-2xl uppercase italic tracking-tighter">{ex.name}</h4>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground/30 active:scale-90" onClick={() => handleDeleteExercise(i)}>
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
                 </div>
                 <div className="space-y-2.5">
                   {ex.sets.map((set: any, idx: number) => (
