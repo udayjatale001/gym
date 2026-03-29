@@ -4,14 +4,19 @@
 import { use, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Calendar, Info, Loader2, Trophy, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Calendar, Info, Loader2, Trophy, XCircle, Ban } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+interface DayStatus {
+  day: number;
+  status: 'completed' | 'skipped' | 'none';
+}
 
 export default function WorkoutGridPage({ params }: { params: Promise<{ type: string }> }) {
   const { type } = use(params);
   const [displayName, setDisplayName] = useState("");
-  const [completedDays, setCompletedDays] = useState<number[]>([]);
+  const [dayStatuses, setDayStatuses] = useState<DayStatus[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -25,15 +30,19 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
       setDisplayName(type);
     }
 
-    // Check all 30 days for logs in localStorage
-    const logged: number[] = [];
+    // Check all 30 days for statuses in localStorage
+    const statuses: DayStatus[] = [];
     for (let i = 1; i <= 30; i++) {
       const storageKey = `fitstride_workout_${type}_day_${i}`;
-      if (localStorage.getItem(storageKey)) {
-        logged.push(i);
+      const data = localStorage.getItem(storageKey);
+      if (data) {
+        const parsed = JSON.parse(data);
+        statuses.push({ day: i, status: parsed.status || 'completed' });
+      } else {
+        statuses.push({ day: i, status: 'none' });
       }
     }
-    setCompletedDays(logged);
+    setDayStatuses(statuses);
     setIsLoaded(true);
   }, [type]);
 
@@ -44,6 +53,8 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
       </div>
     );
   }
+
+  const completedCount = dayStatuses.filter(s => s.status === 'completed').length;
 
   return (
     <div className="p-4 space-y-6 pb-28 animate-in fade-in duration-500">
@@ -73,13 +84,13 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         <CardContent className="p-6 pt-2 flex items-center justify-between relative z-10">
           <div>
             <p className="text-5xl font-black leading-none italic">
-              {completedDays.length}
+              {completedCount}
               <span className="text-sm font-bold opacity-60 ml-2 not-italic">/ 30</span>
             </p>
           </div>
           <div className="bg-black/20 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-right">
             <p className="text-xl font-black italic">
-              {Math.round((completedDays.length / 30) * 100)}%
+              {Math.round((completedCount / 30) * 100)}%
             </p>
             <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Success Rate</p>
           </div>
@@ -87,25 +98,25 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
       </Card>
 
       <div className="grid grid-cols-5 gap-3">
-        {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
-          const isCompleted = completedDays.includes(day);
+        {dayStatuses.map((item) => {
+          const isCompleted = item.status === 'completed';
+          const isSkipped = item.status === 'skipped';
+          
           return (
-            <Link key={day} href={`/dashboard/workout/${type}/${day}`} className="block">
+            <Link key={item.day} href={`/dashboard/workout/${type}/${item.day}`} className="block">
               <Button
                 variant="outline"
                 className={cn(
                   "h-20 w-full flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-95 relative overflow-hidden rounded-[1.2rem] shadow-sm",
-                  isCompleted 
-                    ? "bg-primary/10 border-primary text-primary shadow-inner" 
-                    : "bg-destructive/5 border-destructive/30 text-destructive/40 shadow-sm"
+                  isCompleted && "bg-primary/10 border-primary text-primary shadow-inner",
+                  isSkipped && "bg-destructive/10 border-destructive text-destructive shadow-inner",
+                  item.status === 'none' && "bg-muted/10 border-muted/30 text-muted-foreground/30 shadow-sm"
                 )}
               >
-                <span className="text-[9px] font-black opacity-40 absolute top-1.5 left-2">{day}</span>
-                {isCompleted ? (
-                  <CheckCircle2 className="h-6 w-6 text-primary animate-in zoom-in duration-300" />
-                ) : (
-                  <XCircle className="h-6 w-6 opacity-20" />
-                )}
+                <span className="text-[9px] font-black opacity-40 absolute top-1.5 left-2">{item.day}</span>
+                {isCompleted && <CheckCircle2 className="h-6 w-6 text-primary animate-in zoom-in duration-300" />}
+                {isSkipped && <Ban className="h-6 w-6 text-destructive animate-in zoom-in duration-300" />}
+                {item.status === 'none' && <XCircle className="h-6 w-6 opacity-10" />}
               </Button>
             </Link>
           );
@@ -117,7 +128,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         <div className="space-y-1">
           <p className="text-[11px] font-black text-foreground uppercase tracking-widest leading-none italic">Training Status</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-            <span className="text-primary font-black">GREEN</span> indicates a logged session. <span className="text-destructive font-black">RED</span> indicates an open session. Data is persisted locally for offline performance.
+            <span className="text-primary font-black">GREEN</span> indicates a logged session. <span className="text-destructive font-black">RED</span> indicates a skipped session. Data is persisted locally for performance.
           </p>
         </div>
       </div>

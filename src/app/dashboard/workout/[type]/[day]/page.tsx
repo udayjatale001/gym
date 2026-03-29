@@ -19,7 +19,8 @@ import {
   X, 
   Edit2,
   TrendingUp,
-  Scale
+  XCircle,
+  Ban
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +64,9 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     if (localData) {
       const parsed = JSON.parse(localData);
       setSavedWorkout(parsed);
-      setExercises(parsed.exercises);
+      if (parsed.status === 'completed') {
+        setExercises(parsed.exercises);
+      }
     }
     
     setIsLoaded(true);
@@ -122,6 +125,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         workoutType: type,
         day: parseInt(day),
         exercises: validExercises,
+        status: 'completed',
         timestamp: new Date().toISOString()
       };
 
@@ -138,15 +142,36 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     }, 400);
   };
 
+  const handleSkip = () => {
+    setIsSubmitting(true);
+    setTimeout(() => {
+      const workoutData = {
+        workoutType: type,
+        day: parseInt(day),
+        status: 'skipped',
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem(storageKey, JSON.stringify(workoutData));
+      setSavedWorkout(workoutData);
+      toast({
+        variant: "destructive",
+        title: "Workout Skipped",
+        description: "Status marked as skipped for this day.",
+      });
+      setIsEditing(false);
+      setIsSubmitting(false);
+    }, 300);
+  };
+
   const handleDeleteSession = () => {
-    if (confirm("Permanently delete this session?")) {
+    if (confirm("Permanently delete this record?")) {
       localStorage.removeItem(storageKey);
       setSavedWorkout(null);
       setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
       setIsEditing(true);
       toast({
         title: "Deleted",
-        description: "Session record removed.",
+        description: "Record removed.",
       });
     }
   };
@@ -160,6 +185,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   }
 
   const showViewMode = savedWorkout && !isEditing;
+  const isSkipped = savedWorkout?.status === 'skipped';
 
   return (
     <div className="flex flex-col min-h-svh bg-background pb-32 animate-in fade-in duration-500">
@@ -172,12 +198,24 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             </Button>
           </Link>
           <div className="space-y-0.5">
-            <h2 className="text-xl font-black uppercase tracking-tighter leading-none italic truncate max-w-[150px]">{displayName}</h2>
+            <h2 className="text-xl font-black uppercase tracking-tighter leading-none italic truncate max-w-[120px]">{displayName}</h2>
             <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Block Day {day}</p>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
+          {!showViewMode && !isSubmitting && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full text-destructive border-2 border-destructive/20 hover:bg-destructive/10 active:scale-90 transition-all"
+              onClick={handleSkip}
+              title="Skip Workout"
+            >
+              <Ban className="h-5 w-5" />
+            </Button>
+          )}
+
           {showViewMode ? (
             <Button 
               size="sm" 
@@ -205,14 +243,22 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         {showViewMode ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
             {/* Session Stats Header */}
-            <Card className="bg-primary/5 border-2 border-primary/20 rounded-[2rem] overflow-hidden">
+            <Card className={cn(
+              "border-2 rounded-[2rem] overflow-hidden",
+              isSkipped ? "bg-destructive/5 border-destructive/20" : "bg-primary/5 border-primary/20"
+            )}>
               <CardContent className="p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg">
-                    <CheckCircle2 className="h-8 w-8" />
+                  <div className={cn(
+                    "h-14 w-14 rounded-2xl flex items-center justify-center text-white shadow-lg",
+                    isSkipped ? "bg-destructive" : "bg-primary"
+                  )}>
+                    {isSkipped ? <Ban className="h-8 w-8" /> : <CheckCircle2 className="h-8 w-8" />}
                   </div>
                   <div>
-                    <h3 className="text-lg font-black uppercase italic tracking-tighter leading-none">Session Logged</h3>
+                    <h3 className="text-lg font-black uppercase italic tracking-tighter leading-none">
+                      {isSkipped ? 'Session Skipped' : 'Session Logged'}
+                    </h3>
                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
                       {new Date(savedWorkout.timestamp).toLocaleDateString()} • {new Date(savedWorkout.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -230,44 +276,53 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             </Card>
             
             {/* Exercise List */}
-            <div className="space-y-4">
-              {savedWorkout.exercises.map((ex: any, i: number) => (
-                <Card key={i} className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white border-l-[8px] border-l-primary group">
-                  <CardContent className="p-6 space-y-5">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                          <Dumbbell className="h-6 w-6" />
+            {!isSkipped && (
+              <div className="space-y-4">
+                {savedWorkout.exercises.map((ex: any, i: number) => (
+                  <Card key={i} className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white border-l-[8px] border-l-primary group">
+                    <CardContent className="p-6 space-y-5">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                            <Dumbbell className="h-6 w-6" />
+                          </div>
+                          <h4 className="font-black text-2xl uppercase italic tracking-tighter text-foreground">{ex.name}</h4>
                         </div>
-                        <h4 className="font-black text-2xl uppercase italic tracking-tighter text-foreground">{ex.name}</h4>
+                        <div className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black text-primary uppercase tracking-widest">
+                          {ex.sets.length} SETS
+                        </div>
                       </div>
-                      <div className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black text-primary uppercase tracking-widest">
-                        {ex.sets.length} SETS
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {ex.sets.map((set: any, setIdx: number) => (
-                        <div key={setIdx} className="bg-muted/30 border-2 border-muted/20 px-6 py-4 rounded-[1.5rem] flex items-center justify-between hover:border-primary/20 transition-all">
-                          <span className="text-[11px] font-black text-primary uppercase tracking-widest">SET {setIdx + 1}</span>
-                          <div className="flex items-center gap-6">
-                            <div className="flex flex-col items-end">
-                              <span className="text-xl font-black italic text-foreground leading-none">{set.reps}</span>
-                              <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">REPS</span>
-                            </div>
-                            <div className="w-px h-6 bg-muted-foreground/10" />
-                            <div className="flex flex-col items-end">
-                              <span className="text-xl font-black italic text-primary leading-none">{set.weight}</span>
-                              <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">KG</span>
+                      
+                      <div className="grid grid-cols-1 gap-2.5">
+                        {ex.sets.map((set: any, setIdx: number) => (
+                          <div key={setIdx} className="bg-muted/30 border-2 border-muted/20 px-6 py-4 rounded-[1.5rem] flex items-center justify-between hover:border-primary/20 transition-all">
+                            <span className="text-[11px] font-black text-primary uppercase tracking-widest">SET {setIdx + 1}</span>
+                            <div className="flex items-center gap-6">
+                              <div className="flex flex-col items-end">
+                                <span className="text-xl font-black italic text-foreground leading-none">{set.reps}</span>
+                                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">REPS</span>
+                              </div>
+                              <div className="w-px h-6 bg-muted-foreground/10" />
+                              <div className="flex flex-col items-end">
+                                <span className="text-xl font-black italic text-primary leading-none">{set.weight}</span>
+                                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">KG</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {isSkipped && (
+              <div className="text-center py-20 bg-muted/10 rounded-[3rem] border-4 border-dashed border-muted/30 flex flex-col items-center justify-center space-y-4">
+                <Ban className="h-12 w-12 text-destructive/30" />
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">No training data recorded</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
