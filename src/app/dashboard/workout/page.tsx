@@ -164,7 +164,7 @@ export default function WorkoutPage() {
 
       <Sheet open={isProgressOpen} onOpenChange={setIsProgressOpen}>
         <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[85svh] border-none p-0 overflow-hidden bg-background">
-          <div className="h-full overflow-y-auto no-scrollbar p-10 space-y-12">
+          <div className="h-full overflow-y-auto no-scrollbar p-10 space-y-12 pb-32">
             <SheetHeader>
               <SheetTitle className="text-4xl font-black uppercase italic tracking-tighter text-primary text-center">ANALYTICS HUB</SheetTitle>
               <p className="text-center text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">DISCIPLINE METRICS</p>

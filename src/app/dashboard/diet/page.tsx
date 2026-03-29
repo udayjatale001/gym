@@ -144,7 +144,7 @@ export default function DietPage() {
 
       <Sheet open={isOverallProgressOpen} onOpenChange={setIsOverallProgressOpen}>
         <SheetContent side="bottom" className="rounded-t-[4rem] h-[85svh] border-none p-0 bg-background overflow-hidden">
-          <div className="h-full overflow-y-auto no-scrollbar p-10 space-y-12">
+          <div className="h-full overflow-y-auto no-scrollbar p-10 space-y-12 pb-32">
             <SheetHeader><SheetTitle className="text-4xl font-black uppercase italic tracking-tighter text-primary text-center">DIET STATS</SheetTitle></SheetHeader>
             <div className="space-y-10">
               <div className="grid grid-cols-2 gap-6">

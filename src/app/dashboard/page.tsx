@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Utensils, CheckCircle2, Calendar, Scale, TrendingUp, Zap, Loader2 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Utensils, CheckCircle2, Calendar, Scale, TrendingUp, Zap, Loader2, Sparkles, Target, BrainCircuit, Quote } from "lucide-react";
 import { format, addDays, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { predictFitnessProgressAndAdvice, type PredictFitnessProgressAndAdviceOutput } from '@/ai/flows/predict-fitness-progress-and-advice';
 
 interface LocalWeightLog {
   id: string;
@@ -22,6 +25,9 @@ export default function DashboardPage() {
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [hasLoggedMealToday, setHasLoggedMealToday] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAIAnalyzing, setIsAIAnalyzing] = useState(false);
+  const [aiOutput, setAiOutput] = useState<PredictFitnessProgressAndAdviceOutput | null>(null);
+  const [isAISheetOpen, setIsAISheetOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<{ today: string; yesterday: string; tomorrow: string }>({
     today: "Rest", yesterday: "Rest", tomorrow: "Rest"
   });
@@ -54,6 +60,31 @@ export default function DashboardPage() {
 
     setIsLoaded(true);
   }, []);
+
+  const handleAIAnalysis = async () => {
+    setIsAIAnalyzing(true);
+    setIsAISheetOpen(true);
+    try {
+      // Mocking some data from localStorage to fit the AI input
+      const res = await predictFitnessProgressAndAdvice({
+        currentWeight: currentWeight,
+        targetWeight: targetWeight,
+        height: 180, // Default or fetch from profile if we had it
+        age: 25,
+        gender: 'other',
+        activityLevel: 'moderately active',
+        weeklyWeightLogs: weightLogs.slice(0, 7).map(l => ({ date: format(new Date(l.timestamp), 'yyyy-MM-dd'), weight: l.weight })),
+        dailyCalorieIntakeLogs: [], // We don't track calories yet
+        workoutLogs: [], // Simplified for now
+        fitnessGoals: targetWeight < currentWeight ? 'lose weight' : 'gain muscle'
+      });
+      setAiOutput(res);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAIAnalyzing(false);
+    }
+  };
 
   const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : 0;
   
@@ -107,6 +138,23 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
+      {/* AI Discipline Coach Trigger */}
+      <Button 
+        onClick={handleAIAnalysis}
+        className="w-full h-20 bg-card hover:bg-muted/50 text-foreground border-2 border-primary/20 rounded-[2rem] shadow-xl flex items-center justify-between px-8 active:scale-95 transition-all overflow-hidden relative group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:rotate-12 transition-transform">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <div className="text-left">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">AI DISCIPLINE COACH</p>
+            <p className="text-sm font-black italic uppercase">ANALYZE PERFORMANCE</p>
+          </div>
+        </div>
+        <TrendingUp className="h-6 w-6 text-primary opacity-40" />
+      </Button>
+
       {/* Goal Metrics (Body Mass Progress) */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-2">
@@ -136,7 +184,12 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-6">
-            <Progress value={progress} className="h-8 bg-muted/50 rounded-full shadow-inner border border-border/30" />
+            <div className="h-8 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/30">
+               <div 
+                 className="h-full bg-primary transition-all duration-1000 ease-out rounded-full"
+                 style={{ width: `${progress}%` }}
+               />
+            </div>
             
             {targetWeight > 0 && weightLogs.length > 0 && (
               <div className="text-center py-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-border/50">
@@ -181,6 +234,74 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* AI Coach Sheet */}
+      <Sheet open={isAISheetOpen} onOpenChange={setIsAISheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-[4rem] h-[92svh] border-none p-0 bg-background overflow-hidden">
+          <div className="h-full overflow-y-auto no-scrollbar p-10 space-y-12 pb-32">
+            <SheetHeader>
+              <SheetTitle className="text-4xl font-black uppercase italic tracking-tighter text-primary text-center leading-none">
+                AI COACH ANALYSIS
+              </SheetTitle>
+              <p className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40">DISCIPLINE DIRECTIVES</p>
+            </SheetHeader>
+
+            {isAIAnalyzing ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-6 animate-pulse">
+                <BrainCircuit className="h-20 w-20 text-primary animate-bounce" />
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">SCANNING DISCIPLINE DATA...</p>
+              </div>
+            ) : aiOutput ? (
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-700">
+                <div className="grid grid-cols-2 gap-6">
+                  <Card className="bg-card border-none rounded-[2.5rem] p-8 text-center shadow-2xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-3 opacity-60 text-primary">WEEKLY TREND</p>
+                    <p className="text-4xl font-black italic">{aiOutput.predictedWeightChangeWeekly} <span className="text-sm not-italic opacity-40">KG</span></p>
+                  </Card>
+                  <Card className="bg-card border-none rounded-[2.5rem] p-8 text-center shadow-2xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-3 opacity-60 text-primary">WEEKS TO GOAL</p>
+                    <p className="text-4xl font-black italic">{aiOutput.predictedTimeToGoalWeeks}</p>
+                  </Card>
+                </div>
+
+                <Card className="p-8 rounded-[3rem] bg-primary text-primary-foreground border-none shadow-2xl space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="h-6 w-6" />
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em]">PROGRESS SUMMARY</h3>
+                  </div>
+                  <p className="text-sm font-bold leading-relaxed opacity-90 italic">"{aiOutput.overallProgressSummary}"</p>
+                </Card>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 px-2">
+                    <BrainCircuit className="h-5 w-5 text-primary" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.4em] opacity-40">COACH DIRECTIVES</h3>
+                  </div>
+                  
+                  <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-8 space-y-4 shadow-xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary">DIET PROTOCOL</p>
+                    <p className="text-sm font-bold opacity-80">{aiOutput.advice.dietAdvice}</p>
+                  </Card>
+
+                  <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-8 space-y-4 shadow-xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary">TRAINING ADVICE</p>
+                    <p className="text-sm font-bold opacity-80">{aiOutput.advice.workoutAdvice}</p>
+                  </Card>
+
+                  <Card className="bg-muted/30 border-none rounded-[2.5rem] p-8 flex gap-6 items-start italic shadow-inner">
+                    <Quote className="h-8 w-8 text-primary opacity-20 shrink-0" />
+                    <p className="text-lg font-black tracking-tight leading-snug">"{aiOutput.advice.motivationBoost}"</p>
+                  </Card>
+                </div>
+
+                <Button className="w-full h-24 rounded-[2rem] font-black uppercase italic text-2xl shadow-2xl bg-primary active:scale-95" onClick={() => setIsAISheetOpen(false)}>CONFIRM DIRECTIVES</Button>
+              </div>
+            ) : (
+              <div className="text-center py-20 text-muted-foreground">FAILED TO ENGAGE COACH.</div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
