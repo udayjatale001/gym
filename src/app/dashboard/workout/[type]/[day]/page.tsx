@@ -8,11 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2, ListPlus, X, Edit2 } from "lucide-react";
 import Link from "next/link";
-import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 import { cn } from "@/lib/utils";
 
 interface WorkoutSet {
@@ -27,33 +23,13 @@ interface Exercise {
 
 export default function WorkoutLogPage({ params }: { params: Promise<{ type: string, day: string }> }) {
   const { type, day } = use(params);
-  const db = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   
-  const docId = `${type}-day-${day}`;
-  const logRef = useMemoFirebase(() => 
-    user ? doc(db, 'users', user.uid, 'workoutLogs', docId) : null, 
-    [db, user, docId]
-  );
-  
-  const { data: savedLog, loading: isLoading } = useDoc(logRef);
-  
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [exercises, setExercises] = useState<Exercise[]>([{ name: "", sets: [{ reps: "", weight: "" }] }]);
+  const [localSavedLog, setLocalSavedLog] = useState<{ exercises: Exercise[] } | null>(null);
+  const [isEditing, setIsEditing] = useState(true);
   const [displayName, setDisplayName] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-
-  // Sync state with saved data once loaded
-  useEffect(() => {
-    if (savedLog && savedLog.exercises) {
-      setExercises(savedLog.exercises);
-      setIsEditing(false);
-    } else if (!isLoading) {
-      setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
-      setIsEditing(true);
-    }
-  }, [savedLog, isLoading]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load split name from local storage
   useEffect(() => {
@@ -65,6 +41,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     } else {
       setDisplayName(type);
     }
+    setIsLoaded(true);
   }, [type]);
 
   const handleAddExercise = () => {
@@ -108,8 +85,6 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       return;
     }
 
-    if (!user || !logRef) return;
-    
     const validExercises = exercises.filter(ex => ex.name.trim() !== "" && ex.sets.some(s => s.reps.trim() !== ""));
     if (validExercises.length === 0) {
       toast({
@@ -120,38 +95,17 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       return;
     }
 
-    setIsSaving(true);
-
-    const logData = {
-      workoutType: type,
-      day: parseInt(day),
-      exercises: validExercises,
-      timestamp: new Date().toISOString(),
-      updatedAt: serverTimestamp()
-    };
-
-    setDoc(logRef, logData, { merge: true })
-      .then(() => {
-        toast({
-          title: "Workout Saved",
-          description: `Day ${day} progress has been recorded.`,
-        });
-        setIsEditing(false);
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: logRef.path,
-          operation: 'write',
-          requestResourceData: logData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
+    // Set local state to show the professional list format
+    setLocalSavedLog({ exercises: validExercises });
+    setIsEditing(false);
+    
+    toast({
+      title: "Workout Saved Locally",
+      description: "Showing your session summary.",
+    });
   };
 
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <div className="flex flex-col items-center justify-center min-h-svh">
         <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
@@ -161,7 +115,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
   return (
     <div className="flex flex-col min-h-svh bg-background pb-24">
-      {/* Dynamic Header with Right-Aligned Button */}
+      {/* Header with Right-Aligned SAVE button */}
       <div className="p-4 border-b bg-card flex items-center justify-between sticky top-0 z-20 shadow-sm backdrop-blur-md bg-white/90">
         <div className="flex items-center gap-3">
           <Link href={`/dashboard/workout/${type}`}>
@@ -178,20 +132,19 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         <Button 
           size="sm" 
           className={cn(
-            "gap-2 font-black shadow-lg px-6 rounded-full transition-all active:scale-95",
+            "gap-2 font-black shadow-lg px-6 rounded-full transition-all active:scale-95 h-9",
             isEditing ? "bg-primary hover:bg-primary/90" : "bg-black text-white hover:bg-black/80"
           )} 
           onClick={handleSave}
-          disabled={isSaving}
         >
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : (isEditing ? <Save className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />)}
+          {isEditing ? <Save className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
           {isEditing ? 'SAVE' : 'EDIT'}
         </Button>
       </div>
 
       <div className="p-4 space-y-4">
         {/* View Mode: Professional Short List Format */}
-        {!isEditing && savedLog ? (
+        {!isEditing && localSavedLog ? (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex items-center gap-2 text-primary bg-primary/5 p-3 rounded-2xl border border-primary/20">
               <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -199,7 +152,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             </div>
             
             <div className="grid grid-cols-1 gap-3">
-              {savedLog.exercises.map((ex: Exercise, i: number) => (
+              {localSavedLog.exercises.map((ex, i) => (
                 <div key={i} className="bg-white border-2 border-muted rounded-2xl p-4 shadow-sm border-l-4 border-l-primary relative overflow-hidden group hover:border-primary/30 transition-all">
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2">
@@ -236,7 +189,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             </div>
           </div>
         ) : (
-          /* Edit Mode: Structured Form with Unique Styling */
+          /* Edit Mode: Structured Form */
           <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
             {exercises.map((exercise, exerciseIndex) => (
               <Card key={exerciseIndex} className="border-2 border-muted overflow-hidden shadow-sm hover:border-primary/20 transition-all">
@@ -260,7 +213,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black uppercase opacity-60 tracking-[0.1em]">Exercise Name</Label>
                     <Input 
-                      placeholder="e.g. Bench Press" 
+                      placeholder="e.g. Squats" 
                       value={exercise.name}
                       onChange={(e) => handleUpdateExerciseName(exerciseIndex, e.target.value)}
                       className="font-black border-2 focus-visible:ring-primary h-11 text-sm uppercase tracking-tight"
