@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2, TrendingUp, Calendar } from "lucide-react";
+import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2, TrendingUp, Calendar, LayoutGrid, CheckCircle2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -116,15 +116,23 @@ export default function WorkoutPage() {
   const calculateOverallStats = () => {
     let totalCompleted = 0;
     let totalSkipped = 0;
-    const totalPossibleSlots = splits.length * 30;
+    const splitStats: Record<string, { completed: number, skipped: number, name: string }> = {};
+    const totalPossibleSlots = splits.length * 30; // Usually 90 for PPL
     
     splits.forEach(split => {
+      splitStats[split.id] = { completed: 0, skipped: 0, name: split.name };
       for (let i = 1; i <= 30; i++) {
         const data = localStorage.getItem(`fitstride_workout_${split.id}_day_${i}`);
         if (data) {
           const parsed = JSON.parse(data);
-          if (parsed.status === 'completed') totalCompleted++;
-          if (parsed.status === 'skipped') totalSkipped++;
+          if (parsed.status === 'completed') {
+            totalCompleted++;
+            splitStats[split.id].completed++;
+          }
+          if (parsed.status === 'skipped') {
+            totalSkipped++;
+            splitStats[split.id].skipped++;
+          }
         }
       }
     });
@@ -139,7 +147,8 @@ export default function WorkoutPage() {
       efficiencyPercentage, 
       completionPercentage,
       totalLogged,
-      totalPossibleSlots 
+      totalPossibleSlots,
+      splitStats
     };
   };
 
@@ -175,14 +184,14 @@ export default function WorkoutPage() {
       <div className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black flex items-center gap-2 text-primary uppercase italic tracking-tighter">
+            <h2 className="text-xl font-black flex items-center gap-2 text-primary uppercase italic tracking-tighter leading-none">
               <Dumbbell className="h-6 w-6" />
               Workout Tracker
             </h2>
             <button 
               className="text-3xl hover:scale-125 transition-transform active:scale-90 p-1"
               onClick={() => setIsProgressOpen(true)}
-              title="View Overall Progress"
+              title="View Overall Consistency"
             >
               📈
             </button>
@@ -193,7 +202,7 @@ export default function WorkoutPage() {
           <DialogTrigger asChild>
             <Button 
               size="icon" 
-              className="rounded-full h-10 w-10 shadow-lg bg-primary hover:bg-primary/90"
+              className="rounded-full h-10 w-10 shadow-lg bg-primary hover:bg-primary/90 active:scale-90 transition-transform"
               onClick={() => {
                 setFormData({ name: "", focus: "", description: "" });
                 setIsSubmitting(false);
@@ -202,7 +211,7 @@ export default function WorkoutPage() {
               <Plus className="h-6 w-6" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[90%] sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8">
+          <DialogContent className="w-[90%] sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary">Add Workout Split</DialogTitle>
             </DialogHeader>
@@ -213,7 +222,7 @@ export default function WorkoutPage() {
                   placeholder="e.g. CHEST + TRICEPS" 
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value.toUpperCase() }))}
-                  className="font-black border-2 h-14 uppercase rounded-[1rem] shadow-inner"
+                  className="font-black border-2 h-14 uppercase rounded-[1rem] shadow-inner focus-visible:ring-primary"
                   disabled={isSubmitting}
                 />
               </div>
@@ -223,7 +232,7 @@ export default function WorkoutPage() {
                   placeholder="e.g. CHEST, TRICEPS" 
                   value={formData.focus}
                   onChange={(e) => setFormData(prev => ({ ...prev, focus: e.target.value.toUpperCase() }))}
-                  className="font-black border-2 h-14 uppercase rounded-[1rem] shadow-inner"
+                  className="font-black border-2 h-14 uppercase rounded-[1rem] shadow-inner focus-visible:ring-primary"
                   disabled={isSubmitting}
                 />
               </div>
@@ -234,14 +243,14 @@ export default function WorkoutPage() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value.toUpperCase() }))}
                   disabled={isSubmitting}
-                  className="font-black border-2 rounded-[1rem] shadow-inner resize-none uppercase"
+                  className="font-black border-2 rounded-[1rem] shadow-inner resize-none uppercase focus-visible:ring-primary"
                   rows={3}
                 />
               </div>
             </div>
             <DialogFooter>
               <Button 
-                className="w-full h-16 font-black uppercase tracking-widest italic rounded-[1.2rem] shadow-xl" 
+                className="w-full h-16 font-black uppercase tracking-widest italic rounded-[1.2rem] shadow-xl active:scale-95" 
                 onClick={handleAddSplit} 
                 disabled={!isFormValid || isSubmitting}
               >
@@ -297,7 +306,7 @@ export default function WorkoutPage() {
                             </div>
                             <div className="space-y-1">
                               <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Guidance</p>
-                              <p className="text-xs text-muted-foreground leading-relaxed italic opacity-70">{split.description}</p>
+                              <p className="text-xs text-muted-foreground leading-relaxed italic opacity-70 line-clamp-2">{split.description}</p>
                             </div>
                           </div>
                         </div>
@@ -321,45 +330,75 @@ export default function WorkoutPage() {
 
       {/* Overall Progress Sheet */}
       <Sheet open={isProgressOpen} onOpenChange={setIsProgressOpen}>
-        <SheetContent side="bottom" className="rounded-t-[3rem] h-[85svh] border-none shadow-2xl p-0 overflow-hidden">
-          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10">
+        <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[85svh] border-none shadow-2xl p-0 overflow-hidden bg-background">
+          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-20">
             <SheetHeader>
-              <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">
-                Overall Training Consistency
+              <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center leading-none">
+                Elite Consistency Log
               </SheetTitle>
               <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">
-                Aggregated from Push, Pull, Legs
+                Aggregated Training Analytics (90-Day Block)
               </p>
             </SheetHeader>
 
-            <div className="space-y-8">
+            <div className="space-y-10">
               <div className="grid grid-cols-2 gap-4">
                 <Card className="bg-primary/5 border-2 border-primary/20 rounded-[2rem] p-6 text-center shadow-lg">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Sessions Done</p>
-                  <p className="text-5xl font-black italic text-primary">{stats.totalCompleted}<span className="text-sm ml-1 opacity-40">DAYS</span></p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Total Done</p>
+                  <p className="text-5xl font-black italic text-primary leading-none">
+                    {stats.totalCompleted}<span className="text-xs ml-1 opacity-40 not-italic">/{stats.totalPossibleSlots}</span>
+                  </p>
+                  <p className="text-[8px] font-bold text-muted-foreground uppercase mt-2">Sessions Logged</p>
                 </Card>
                 <Card className="bg-destructive/5 border-2 border-destructive/20 rounded-[2rem] p-6 text-center shadow-lg">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Sessions Skipped</p>
-                  <p className="text-5xl font-black italic text-destructive">{stats.totalSkipped}<span className="text-sm ml-1 opacity-40">DAYS</span></p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Total Skipped</p>
+                  <p className="text-5xl font-black italic text-destructive leading-none">{stats.totalSkipped}</p>
+                  <p className="text-[8px] font-bold text-muted-foreground uppercase mt-2">Missed Days</p>
                 </Card>
               </div>
 
-              <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-white space-y-6 relative overflow-hidden">
+              <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-card space-y-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
+                
                 <div className="space-y-4 relative z-10">
-                  <div className="flex justify-between items-end mb-4">
+                  <div className="flex justify-between items-end">
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-primary" /> Training Efficiency
                     </h3>
-                    <span className="text-3xl font-black text-primary italic">{Math.round(stats.efficiencyPercentage)}%</span>
+                    <span className="text-3xl font-black text-primary italic leading-none">{Math.round(stats.efficiencyPercentage)}%</span>
                   </div>
                   <Progress value={stats.efficiencyPercentage} className="h-8 bg-muted rounded-full shadow-inner border-2 border-muted" />
                 </div>
                 
-                <div className="text-center py-6 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Total Training Interaction</p>
-                  <p className="text-4xl font-black text-foreground italic leading-none">{stats.totalLogged} <span className="text-xs opacity-40">LOGS</span></p>
-                  <div className="flex items-center justify-center gap-2 mt-4">
+                <div className="space-y-6 relative z-10 border-t pt-8">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4" /> Split Consistency Breakdown
+                  </h4>
+                  <div className="space-y-6">
+                    {Object.values(stats.splitStats).map((split: any, idx) => (
+                      <div key={idx} className="space-y-3">
+                        <div className="flex justify-between items-end px-1">
+                          <p className="text-sm font-black uppercase italic tracking-tighter text-foreground">{split.name}</p>
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1 text-[9px] font-black text-primary uppercase">
+                              <CheckCircle2 className="h-3 w-3" /> {split.completed}
+                            </span>
+                            <span className="flex items-center gap-1 text-[9px] font-black text-destructive uppercase">
+                              <Ban className="h-3 w-3" /> {split.skipped}
+                            </span>
+                            <span className="text-[10px] font-bold text-muted-foreground">/ 30</span>
+                          </div>
+                        </div>
+                        <Progress value={(split.completed / 30) * 100} className="h-3 bg-muted rounded-full" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-center py-6 bg-muted/20 rounded-2xl border-2 border-dashed border-muted relative z-10">
+                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Total Block Engagement</p>
+                  <p className="text-4xl font-black text-foreground italic leading-none">{stats.totalLogged} <span className="text-xs opacity-40">INTERACTIONS</span></p>
+                  <div className="flex items-center justify-center gap-2 mt-4 opacity-40">
                     <Calendar className="h-4 w-4 text-primary" />
                     <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
                       {stats.totalCompleted} Completed • {stats.totalSkipped} Skipped
@@ -369,10 +408,10 @@ export default function WorkoutPage() {
               </Card>
 
               <Button 
-                className="w-full h-20 rounded-[1.8rem] font-black uppercase tracking-widest italic text-xl shadow-2xl shadow-primary/20 bg-primary hover:bg-primary/95" 
+                className="w-full h-20 rounded-[1.8rem] font-black uppercase tracking-widest italic text-xl shadow-2xl shadow-primary/20 bg-primary hover:bg-primary/95 active:scale-95" 
                 onClick={() => setIsProgressOpen(false)}
               >
-                Close Metrics
+                Return to Tracker
               </Button>
             </div>
           </div>
