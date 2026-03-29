@@ -164,16 +164,14 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   };
 
   const handleDeleteSession = () => {
-    if (confirm("Permanently delete this record?")) {
-      localStorage.removeItem(storageKey);
-      setSavedWorkout(null);
-      setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
-      setIsEditing(true);
-      toast({
-        title: "Deleted",
-        description: "Record removed.",
-      });
-    }
+    localStorage.removeItem(storageKey);
+    setSavedWorkout(null);
+    setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
+    setIsEditing(true);
+    toast({
+      title: "Deleted",
+      description: "Session record removed permanently.",
+    });
   };
 
   const handleDeleteExerciseInView = (index: number) => {
