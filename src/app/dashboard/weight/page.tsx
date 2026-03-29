@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Scale, Plus, History, Loader2, Clock, Trash2, Calendar } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Scale, Plus, History, Loader2, Clock, Trash2, Calendar, Target, TrendingUp, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -18,16 +20,17 @@ interface LocalWeightLog {
 export default function WeightPage() {
   const { toast } = useToast();
   const [logs, setLogs] = useState<LocalWeightLog[]>([]);
+  const [targetWeight, setTargetWeight] = useState<string>("");
   const [newWeight, setNewWeight] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('fitstride_weight_logs_v2');
-    if (saved) {
-      setLogs(JSON.parse(saved));
-    }
+    const savedLogs = localStorage.getItem('fitstride_weight_logs_v2');
+    const savedTarget = localStorage.getItem('fitstride_weight_target');
+    if (savedLogs) setLogs(JSON.parse(savedLogs));
+    if (savedTarget) setTargetWeight(savedTarget);
     setIsLoaded(true);
   }, []);
 
@@ -35,8 +38,9 @@ export default function WeightPage() {
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem('fitstride_weight_logs_v2', JSON.stringify(logs));
+      localStorage.setItem('fitstride_weight_target', targetWeight);
     }
-  }, [logs, isLoaded]);
+  }, [logs, targetWeight, isLoaded]);
 
   const handleAddWeight = () => {
     const trimmedWeight = newWeight.trim();
@@ -44,7 +48,6 @@ export default function WeightPage() {
 
     setIsSubmitting(true);
     
-    // Professional delay simulation for tactile feedback
     setTimeout(() => {
       const weightVal = parseFloat(trimmedWeight);
       const newEntry: LocalWeightLog = {
@@ -72,6 +75,28 @@ export default function WeightPage() {
     });
   };
 
+  const currentWeight = logs.length > 0 ? logs[0].weight : 0;
+  const goalWeight = parseFloat(targetWeight) || 0;
+  
+  // Progress Calculation Logic (Weight Loss or Gain)
+  const calculateProgress = () => {
+    if (logs.length === 0 || goalWeight === 0) return 0;
+    const startWeight = logs[logs.length - 1].weight;
+    
+    if (startWeight === goalWeight) return 100;
+    
+    // Total distance needed
+    const totalDistance = Math.abs(startWeight - goalWeight);
+    // Distance already covered
+    const distanceCovered = Math.abs(startWeight - currentWeight);
+    
+    const percentage = (distanceCovered / totalDistance) * 100;
+    return Math.min(100, Math.max(0, percentage));
+  };
+
+  const progressValue = calculateProgress();
+  const weightRemaining = goalWeight > 0 ? Math.abs(currentWeight - goalWeight).toFixed(1) : null;
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-svh">
@@ -83,17 +108,91 @@ export default function WeightPage() {
   return (
     <div className="p-4 space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* High-Impact Header Section */}
-      <div className="flex items-center gap-4 pt-6 px-1">
-        <div className="h-16 w-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 -rotate-2 border-b-4 border-primary-foreground/20">
-          <Scale className="h-9 w-9" />
-        </div>
-        <div className="space-y-0.5">
-          <h2 className="text-4xl font-black text-primary uppercase tracking-tighter italic leading-none">
-            Weight Log
-          </h2>
-          <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-60">
-            Progress Precision
-          </p>
+      <div className="flex items-center justify-between pt-6 px-1">
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 -rotate-2 border-b-4 border-primary-foreground/20">
+            <Scale className="h-9 w-9" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h2 className="text-4xl font-black text-primary uppercase tracking-tighter italic leading-none">
+                Weight Log
+              </h2>
+              
+              {/* Progress Tracking Trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="text-3xl hover:scale-125 transition-transform active:scale-90" title="View Progress">
+                    📈
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="rounded-t-[3rem] h-[80svh] border-none shadow-2xl p-0 overflow-hidden">
+                  <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10">
+                    <SheetHeader>
+                      <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">
+                        Goal Progress
+                      </SheetTitle>
+                    </SheetHeader>
+
+                    <div className="space-y-8">
+                      {/* Current Status Cards */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card className="bg-primary/5 border-2 border-primary/20 rounded-[2rem] p-6 text-center shadow-lg">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Current</p>
+                          <p className="text-4xl font-black italic text-primary">{currentWeight || "--"}<span className="text-sm">KG</span></p>
+                        </Card>
+                        <Card className="bg-accent/5 border-2 border-accent/20 rounded-[2rem] p-6 text-center shadow-lg">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Goal</p>
+                          <Input 
+                            type="number"
+                            placeholder="SET GOAL"
+                            value={targetWeight}
+                            onChange={(e) => setTargetWeight(e.target.value)}
+                            className="text-center font-black text-2xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent"
+                          />
+                        </Card>
+                      </div>
+
+                      {/* Progress Bar Container */}
+                      <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-white space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
+                        <div className="space-y-2 relative z-10">
+                          <div className="flex justify-between items-end mb-4">
+                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-primary" /> Success Metric
+                            </h3>
+                            <span className="text-2xl font-black text-primary italic">{Math.round(progressValue)}%</span>
+                          </div>
+                          <Progress value={progressValue} className="h-6 bg-muted rounded-full shadow-inner border-2 border-muted" />
+                        </div>
+                        
+                        {weightRemaining && goalWeight > 0 && (
+                          <div className="text-center py-4 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
+                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">Remaining to reach goal</p>
+                            <p className="text-3xl font-black text-foreground italic">{weightRemaining} <span className="text-sm opacity-40">KG</span></p>
+                          </div>
+                        )}
+
+                        {!goalWeight && (
+                          <div className="text-center py-6 flex flex-col items-center gap-2 opacity-40">
+                            <Target className="h-8 w-8" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Set a goal weight to track progress</p>
+                          </div>
+                        )}
+                      </Card>
+
+                      <Button className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest italic text-lg shadow-xl shadow-primary/20" onClick={() => toast({ title: "Goal Saved", description: "Your target weight has been updated locally." })}>
+                        Save Target
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+            <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-60">
+              Progress Tracking Precision
+            </p>
+          </div>
         </div>
       </div>
 
@@ -102,7 +201,7 @@ export default function WeightPage() {
         <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
         <CardContent className="p-10 space-y-8 relative z-10">
           <div className="space-y-4">
-            <p className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.25em] px-1">Body Mass Metric (KG)</p>
+            <p className="text-[12px] font-black text-muted-foreground uppercase tracking-[0.25em] px-1">Record Body Mass (KG)</p>
             <div className="relative group">
               <Input 
                 type="number" 
