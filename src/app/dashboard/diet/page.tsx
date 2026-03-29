@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
@@ -55,11 +55,12 @@ export default function DietPage() {
 
     setIsSubmitting(true);
     
+    // Simulate slight delay for "Confirm Meal" feel
     setTimeout(() => {
       const newMeal: LocalMeal = {
         id: Math.random().toString(36).substr(2, 9),
         mealType: selectedType,
-        mealName: mealName.trim(),
+        mealName: mealName.trim().toUpperCase(),
         timestamp: new Date().toISOString(),
         date: format(new Date(), 'yyyy-MM-dd'),
         checklist: {}
@@ -85,7 +86,7 @@ export default function DietPage() {
     setMeals(prev => prev.filter(m => m.id !== id));
     toast({
       title: "Meal Deleted",
-      description: "The meal has been removed from your local list.",
+      description: "The meal entry has been removed from your local list.",
     });
   };
 
@@ -110,10 +111,10 @@ export default function DietPage() {
   return (
     <div className="p-4 space-y-6 pb-24 animate-in fade-in duration-500">
       {/* Header with + button in front */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <Button 
           size="icon" 
-          className="h-10 w-10 rounded-full shadow-lg active:scale-90 transition-transform bg-primary hover:bg-primary/90"
+          className="h-12 w-12 rounded-2xl shadow-xl active:scale-90 transition-transform bg-primary hover:bg-primary/90 shrink-0"
           onClick={() => {
             setStep(1);
             setMealName("");
@@ -121,11 +122,11 @@ export default function DietPage() {
             setIsLogOpen(true);
           }}
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-7 w-7" />
         </Button>
         <div className="space-y-0.5">
-          <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">
-            Log Your Diet
+          <h2 className="text-3xl font-black text-primary uppercase tracking-tighter italic leading-none">
+            Log Diet
           </h2>
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
             Precision Nutrition Tracking
@@ -139,16 +140,16 @@ export default function DietPage() {
           meals.map((meal) => (
             <Card 
               key={meal.id} 
-              className="border-2 border-muted hover:border-primary/40 transition-all cursor-pointer group shadow-sm overflow-hidden active:scale-[0.98] rounded-2xl"
+              className="border-2 border-muted hover:border-primary/40 transition-all cursor-pointer group shadow-sm overflow-hidden active:scale-[0.98] rounded-[1.5rem]"
               onClick={() => setViewingMealId(meal.id)}
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-inner">
-                    <Utensils className="h-6 w-6" />
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-inner">
+                    <Utensils className="h-7 w-7" />
                   </div>
                   <div>
-                    <h4 className="font-black text-lg uppercase tracking-tighter leading-tight">
+                    <h4 className="font-black text-xl uppercase tracking-tighter leading-tight italic">
                       {meal.mealType}: <span className="text-primary">{meal.mealName}</span>
                     </h4>
                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1.5 mt-1">
@@ -161,13 +162,13 @@ export default function DietPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                     onClick={(e) => handleDeleteMeal(e, meal.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                  <div className="h-8 w-8 rounded-full flex items-center justify-center bg-muted/50 group-hover:bg-primary/10 transition-colors">
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <div className="h-9 w-9 rounded-full flex items-center justify-center bg-muted/50 group-hover:bg-primary/10 transition-colors">
+                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </div>
               </CardContent>
@@ -188,60 +189,60 @@ export default function DietPage() {
 
       {/* Log Meal Dialog */}
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
-        <DialogContent className="sm:max-w-md rounded-[2rem] border-none shadow-2xl">
+        <DialogContent className="sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-center text-primary">
+            <DialogTitle className="text-3xl font-black uppercase tracking-tighter italic text-center text-primary">
               {step === 1 ? 'Select Category' : `Log ${selectedType}`}
             </DialogTitle>
           </DialogHeader>
 
           {step === 1 ? (
-            <div className="grid grid-cols-2 gap-3 py-6">
+            <div className="grid grid-cols-2 gap-4 py-8">
               {(['Breakfast', 'Snacks', 'Lunch', 'Dinner'] as MealType[]).map((type) => (
                 <Button
                   key={type}
                   variant="outline"
-                  className="h-28 flex flex-col gap-3 border-2 rounded-2xl hover:border-primary hover:bg-primary/5 transition-all group active:scale-95 shadow-sm"
+                  className="h-32 flex flex-col gap-3 border-2 rounded-[1.5rem] hover:border-primary hover:bg-primary/5 transition-all group active:scale-95 shadow-sm"
                   onClick={() => {
                     setSelectedType(type);
                     setStep(2);
                   }}
                 >
-                  <div className="h-12 w-12 rounded-full bg-muted group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-                    <Utensils className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-12" />
+                  <div className="h-14 w-14 rounded-full bg-muted group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                    <Utensils className="h-7 w-7 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-12" />
                   </div>
-                  <span className="font-black text-[10px] uppercase tracking-[0.2em]">{type}</span>
+                  <span className="font-black text-xs uppercase tracking-[0.2em]">{type}</span>
                 </Button>
               ))}
             </div>
           ) : (
-            <div className="py-6 space-y-6">
+            <div className="py-8 space-y-8">
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Describe your meal</p>
+                <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Describe your meal</p>
                 <Input 
-                  placeholder="e.g. OATS & WHEY" 
+                  placeholder="e.g. STEAK & EGGS" 
                   value={mealName}
                   onChange={(e) => setMealName(e.target.value)}
                   autoFocus
-                  className="font-black border-2 border-muted h-14 text-lg uppercase rounded-2xl focus-visible:ring-primary focus-visible:border-primary transition-all shadow-inner"
+                  className="font-black border-2 border-muted h-16 text-xl uppercase rounded-[1.2rem] focus-visible:ring-primary focus-visible:border-primary transition-all shadow-inner"
                   onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <Button 
                   variant="ghost" 
-                  className="flex-1 font-black text-[10px] uppercase rounded-2xl h-14 tracking-widest" 
+                  className="flex-1 font-black text-xs uppercase rounded-[1.2rem] h-16 tracking-widest" 
                   onClick={() => setStep(1)}
                   disabled={isSubmitting}
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                  <ArrowLeft className="h-5 w-5 mr-2" /> Back
                 </Button>
                 <Button 
-                  className="flex-[2] font-black text-[10px] uppercase h-14 rounded-2xl tracking-[0.2em] shadow-lg shadow-primary/20 active:scale-95" 
+                  className="flex-[2] font-black text-xs uppercase h-16 rounded-[1.2rem] tracking-[0.2em] shadow-lg shadow-primary/20 active:scale-95" 
                   onClick={handleLogMeal} 
                   disabled={!mealName.trim() || isSubmitting}
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : 'Confirm Meal'}
+                  {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : 'Confirm Meal'}
                 </Button>
               </div>
             </div>
@@ -277,101 +278,114 @@ function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate
 
   return (
     <Sheet open={!!meal} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-y-auto no-scrollbar border-none shadow-2xl rounded-l-[3rem]">
-        <div className="p-8 space-y-8 animate-in slide-in-from-right duration-500">
+      <SheetContent side="bottom" className="h-[90svh] w-full p-0 overflow-y-auto no-scrollbar border-none shadow-2xl rounded-t-[3.5rem]">
+        <div className="p-8 space-y-10 animate-in slide-in-from-bottom duration-500">
           <SheetHeader className="text-left">
-            <div className="flex items-center gap-3 mb-4">
-              <Button variant="outline" size="icon" onClick={onClose} className="h-10 w-10 rounded-full border-2 border-muted hover:border-primary hover:text-primary active:scale-90 transition-all">
-                <ArrowLeft className="h-5 w-5" />
+            <div className="flex items-center gap-4 mb-2">
+              <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 rounded-full border-2 border-muted hover:border-primary hover:text-primary active:scale-90 transition-all">
+                <ArrowLeft className="h-6 w-6" />
               </Button>
               <div className="space-y-0.5">
-                <SheetTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary leading-none">
+                <SheetTitle className="text-3xl font-black uppercase tracking-tighter italic text-primary leading-none">
                   {meal.mealName}
                 </SheetTitle>
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
-                  {meal.mealType} • 30-Day Cycle
+                <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em]">
+                  {meal.mealType} • 30-Day Consistency Cycle
                 </p>
               </div>
             </div>
           </SheetHeader>
 
-          <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] overflow-hidden">
-            <CardHeader className="p-6 pb-2">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                <Calendar className="h-4 w-4" />
-                Monthly Consistency
+          {/* Stats Banner */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Logged</p>
+              <p className="text-5xl font-black text-primary leading-none">{totalTaken}</p>
+              <div className="h-1.5 w-12 rounded-full bg-primary/20" />
+            </Card>
+            <Card className="bg-destructive/5 border-2 border-destructive/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Skipped</p>
+              <p className="text-5xl font-black text-destructive leading-none">{totalSkipped}</p>
+              <div className="h-1.5 w-12 rounded-full bg-destructive/20" />
+            </Card>
+          </div>
+
+          {/* Grid Layout */}
+          <div className="space-y-4 pb-12">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-[12px] font-black uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" /> Progress Grid
               </h3>
-            </CardHeader>
-            <CardContent className="p-6 pt-0 flex items-center justify-between">
-              <div className="flex gap-10">
-                <div className="space-y-1">
-                  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Taken</p>
-                  <p className="text-4xl font-black text-primary leading-none">{totalTaken}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Skipped</p>
-                  <p className="text-4xl font-black text-destructive leading-none">{totalSkipped}</p>
-                </div>
-              </div>
-              {totalSkipped > 3 && (
-                <div className="bg-destructive/10 text-destructive p-3 rounded-2xl flex items-center gap-2 max-w-[140px] border border-destructive/20 animate-pulse">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <p className="text-[8px] font-black leading-tight uppercase tracking-tight">Warning: Consistency Gaps</p>
+              {totalSkipped > 5 && (
+                <div className="flex items-center gap-1.5 text-[10px] font-black text-destructive uppercase tracking-widest animate-pulse">
+                  <AlertCircle className="h-3.5 w-3.5" /> High Skips
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-5 gap-3 pb-12">
-            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
-              const status = getDayStatus(day);
-              return (
-                <Dialog key={day}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "h-16 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-2xl shadow-sm",
-                        status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
-                        status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
-                        !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
-                        isUpdating === day && "animate-pulse"
-                      )}
-                    >
-                      <span className="text-[9px] font-black mb-1 opacity-50">{day}</span>
-                      {status === 'taken' && <CheckCircle2 className="h-4 w-4" />}
-                      {status === 'skipped' && <XCircle className="h-4 w-4" />}
-                      {!status && <div className="h-1 w-1 rounded-full bg-muted-foreground/20" />}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-xs rounded-[2rem] border-none shadow-2xl">
-                    <DialogHeader>
-                      <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-xl">Day {day} Status</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex gap-3 py-6">
-                      <Button 
-                        className="flex-1 font-black text-[10px] uppercase gap-2 h-14 rounded-2xl shadow-lg shadow-primary/20"
-                        onClick={() => handleMarkDay(day, 'taken')}
+            </div>
+            
+            <div className="grid grid-cols-5 gap-3">
+              {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
+                const status = getDayStatus(day);
+                return (
+                  <Dialog key={day}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "h-20 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-[1.2rem] shadow-sm relative overflow-hidden",
+                          status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
+                          status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
+                          !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
+                          isUpdating === day && "animate-pulse"
+                        )}
                       >
-                        <CheckCircle2 className="h-4 w-4" /> Taken
+                        <span className="text-[11px] font-black mb-1 opacity-50 absolute top-2">{day}</span>
+                        {status === 'taken' && <CheckCircle2 className="h-6 w-6 mt-3" />}
+                        {status === 'skipped' && <XCircle className="h-6 w-6 mt-3" />}
+                        {!status && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/20 mt-3" />}
                       </Button>
-                      <Button 
-                        variant="destructive" 
-                        className="flex-1 font-black text-[10px] uppercase gap-2 h-14 rounded-2xl shadow-lg shadow-destructive/20"
-                        onClick={() => handleMarkDay(day, 'skipped')}
-                      >
-                        <XCircle className="h-4 w-4" /> Skipped
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              );
-            })}
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-xs rounded-[2.5rem] border-none shadow-2xl p-8">
+                      <DialogHeader>
+                        <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-2xl">Day {day} Status</DialogTitle>
+                      </DialogHeader>
+                      <div className="flex flex-col gap-3 py-8">
+                        <Button 
+                          className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-primary/20"
+                          onClick={() => handleMarkDay(day, 'taken')}
+                        >
+                          <CheckCircle2 className="h-6 w-6" /> Mark as Taken
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-destructive/20"
+                          onClick={() => handleMarkDay(day, 'skipped')}
+                        >
+                          <XCircle className="h-6 w-6" /> Mark as Skipped
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full font-black text-[10px] uppercase opacity-40 mt-2"
+                          onClick={() => {
+                            setMeals(prev => prev.map(m => 
+                              m.id === meal.id 
+                                ? { ...m, checklist: { ...Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) } }
+                                : m
+                            ));
+                            toast({ title: "Status Cleared", description: `Day ${day} has been reset.` });
+                          }}
+                        >
+                          Clear Status
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                );
+              })}
+            </div>
           </div>
         </div>
       </SheetContent>
     </Sheet>
   );
 }
-
-import { DialogTrigger } from '@/components/ui/dialog';
