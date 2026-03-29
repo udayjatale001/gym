@@ -11,7 +11,7 @@ import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -43,7 +43,7 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Create initial user profile in Firestore
+      // 1. Create initial user profile
       await setDoc(doc(db, 'users', user.uid), {
         displayName: name,
         email: email,
@@ -53,6 +53,21 @@ export default function SignupPage() {
         workoutStartDate: format(new Date(), 'yyyy-MM-dd'),
         createdAt: new Date().toISOString()
       });
+
+      // 2. Seed default PPL splits into Firestore for the user
+      const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
+      const defaults = [
+        { name: "Push", focus: "Chest, Shoulders, Triceps", description: "Focus on pushing movements and upper body strength." },
+        { name: "Pull", focus: "Back, Biceps, Rear Delts", description: "Focus on pulling movements and back definition." },
+        { name: "Legs", focus: "Quads, Hams, Glutes, Calves", description: "Complete lower body workout for power and stability." }
+      ];
+
+      for (const item of defaults) {
+        await addDoc(splitsRef, {
+          ...item,
+          createdAt: serverTimestamp()
+        });
+      }
 
       toast({
         title: "Account Created!",

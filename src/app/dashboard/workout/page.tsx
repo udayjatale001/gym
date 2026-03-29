@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2, RotateCcw } from "lucide-react";
+import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,36 +13,16 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, addDoc, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, query, addDoc, deleteDoc, doc, serverTimestamp, setDoc, orderBy } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 
-const defaultCategories = [
-  { 
-    id: "push", 
-    name: "Push", 
-    focus: "Chest, Shoulders, Triceps", 
-    color: "bg-primary", 
-    icon: Flame,
-    description: "Focus on pushing movements and upper body strength.",
-  },
-  { 
-    id: "pull", 
-    name: "Pull", 
-    focus: "Back, Biceps, Rear Delts", 
-    color: "bg-secondary", 
-    icon: Target,
-    description: "Focus on pulling movements and back definition.",
-  },
-  { 
-    id: "legs", 
-    name: "Legs", 
-    focus: "Quads, Hams, Glutes, Calves", 
-    color: "bg-accent", 
-    icon: Zap,
-    description: "Complete lower body workout for power and stability.",
-  },
-];
+const iconMap: Record<string, any> = {
+  push: Flame,
+  pull: Target,
+  legs: Zap,
+  default: Dumbbell
+};
 
 export default function WorkoutPage() {
   const { toast } = useToast();
@@ -54,10 +34,13 @@ export default function WorkoutPage() {
   
   const splitsQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(db, 'users', user.uid, 'workoutSplits'));
+    return query(
+      collection(db, 'users', user.uid, 'workoutSplits'),
+      orderBy('createdAt', 'asc')
+    );
   }, [db, user]);
 
-  const { data: customSplits, loading } = useCollection(splitsQuery);
+  const { data: splits, loading } = useCollection(splitsQuery);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -110,6 +93,7 @@ export default function WorkoutPage() {
 
     const splitRef = doc(db, 'users', user.uid, 'workoutSplits', splitId);
 
+    // Permanent Deletion from Firestore
     deleteDoc(splitRef)
       .then(() => {
         toast({
@@ -117,7 +101,7 @@ export default function WorkoutPage() {
           description: `${splitName} has been deleted permanently.`,
           action: (
             <ToastAction altText="Undo" onClick={() => {
-              // Restore data if undo is clicked
+              // Restore data back to Firestore
               setDoc(splitRef, splitData);
             }}>
               Undo
@@ -134,24 +118,23 @@ export default function WorkoutPage() {
       });
   };
 
-  const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
+  const getIcon = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('push')) return iconMap.push;
+    if (lower.includes('pull')) return iconMap.pull;
+    if (lower.includes('leg')) return iconMap.legs;
+    return iconMap.default;
+  };
 
-  // Combine defaults (static) and custom (from DB)
-  // Note: For full "permanent delete" of defaults, we'd need to seed them into the DB on signup.
-  // For now, we display defaults as permanent entries and custom splits as manageable ones.
-  const allSplits = [
-    ...defaultCategories.map(c => ({ ...c, isDefault: true })),
-    ...(customSplits?.map(s => ({ 
-      id: s.id, 
-      name: s.name, 
-      focus: s.focus, 
-      description: s.description, 
-      color: "bg-muted-foreground", 
-      icon: Dumbbell,
-      isDefault: false,
-      raw: s
-    })) || [])
-  ];
+  const getColor = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('push')) return "bg-primary";
+    if (lower.includes('pull')) return "bg-secondary";
+    if (lower.includes('leg')) return "bg-accent";
+    return "bg-muted-foreground";
+  };
+
+  const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
 
   return (
     <div className="p-4 space-y-6 pb-24">
@@ -234,54 +217,57 @@ export default function WorkoutPage() {
           <div className="flex justify-center py-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
           </div>
-        ) : allSplits.length > 0 ? (
-          allSplits.map((cat) => (
-            <div key={cat.id} className="relative group">
-              <Link href={`/dashboard/workout/${cat.id}`}>
-                <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
-                  <CardContent className="p-0 flex items-stretch min-h-[160px]">
-                    <div className={cn(cat.color, "w-2 shrink-0")}></div>
-                    <div className="p-5 flex-1 flex flex-col justify-between">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-2">
-                            <div className={cn("p-2 rounded-lg", cat.color.replace('bg-', 'bg-') + "/10")}>
-                              <cat.icon className={cn("h-5 w-5", cat.color.replace('bg-', 'text-'))} />
+        ) : splits && splits.length > 0 ? (
+          splits.map((split: any) => {
+            const Icon = getIcon(split.name);
+            const colorClass = getColor(split.name);
+            
+            return (
+              <div key={split.id} className="relative group">
+                <Link href={`/dashboard/workout/${split.id}`}>
+                  <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
+                    <CardContent className="p-0 flex items-stretch min-h-[160px]">
+                      <div className={cn(colorClass, "w-2 shrink-0")}></div>
+                      <div className="p-5 flex-1 flex flex-col justify-between">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <div className={cn("p-2 rounded-lg", colorClass.replace('bg-', 'bg-') + "/10")}>
+                                <Icon className={cn("h-5 w-5", colorClass.replace('bg-', 'text-'))} />
+                              </div>
+                              <h4 className="font-black text-xl tracking-tight uppercase">{split.name}</h4>
                             </div>
-                            <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {!cat.isDefault && (
+                            <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full"
-                                onClick={(e) => handleDeleteSplit(e, cat.id, cat.name, (cat as any).raw)}
+                                onClick={(e) => handleDeleteSplit(e, split.id, split.name, split)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
-                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
-                            <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed italic">{cat.description}</p>
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
+                              <p className="text-xs font-bold text-muted-foreground uppercase">{split.focus}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
+                              <p className="text-xs text-muted-foreground leading-relaxed italic">{split.description}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
-          ))
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+            );
+          })
         ) : (
           <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
             <Dumbbell className="h-10 w-10 text-muted-foreground mx-auto opacity-20 mb-3" />
