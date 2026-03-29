@@ -398,14 +398,25 @@ function DayDialog({
   onMark: (status: 'taken' | 'skipped', amount: string) => void,
   onClear: () => void
 }) {
+  const [open, setOpen] = useState(false);
   const [tempAmount, setTempAmount] = useState(amount);
 
   useEffect(() => {
     setTempAmount(amount);
   }, [amount]);
 
+  const handleMarkWithClose = (status: 'taken' | 'skipped', amt: string) => {
+    onMark(status, amt);
+    setOpen(false);
+  };
+
+  const handleClearWithClose = () => {
+    onClear();
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
@@ -448,21 +459,21 @@ function DayDialog({
           <div className="flex flex-col gap-3">
             <Button 
               className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-primary/20 active:scale-95"
-              onClick={() => onMark('taken', tempAmount)}
+              onClick={() => handleMarkWithClose('taken', tempAmount)}
             >
               <CheckCircle2 className="h-6 w-6" /> Log Portion
             </Button>
             <Button 
               variant="destructive" 
               className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-destructive/20 active:scale-95"
-              onClick={() => onMark('skipped', "")}
+              onClick={() => handleMarkWithClose('skipped', "")}
             >
               <XCircle className="h-6 w-6" /> Mark as Skipped
             </Button>
             <Button
               variant="ghost"
               className="w-full font-black text-[10px] uppercase opacity-40 mt-2 active:scale-95"
-              onClick={onClear}
+              onClick={handleClearWithClose}
             >
               Reset Status
             </Button>
