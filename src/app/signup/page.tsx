@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -18,20 +21,45 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
+  const db = useFirestore();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({ variant: "destructive", title: "Passwords match error", description: "Passwords do not match." });
+      return;
+    }
     setIsLoading(true);
 
-    // Direct navigation as requested
-    setTimeout(() => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      
+      // Initialize User Profile in Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        displayName: name,
+        email: email,
+        currentWeight: 0,
+        targetWeight: 0,
+        createdAt: new Date().toISOString()
+      });
+
       router.push('/dashboard');
       toast({
         title: "Account Ready!",
         description: "Welcome to FitStride.",
       });
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Signup Failed",
+        description: error.message || "Could not create account.",
+      });
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (

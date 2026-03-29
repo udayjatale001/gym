@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect } from "react";
@@ -17,8 +16,7 @@ import {
   CheckCircle2, 
   ListPlus, 
   X, 
-  Edit2,
-  AlertTriangle
+  Edit2
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -57,7 +55,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
   const { data: savedLog, loading: isLoadingDoc } = useDoc(logRef);
 
-  // Load split name from local storage
+  // Load split name from local storage or default
   useEffect(() => {
     const saved = localStorage.getItem('fitstride_splits');
     if (saved) {
@@ -112,7 +110,10 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   };
 
   const handleSave = () => {
-    if (!user || !logRef) return;
+    if (!user || !logRef) {
+      toast({ variant: "destructive", title: "Error", description: "You must be logged in to save." });
+      return;
+    }
 
     const validExercises = exercises.filter(ex => ex.name.trim() !== "" && ex.sets.some(s => s.reps.trim() !== ""));
     if (validExercises.length === 0) {

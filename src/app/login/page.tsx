@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Dumbbell, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,20 +18,29 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Direct navigation as requested
-    setTimeout(() => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
       toast({
         title: "Welcome back!",
-        description: "You have successfully entered Guest Mode.",
+        description: "You have successfully logged in.",
       });
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message || "Invalid credentials. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   return (
