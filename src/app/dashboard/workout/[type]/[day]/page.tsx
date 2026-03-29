@@ -22,10 +22,25 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const [logText, setLogText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [displayName, setDisplayName] = useState("");
 
   const docId = `${type}-day-${day}`;
 
   useEffect(() => {
+    // Load display name from local storage
+    const saved = localStorage.getItem('fitstride_splits');
+    if (saved) {
+      const splits = JSON.parse(saved);
+      const found = splits.find((s: any) => s.id === type);
+      if (found) {
+        setDisplayName(found.name);
+      } else {
+        setDisplayName(type);
+      }
+    } else {
+      setDisplayName(type);
+    }
+
     async function fetchWorkout() {
       if (!user) return;
       setIsLoading(true);
@@ -37,13 +52,13 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
           setLogText(data.description || "");
         }
       } catch (e) {
-        // Error handled silently or via global listener if preferred
+        // Error handled silently
       } finally {
         setIsLoading(false);
       }
     }
     fetchWorkout();
-  }, [db, user, docId]);
+  }, [db, user, docId, type]);
 
   const handleSave = () => {
     if (!user) return;
@@ -63,7 +78,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       .then(() => {
         toast({
           title: "Workout Saved",
-          description: `Logged Day ${day}: ${type}.`,
+          description: `Logged Day ${day}: ${displayName}.`,
         });
       })
       .catch(async (error) => {
@@ -92,7 +107,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             </Button>
           </Link>
           <div>
-            <h2 className="text-lg font-black uppercase tracking-tight">Day {day}: {type}</h2>
+            <h2 className="text-lg font-black uppercase tracking-tight">Day {day}: {displayName}</h2>
             <p className="text-[10px] text-muted-foreground font-bold uppercase">Training Notepad</p>
           </div>
         </div>

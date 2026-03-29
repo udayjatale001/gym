@@ -1,10 +1,10 @@
 
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Calendar, Info } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Calendar, Info, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -14,6 +14,24 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
   const { type } = use(params);
   const db = useFirestore();
   const { user } = useUser();
+  const [displayName, setDisplayName] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('fitstride_splits');
+    if (saved) {
+      const splits = JSON.parse(saved);
+      const found = splits.find((s: any) => s.id === type);
+      if (found) {
+        setDisplayName(found.name);
+      } else {
+        setDisplayName(type);
+      }
+    } else {
+      setDisplayName(type);
+    }
+    setIsLoaded(true);
+  }, [type]);
 
   const workoutLogsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -27,6 +45,14 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
 
   const completedDays = logs?.map(l => l.day) || [];
 
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 space-y-6">
       <div className="flex items-center gap-3">
@@ -36,7 +62,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
           </Button>
         </Link>
         <div>
-          <h2 className="text-xl font-bold capitalize">{type} Split</h2>
+          <h2 className="text-xl font-bold capitalize">{displayName} Split</h2>
           <p className="text-[10px] text-muted-foreground uppercase font-black">30-Day Progress Grid</p>
         </div>
       </div>
