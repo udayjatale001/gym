@@ -1,11 +1,12 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, RefreshCcw, Calendar, History, LogOut, User } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Trash2, AlertTriangle, RefreshCcw, Calendar, History, LogOut, User, Moon, Sun } from "lucide-react";
 import { useFirestore, useUser, useAuth } from '@/firebase';
 import { doc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -22,6 +23,25 @@ export default function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [isCycling, setIsCycling] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check initial theme
+    if (document.documentElement.classList.contains('dark')) {
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = (checked: boolean) => {
+    setIsDarkMode(checked);
+    if (checked) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -75,7 +95,6 @@ export default function SettingsPage() {
     try {
       const batch = writeBatch(db);
 
-      // 1. Reset User Profile
       const userRef = doc(db, 'users', user.uid);
       batch.update(userRef, {
         currentWeight: 0,
@@ -84,7 +103,6 @@ export default function SettingsPage() {
         workoutStartDate: format(new Date(), 'yyyy-MM-dd')
       });
 
-      // 2. Clear subcollections
       const subcollections = ['weightLogs', 'workoutLogs', 'mealLogs', 'workoutSplits'];
       
       for (const sub of subcollections) {
@@ -115,7 +133,7 @@ export default function SettingsPage() {
     <div className="p-4 space-y-6 pb-24">
       <div className="space-y-1">
         <h2 className="text-xl font-bold">Settings</h2>
-        <p className="text-xs text-muted-foreground">Manage your account and data.</p>
+        <p className="text-xs text-muted-foreground">Manage your account and app preferences.</p>
       </div>
 
       <Card>
@@ -126,10 +144,23 @@ export default function SettingsPage() {
           </CardTitle>
           <CardDescription>Logged in as {user?.email}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-muted">
+            <div className="flex items-center gap-3">
+              {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold">Dark Mode</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Elite Interface</p>
+              </div>
+            </div>
+            <Switch 
+              checked={isDarkMode} 
+              onCheckedChange={toggleTheme}
+            />
+          </div>
           <Button 
             variant="outline" 
-            className="w-full gap-2 border-primary/20 hover:bg-primary/5" 
+            className="w-full h-14 rounded-2xl gap-2 border-primary/20 hover:bg-primary/5 font-bold" 
             onClick={handleLogout}
             disabled={isLoggingOut}
           >
@@ -155,7 +186,7 @@ export default function SettingsPage() {
             </p>
             <Button 
               variant="outline" 
-              className="w-full gap-2" 
+              className="w-full h-14 rounded-2xl gap-2 font-bold" 
               onClick={handleResetCycle}
               disabled={isCycling}
             >
@@ -184,7 +215,7 @@ export default function SettingsPage() {
             </p>
             <Button 
               variant="destructive" 
-              className="w-full gap-2" 
+              className="w-full h-14 rounded-2xl gap-2 font-bold" 
               onClick={handleFullReset}
               disabled={isResetting}
             >
