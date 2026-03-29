@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus } from "lucide-react";
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
@@ -99,6 +99,19 @@ export default function DashboardPage() {
     }
     
     localStorage.setItem('fitstride_water_logs', JSON.stringify(logs));
+  };
+
+  const handleResetWater = () => {
+    setWaterAmount(0);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const savedWater = localStorage.getItem('fitstride_water_logs');
+    let logs: WaterLog[] = savedWater ? JSON.parse(savedWater) : [];
+    
+    const todayIndex = logs.findIndex(l => l.date === todayStr);
+    if (todayIndex > -1) {
+      logs[todayIndex].amount = 0;
+      localStorage.setItem('fitstride_water_logs', JSON.stringify(logs));
+    }
   };
 
   const t = translations[lang];
@@ -226,15 +239,22 @@ export default function DashboardPage() {
                 </p>
               </div>
             </div>
-            {waterAmount >= WATER_GOAL ? (
-              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
-              </div>
-            ) : (
-              <Button onClick={handleAddWater} size="sm" className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] italic shadow-lg active:scale-90">
-                <Plus className="h-4 w-4 mr-2" /> {t.addWater}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {waterAmount > 0 && (
+                <Button onClick={handleResetWater} variant="ghost" size="icon" className="h-12 w-12 rounded-2xl border-2 border-muted/50 text-muted-foreground/40 hover:text-destructive transition-colors active:scale-90">
+                  <RotateCcw className="h-5 w-5" />
+                </Button>
+              )}
+              {waterAmount >= WATER_GOAL ? (
+                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
+                  <CheckCircle2 className="h-6 w-6 text-primary" />
+                </div>
+              ) : (
+                <Button onClick={handleAddWater} size="sm" className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] italic shadow-lg active:scale-90">
+                  <Plus className="h-4 w-4 mr-2" /> {t.addWater}
+                </Button>
+              )}
+            </div>
           </div>
           
           <div className="space-y-2">

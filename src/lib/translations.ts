@@ -35,6 +35,7 @@ export const translations = {
     dailyGoal: "DAILY GOAL",
     liters: "L",
     addWater: "ADD 250ML",
+    resetWater: "RESET",
     hydrationSuccess: "HYDRATION SECURED",
     stayHydrated: "STAY HYDRATED",
 
@@ -115,7 +116,7 @@ export const translations = {
     disciplineDirective: "अनुशासन निर्देश",
     bodyMassProgress: "शरीर द्रव्यमान प्रगति",
     current: "वर्तमान",
-    target: "लक्ष्य",
+    target: "लक्षय",
     transformation: "परिवर्तन",
     remainingGap: "शेष अंतर",
     dietaryLoop: "आहार लूप",
@@ -131,6 +132,7 @@ export const translations = {
     dailyGoal: "दैनिक लक्ष्य",
     liters: "ली",
     addWater: "250ML जोड़ें",
+    resetWater: "रीसेट",
     hydrationSuccess: "हाइड्रेशन सफल",
     stayHydrated: "हाइड्रेटेड रहें",
 
