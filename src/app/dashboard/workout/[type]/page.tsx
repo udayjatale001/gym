@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect } from "react";
@@ -54,15 +53,15 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
   }
 
   return (
-    <div className="p-4 space-y-6 pb-24">
+    <div className="p-4 space-y-6 pb-28">
       <div className="flex items-center gap-3">
         <Link href="/dashboard/workout">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full active:scale-90">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div>
-          <h2 className="text-xl font-black uppercase tracking-tight">{displayName} Split</h2>
+          <h2 className="text-xl font-black uppercase tracking-tight">{displayName}</h2>
           <div className="flex items-center gap-1.5">
             <Calendar className="h-3 w-3 text-primary" />
             <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">30-Day Training Block</p>
@@ -71,11 +70,11 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
       </div>
 
       <Card className="bg-primary shadow-lg border-none text-primary-foreground overflow-hidden relative">
-        <div className="absolute right-0 top-0 h-full w-24 bg-white/10 -skew-x-12 translate-x-12" />
+        <div className="absolute right-0 top-0 h-full w-32 bg-white/10 -skew-x-12 translate-x-16" />
         <CardHeader className="p-4 pb-0">
           <CardTitle className="text-[10px] font-black flex items-center gap-2 uppercase tracking-[0.2em] opacity-80">
             <Trophy className="h-4 w-4" />
-            Consistency Score
+            Cycle Progress
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-2 flex items-center justify-between relative z-10">
@@ -89,33 +88,30 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
             <p className="text-xs font-black">
               {Math.round((completedDays.length / 30) * 100)}%
             </p>
-            <p className="text-[8px] font-bold uppercase tracking-tighter opacity-70">Complete</p>
+            <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Complete</p>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-5 gap-2">
         {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
           const isCompleted = completedDays.includes(day);
           return (
-            <Link key={day} href={`/dashboard/workout/${type}/${day}`}>
+            <Link key={day} href={`/dashboard/workout/${type}/${day}`} className="block">
               <Button
                 variant="outline"
                 className={cn(
-                  "h-20 w-full flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 relative",
+                  "h-16 w-full flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-95 relative overflow-hidden",
                   isCompleted 
                     ? "bg-primary/10 border-primary text-primary shadow-inner" 
-                    : "bg-white border-muted/50 hover:border-primary/40 text-muted-foreground"
+                    : "bg-card border-muted/50 hover:border-primary/40 text-muted-foreground"
                 )}
               >
-                <span className="text-[10px] font-black opacity-40 absolute top-2 left-2">#{day}</span>
+                <span className="text-[8px] font-black opacity-30 absolute top-1 left-1.5">{day}</span>
                 {isCompleted ? (
-                  <CheckCircle2 className="h-6 w-6 text-primary animate-in zoom-in-50 duration-300" />
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
                 ) : (
-                  <span className="text-lg font-black tracking-tighter opacity-20">LOG</span>
-                )}
-                {isCompleted && (
-                  <span className="text-[8px] font-black uppercase mt-1 opacity-60">SAVED</span>
+                  <span className="text-xs font-black opacity-20">LOG</span>
                 )}
               </Button>
             </Link>
@@ -123,12 +119,12 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         })}
       </div>
 
-      <div className="p-5 bg-muted/30 rounded-2xl flex items-start gap-3 border-2 border-dashed border-muted-foreground/10">
-        <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+      <div className="p-4 bg-muted/30 rounded-2xl flex items-start gap-3 border-2 border-dashed border-muted-foreground/10">
+        <Info className="h-5 w-5 text-primary shrink-0" />
         <div className="space-y-1">
-          <p className="text-xs font-bold text-foreground uppercase tracking-tight">How to log:</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Tap any box above to open your digital notepad. Once you save a workout entry, the box will turn green.
+          <p className="text-[10px] font-black text-foreground uppercase tracking-widest leading-none">Usage Info</p>
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Tap any box to log your training session. Boxes turn green once data is successfully synced to the cloud.
           </p>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -57,17 +56,27 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground font-body;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 }
 
-/* Custom Hide Scrollbar */
+/* Custom Scrollbar Handling */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Mobile-First Adjustments */
+@layer utilities {
+  .min-h-svh {
+    min-height: 100svh;
+  }
 }

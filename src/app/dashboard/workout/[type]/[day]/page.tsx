@@ -47,7 +47,6 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const [displayName, setDisplayName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Firestore Document Reference for this specific split and day
   const logRef = useMemoFirebase(() => {
     if (!user || !db) return null;
     return doc(db, 'users', user.uid, 'workoutLogs', `${type}-day-${day}`);
@@ -55,7 +54,6 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
   const { data: savedLog, loading: isLoadingDoc } = useDoc(logRef);
 
-  // Load split name from local storage or default
   useEffect(() => {
     const saved = localStorage.getItem('fitstride_splits');
     if (saved) {
@@ -67,7 +65,6 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     }
   }, [type]);
 
-  // If we have saved data and are not editing, set the form to the saved data
   useEffect(() => {
     if (savedLog && !isEditing) {
       setExercises(savedLog.exercises || []);
@@ -111,7 +108,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
   const handleSave = () => {
     if (!user || !logRef) {
-      toast({ variant: "destructive", title: "Error", description: "You must be logged in to save." });
+      toast({ variant: "destructive", title: "Authentication required", description: "Please sign in to save your progress." });
       return;
     }
 
@@ -119,8 +116,8 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     if (validExercises.length === 0) {
       toast({
         variant: "destructive",
-        title: "Incomplete Log",
-        description: "Please add at least one exercise with name and reps.",
+        title: "Empty session",
+        description: "Add at least one exercise and set to save.",
       });
       return;
     }
@@ -138,8 +135,8 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     setDoc(logRef, logData)
       .then(() => {
         toast({
-          title: "Workout Saved",
-          description: "Your training session has been permanently logged.",
+          title: "Session Recorded",
+          description: "Your training data is synced with the cloud.",
         });
         setIsEditing(false);
       })
@@ -159,12 +156,12 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const handleDeleteSession = () => {
     if (!logRef || !user) return;
     
-    if (confirm("Are you sure you want to permanently delete this session log?")) {
+    if (confirm("Permanently delete this session? This cannot be undone.")) {
       deleteDoc(logRef)
         .then(() => {
           toast({
-            title: "Session Deleted",
-            description: "The workout log for this day has been removed.",
+            title: "Deleted",
+            description: "Session record removed.",
           });
           setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
           setIsEditing(false);
@@ -181,8 +178,8 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
   if (isLoadingDoc) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-svh">
-        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/30" />
       </div>
     );
   }
@@ -190,18 +187,17 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const showViewMode = savedLog && !isEditing;
 
   return (
-    <div className="flex flex-col min-h-svh bg-background pb-24">
-      {/* Header with Sticky Save Button */}
-      <div className="p-4 border-b bg-card flex items-center justify-between sticky top-0 z-20 shadow-sm backdrop-blur-md bg-white/90">
+    <div className="flex flex-col min-h-full bg-background pb-28">
+      <div className="p-4 border-b bg-background/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <Link href={`/dashboard/workout/${type}`}>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full active:scale-90">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <h2 className="text-lg font-black uppercase tracking-tighter leading-none">{displayName}</h2>
-            <p className="text-[10px] text-primary font-black uppercase tracking-[0.1em]">Day {day} Session</p>
+            <h2 className="text-base font-black uppercase tracking-tight leading-none truncate max-w-[120px]">{displayName}</h2>
+            <p className="text-[10px] text-primary font-black uppercase tracking-wider">Day {day}</p>
           </div>
         </div>
         
@@ -210,16 +206,16 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             <Button 
               size="sm" 
               variant="outline"
-              className="font-black rounded-full h-9 gap-2"
+              className="font-black rounded-full h-9 gap-1.5 active:scale-95 px-4"
               onClick={() => setIsEditing(true)}
             >
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className="h-3.5 w-3.5" />
               EDIT
             </Button>
           ) : (
             <Button 
               size="sm" 
-              className="gap-2 font-black shadow-lg px-6 rounded-full transition-all active:scale-95 h-9" 
+              className="gap-2 font-black shadow-lg px-6 rounded-full active:scale-95 h-9" 
               onClick={handleSave}
               disabled={isSubmitting}
             >
@@ -232,17 +228,16 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
       <div className="p-4 space-y-4">
         {showViewMode ? (
-          /* View Mode: Professional Short List Format */
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex items-center justify-between gap-2 text-primary bg-primary/5 p-3 rounded-2xl border border-primary/20">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between gap-2 text-primary bg-primary/5 p-4 rounded-2xl border border-primary/20">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 shrink-0" />
-                <p className="text-[10px] font-black uppercase tracking-widest">Training Session Complete</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">Training Logged</p>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive active:scale-90"
                 onClick={handleDeleteSession}
               >
                 <Trash2 className="h-4 w-4" />
@@ -251,30 +246,27 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             
             <div className="grid grid-cols-1 gap-3">
               {savedLog.exercises.map((ex: any, i: number) => (
-                <div key={i} className="bg-white border-2 border-muted rounded-2xl p-4 shadow-sm border-l-4 border-l-primary relative overflow-hidden group hover:border-primary/30 transition-all">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <div key={i} className="bg-card border-2 border-muted rounded-2xl p-4 shadow-sm border-l-4 border-l-primary relative">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
                         <Dumbbell className="h-4 w-4 text-primary" />
                       </div>
                       <h4 className="font-black text-sm uppercase tracking-tight">{ex.name}</h4>
                     </div>
-                    <span className="text-[9px] font-black text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                      {ex.sets.length} {ex.sets.length === 1 ? 'Set' : 'Sets'}
-                    </span>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {ex.sets.map((set: any, setIdx: number) => (
-                      <div key={setIdx} className="bg-muted/30 border border-muted-foreground/10 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                        <span className="text-[9px] font-black text-primary opacity-50">#{setIdx + 1}</span>
-                        <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-tighter">
-                          <span className="flex items-center gap-1">
+                      <div key={setIdx} className="bg-muted/30 border border-muted/20 px-4 py-2.5 rounded-xl flex items-center justify-between">
+                        <span className="text-[10px] font-black text-primary/40 uppercase">Set {setIdx + 1}</span>
+                        <div className="flex items-center gap-4 text-xs font-black uppercase tracking-tighter">
+                          <span className="flex items-center gap-1.5">
                             <span className="text-foreground">{set.reps}</span>
                             <span className="text-muted-foreground opacity-60 text-[8px]">REPS</span>
                           </span>
-                          <span className="w-px h-2 bg-muted-foreground/20" />
-                          <span className="flex items-center gap-1">
+                          <span className="w-px h-3 bg-muted-foreground/10" />
+                          <span className="flex items-center gap-1.5">
                             <span className="text-foreground">{set.weight}</span>
                             <span className="text-muted-foreground opacity-60 text-[8px]">KG</span>
                           </span>
@@ -287,20 +279,19 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             </div>
           </div>
         ) : (
-          /* Edit Mode: Structured Form */
           <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
             {exercises.map((exercise, exerciseIndex) => (
-              <Card key={exerciseIndex} className="border-2 border-muted overflow-hidden shadow-sm hover:border-primary/20 transition-all">
+              <Card key={exerciseIndex} className="border-2 border-muted overflow-hidden shadow-sm">
                 <CardHeader className="p-3 bg-muted/30 flex flex-row items-center justify-between space-y-0">
                   <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
                     <LayoutGrid className="h-3.5 w-3.5 text-primary" />
-                    Exercise {exerciseIndex + 1}
+                    Movement {exerciseIndex + 1}
                   </CardTitle>
                   {exercises.length > 1 && (
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive transition-colors"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive active:scale-90"
                       onClick={() => handleRemoveExercise(exerciseIndex)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -308,21 +299,21 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                   )}
                 </CardHeader>
                 <CardContent className="p-4 space-y-5">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase opacity-60 tracking-[0.1em]">Exercise Name</Label>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase opacity-60 tracking-widest">Exercise Name</Label>
                     <Input 
-                      placeholder="e.g. Squats" 
+                      placeholder="e.g. BENCH PRESS" 
                       value={exercise.name}
                       onChange={(e) => handleUpdateExerciseName(exerciseIndex, e.target.value)}
-                      className="font-black border-2 focus-visible:ring-primary h-11 text-sm uppercase tracking-tight"
+                      className="font-black border-2 h-12 text-sm uppercase"
                     />
                   </div>
                   
                   <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase opacity-60 tracking-[0.1em]">Sets & Progression</p>
+                    <p className="text-[10px] font-black uppercase opacity-60 tracking-widest">Sets & Targets</p>
                     {exercise.sets.map((set, setIndex) => (
-                      <div key={setIndex} className="flex items-center gap-2 group animate-in slide-in-from-right-2 duration-200">
-                        <div className="h-10 w-10 flex items-center justify-center bg-primary/5 rounded-xl text-[10px] font-black text-primary border border-primary/10 shrink-0">
+                      <div key={setIndex} className="flex items-center gap-2">
+                        <div className="h-11 w-11 flex items-center justify-center bg-primary/5 rounded-xl text-[10px] font-black text-primary border border-primary/10 shrink-0">
                           #{setIndex + 1}
                         </div>
                         <div className="flex-1 grid grid-cols-2 gap-2">
@@ -331,19 +322,17 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                               placeholder="REPS" 
                               value={set.reps}
                               onChange={(e) => handleUpdateSet(exerciseIndex, setIndex, 'reps', e.target.value)}
-                              className="h-10 font-black border-2 text-center text-sm"
-                              type="text"
+                              className="h-11 font-black border-2 text-center text-sm"
                               inputMode="numeric"
                             />
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[7px] font-black opacity-30">REP</span>
                           </div>
                           <div className="relative">
                             <Input 
-                              placeholder="WEIGHT" 
+                              placeholder="KG" 
                               value={set.weight}
                               onChange={(e) => handleUpdateSet(exerciseIndex, setIndex, 'weight', e.target.value)}
-                              className="h-10 font-black border-2 text-center pr-6 text-sm"
-                              type="text"
+                              className="h-11 font-black border-2 text-center text-sm"
                               inputMode="decimal"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[7px] font-black opacity-30">KG</span>
@@ -353,10 +342,10 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                            className="h-11 w-8 text-muted-foreground active:scale-90"
                             onClick={() => handleRemoveSet(exerciseIndex, setIndex)}
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
@@ -365,10 +354,10 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="w-full h-10 border-dashed border-2 text-[10px] font-black uppercase gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all"
+                      className="w-full h-11 border-dashed border-2 text-[10px] font-black uppercase gap-2 active:scale-95"
                       onClick={() => handleAddSet(exerciseIndex)}
                     >
-                      <ListPlus className="h-3.5 w-3.5" />
+                      <ListPlus className="h-4 w-4" />
                       Add Set
                     </Button>
                   </div>
@@ -379,22 +368,22 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             <div className="space-y-4">
               <Button 
                 variant="outline" 
-                className="w-full border-dashed border-2 py-10 flex flex-col gap-2 rounded-2xl hover:bg-primary/5 hover:border-primary/40 group transition-all"
+                className="w-full border-dashed border-2 py-8 flex flex-col gap-2 rounded-2xl active:scale-98"
                 onClick={handleAddExercise}
               >
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <Plus className="h-6 w-6" />
                 </div>
-                <span className="font-black text-[10px] uppercase tracking-[0.2em]">Add New Exercise</span>
+                <span className="font-black text-[10px] uppercase tracking-widest">Add Next Movement</span>
               </Button>
 
               {isEditing && (
                 <Button 
                   variant="ghost" 
-                  className="w-full text-muted-foreground hover:text-destructive"
+                  className="w-full text-xs text-muted-foreground"
                   onClick={() => setIsEditing(false)}
                 >
-                  Cancel Editing
+                  Cancel Edit
                 </Button>
               )}
             </div>
