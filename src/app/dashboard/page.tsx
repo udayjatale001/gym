@@ -37,8 +37,8 @@ export default function DashboardPage() {
   const [hasLoggedMealToday, setHasLoggedMealToday] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [quote, setQuote] = useState("");
-  const [suggestion, setSuggestion] = useState<{ today: string; yesterday: string; tomorrow: string }>({
-    today: "Rest", yesterday: "Rest", tomorrow: "Rest"
+  const [suggestion, setSuggestion] = useState<{ today: string }>({
+    today: "Rest"
   });
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function DashboardPage() {
       setHasLoggedMealToday(meals.some(m => m.date === todayStr));
     }
 
-    // Set Training Schedule
+    // Set Training Schedule (Today Only)
     const getWorkout = (date: Date) => {
       const day = date.getDay();
       const map: Record<number, string> = { 0: "Rest", 1: "Push", 2: "Pull", 3: "Legs", 4: "Push", 5: "Pull", 6: "Legs" };
@@ -64,11 +64,10 @@ export default function DashboardPage() {
     };
     const now = new Date();
     setSuggestion({
-      today: getWorkout(now), yesterday: getWorkout(subDays(now, 1)), tomorrow: getWorkout(addDays(now, 1))
+      today: getWorkout(now)
     });
 
     // Daily Quote rotation at Midnight
-    // Using a deterministic seed based on the current date (YYYYMMDD)
     const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
     const quoteIndex = dateSeed % DISCIPLINE_QUOTES.length;
     setQuote(DISCIPLINE_QUOTES[quoteIndex]);
@@ -76,12 +75,13 @@ export default function DashboardPage() {
     setIsLoaded(true);
   }, []);
 
-  const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : 0;
+  const weightLogsSorted = [...weightLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const currentWeight = weightLogsSorted.length > 0 ? weightLogsSorted[0].weight : 0;
   
   const progress = (() => {
-    if (weightLogs.length === 0 || targetWeight === 0) return 0;
+    if (weightLogsSorted.length === 0 || targetWeight === 0) return 0;
     // Find initial weight for progress calculation (oldest log)
-    const startWeight = weightLogs[weightLogs.length - 1].weight;
+    const startWeight = weightLogsSorted[weightLogsSorted.length - 1].weight;
     if (startWeight === targetWeight) return 100;
     const totalDist = Math.abs(startWeight - targetWeight);
     const covered = Math.abs(startWeight - currentWeight);
@@ -109,32 +109,22 @@ export default function DashboardPage() {
             TRAINING SCHEDULE
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 pb-6">
+        <CardContent className="space-y-4 pb-8">
           <div className="flex flex-col items-center text-center py-2">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">Today's Discipline</p>
             <h3 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
               {suggestion.today}
             </h3>
             {quote && (
-              <div className="mt-4 px-6 py-3 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20 w-full">
+              <div className="mt-6 px-6 py-4 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20 w-full">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1 flex items-center justify-center gap-2">
-                  <Quote className="h-2 w-2" /> DISCIPLINE DIRECTIVE
+                  <Quote className="h-2.5 w-2.5" /> DISCIPLINE DIRECTIVE
                 </p>
-                <p className="text-[10px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
+                <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
                   "{quote}"
                 </p>
               </div>
             )}
-          </div>
-          <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
-            <div className="text-left space-y-0.5">
-              <p className="text-[9px] opacity-50 font-black uppercase tracking-[0.2em]">Yesterday</p>
-              <p className="text-base font-black italic uppercase tracking-tight">{suggestion.yesterday}</p>
-            </div>
-            <div className="text-right space-y-0.5">
-              <p className="text-[9px] opacity-50 font-black uppercase tracking-[0.2em]">Tomorrow</p>
-              <p className="text-base font-black italic uppercase tracking-tight">{suggestion.tomorrow}</p>
-            </div>
           </div>
         </CardContent>
       </Card>
