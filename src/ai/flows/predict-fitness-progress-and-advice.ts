@@ -94,7 +94,7 @@ Daily Calorie Intake Logs:
 - Date: {{{this.date}}}, Calories: {{{this.calories}}} kcal
 {{else}}
 - No recent calorie intake logs.
-{{/each}}}
+{{/each}}
 
 Workout Logs:
 {{#each workoutLogs}}
