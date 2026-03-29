@@ -47,6 +47,8 @@ export default function DashboardPage() {
     return Math.min(100, Math.max(0, (covered / totalDist) * 100));
   })();
 
+  const remainingGap = Math.abs(currentWeight - targetWeight).toFixed(1);
+
   const hasLoggedMealToday = recentMeals?.some(m => m.date === format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
@@ -62,7 +64,8 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+      {/* Training Card */}
       <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[2.5rem] overflow-hidden relative">
         <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
         <CardHeader className="pb-2">
@@ -91,38 +94,49 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-xl border-none rounded-[2.5rem] bg-white overflow-hidden group">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-[10px] font-black flex items-center gap-2 text-primary uppercase tracking-[0.25em]">
-              <Scale className="h-4 w-4" />
-              BODY MASS PROGRESS
-            </CardTitle>
-            <span className="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-full italic">
-              {currentWeight > 0 ? `${currentWeight} KG` : 'AWAITING LOG'}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-4 pb-8">
-          <div className="relative pt-2">
-            <Progress value={progress} className="h-5 bg-muted rounded-full shadow-inner border-2 border-muted" />
-            <div className="absolute top-0 left-0 w-full flex justify-center -translate-y-6">
-               <TrendingUp className="h-10 w-10 text-primary opacity-5 animate-pulse" />
-            </div>
-          </div>
-          <div className="flex justify-between items-end">
-            <div className="space-y-1">
-              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-60">Current</p>
-              <p className="text-2xl font-black italic tracking-tighter">{currentWeight > 0 ? `${currentWeight} kg` : '--'}</p>
-            </div>
-            <div className="space-y-1 text-right">
-              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-60">Goal</p>
-              <p className="text-2xl font-black text-primary italic tracking-tighter">{targetWeight > 0 ? `${targetWeight} kg` : '--'}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Goal Metrics (Body Mass Progress) */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 px-2">
+           <Scale className="h-4 w-4 text-primary" />
+           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">BODY MASS PROGRESS</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="bg-primary/5 border-2 border-primary/10 rounded-[2rem] p-5 text-center shadow-lg">
+            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">CURRENT</p>
+            <p className="text-3xl font-black italic text-primary">{currentWeight || "--"}<span className="text-xs ml-0.5">KG</span></p>
+          </Card>
+          <Card className="bg-accent/5 border-2 border-accent/10 rounded-[2rem] p-5 text-center shadow-lg">
+            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">TARGET</p>
+            <p className="text-3xl font-black italic text-accent">{targetWeight || "--"}<span className="text-xs ml-0.5">KG</span></p>
+          </Card>
+        </div>
 
+        <Card className="p-8 rounded-[2.5rem] shadow-xl border-none bg-white space-y-6 group">
+          <div className="flex justify-between items-end">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" /> 
+              TRANSFORMATION
+            </h3>
+            <span className="text-3xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
+          </div>
+          
+          <div className="space-y-4">
+            <Progress value={progress} className="h-6 bg-muted rounded-full shadow-inner" />
+            
+            {targetWeight > 0 && currentWeight > 0 && (
+              <div className="text-center py-4 bg-muted/10 rounded-[1.5rem] border-2 border-dashed border-muted group-hover:border-primary/20 transition-colors">
+                <p className="text-[9px] font-black uppercase opacity-40 tracking-widest mb-1">REMAINING GAP</p>
+                <p className="text-4xl font-black italic tracking-tighter">
+                  {remainingGap} <span className="text-sm opacity-40 not-italic">KG</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Diet Card */}
       <Card className={cn(
         "border-none shadow-lg rounded-[2rem] transition-all duration-500",
         hasLoggedMealToday ? "bg-primary/5 border-l-8 border-l-primary" : "bg-muted/30 border-l-8 border-l-muted"
