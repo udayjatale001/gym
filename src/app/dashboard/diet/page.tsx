@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +29,7 @@ export default function DietPage() {
   
   const [meals, setMeals] = useState<LocalMeal[]>([]);
   const [isLogOpen, setIsLogOpen] = useState(false);
+  const [isOverallProgressOpen, setIsOverallProgressOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<MealType | null>(null);
   const [mealName, setMealName] = useState("");
@@ -121,6 +123,23 @@ export default function DietPage() {
 
   const currentViewingMeal = meals.find(m => m.id === viewingMealId);
 
+  // Calculate overall progress across all meals
+  const calculateOverallStats = () => {
+    let totalTaken = 0;
+    let totalSkipped = 0;
+    meals.forEach(meal => {
+      Object.values(meal.checklist).forEach(status => {
+        if (status === 'taken') totalTaken++;
+        if (status === 'skipped') totalSkipped++;
+      });
+    });
+    const totalDays = totalTaken + totalSkipped;
+    const percentage = totalDays > 0 ? (totalTaken / totalDays) * 100 : 0;
+    return { totalTaken, totalSkipped, percentage };
+  };
+
+  const stats = calculateOverallStats();
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-svh">
@@ -132,18 +151,27 @@ export default function DietPage() {
   return (
     <div className="p-4 space-y-6 pb-28 min-h-svh animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center gap-4 pt-2">
-        <Button 
-          size="icon" 
-          className="h-12 w-12 rounded-2xl shadow-xl active:scale-90 transition-transform bg-primary hover:bg-primary/90 shrink-0"
-          onClick={() => {
-            setStep(1);
-            setMealName("");
-            setSelectedType(null);
-            setIsLogOpen(true);
-          }}
-        >
-          <Plus className="h-7 w-7" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            size="icon" 
+            className="h-12 w-12 rounded-2xl shadow-xl active:scale-90 transition-transform bg-primary hover:bg-primary/90 shrink-0"
+            onClick={() => {
+              setStep(1);
+              setMealName("");
+              setSelectedType(null);
+              setIsLogOpen(true);
+            }}
+          >
+            <Plus className="h-7 w-7" />
+          </Button>
+          <button 
+            className="text-3xl hover:scale-125 transition-transform active:scale-90 p-1"
+            onClick={() => setIsOverallProgressOpen(true)}
+            title="View Overall Diet Progress"
+          >
+            📈
+          </button>
+        </div>
         <div className="space-y-0.5">
           <h2 className="text-3xl font-black text-primary uppercase tracking-tighter italic leading-none">
             Log Diet
@@ -205,6 +233,57 @@ export default function DietPage() {
           </div>
         )}
       </section>
+
+      {/* Overall Progress Sheet */}
+      <Sheet open={isOverallProgressOpen} onOpenChange={setIsOverallProgressOpen}>
+        <SheetContent side="bottom" className="rounded-t-[3rem] h-[80svh] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10">
+            <SheetHeader>
+              <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">
+                Overall Diet Consistency
+              </SheetTitle>
+            </SheetHeader>
+
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-primary/5 border-2 border-primary/20 rounded-[2rem] p-6 text-center shadow-lg">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Total Taken</p>
+                  <p className="text-4xl font-black italic text-primary">{stats.totalTaken}<span className="text-sm ml-1 opacity-40">DAYS</span></p>
+                </Card>
+                <Card className="bg-destructive/5 border-2 border-destructive/20 rounded-[2rem] p-6 text-center shadow-lg">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Total Skipped</p>
+                  <p className="text-4xl font-black italic text-destructive">{stats.totalSkipped}<span className="text-sm ml-1 opacity-40">DAYS</span></p>
+                </Card>
+              </div>
+
+              <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-white space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
+                <div className="space-y-2 relative z-10">
+                  <div className="flex justify-between items-end mb-4">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" /> Success Metric
+                    </h3>
+                    <span className="text-2xl font-black text-primary italic">{Math.round(stats.percentage)}%</span>
+                  </div>
+                  <Progress value={stats.percentage} className="h-6 bg-muted rounded-full shadow-inner border-2 border-muted" />
+                </div>
+                
+                <div className="text-center py-4 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground">Total Logs Recorded</p>
+                  <p className="text-3xl font-black text-foreground italic">{stats.totalTaken + stats.totalSkipped}</p>
+                </div>
+              </Card>
+
+              <Button 
+                className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest italic text-lg shadow-xl shadow-primary/20" 
+                onClick={() => setIsOverallProgressOpen(false)}
+              >
+                Close Summary
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
         <DialogContent className="w-[90%] sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
