@@ -54,7 +54,7 @@ export default function WorkoutPage() {
   const [newSplitName, setNewSplitName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch custom splits
+  // Fetch custom splits with real-time updates
   const splitsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -71,18 +71,18 @@ export default function WorkoutPage() {
 
     setIsSubmitting(true);
     
-    // Logic for intelligent mapping
+    // Intelligent mapping logic
     const nameLower = trimmedName.toLowerCase();
     let focus = "Custom Workout Split";
     let description = "Personalized training split.";
 
-    if (nameLower.includes("push") || nameLower.includes("chest")) {
+    if (nameLower.includes("push") || nameLower.includes("chest") || nameLower.includes("tricep")) {
       focus = "Chest, Shoulders, Triceps";
       description = "Focus on pushing movements and upper body strength.";
     } else if (nameLower.includes("pull") || nameLower.includes("back") || nameLower.includes("bicep")) {
       focus = "Back, Biceps, Rear Delts";
       description = "Focus on pulling movements and back definition.";
-    } else if (nameLower.includes("legs") || nameLower.includes("squat")) {
+    } else if (nameLower.includes("legs") || nameLower.includes("squat") || nameLower.includes("quad")) {
       focus = "Quads, Hams, Glutes, Calves";
       description = "Complete lower body workout for power and stability.";
     }
@@ -96,6 +96,7 @@ export default function WorkoutPage() {
 
     const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
 
+    // Initiate write - UI will update instantly via useCollection
     addDoc(splitsRef, splitData)
       .then(() => {
         toast({
@@ -122,7 +123,7 @@ export default function WorkoutPage() {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user || isSubmitting) return;
+    if (!user) return;
 
     const splitDocRef = doc(db, 'users', user.uid, 'workoutSplits', splitId);
     
@@ -147,7 +148,7 @@ export default function WorkoutPage() {
     ...(customSplits || []).map((s: any) => ({
       id: s.id,
       name: s.name,
-      focus: s.focus || "Custom Workout Split",
+      focus: s.focus || "Custom Split",
       color: "bg-muted-foreground",
       icon: Dumbbell,
       description: s.description || "Personalized training split.",
@@ -187,7 +188,7 @@ export default function WorkoutPage() {
               <div className="space-y-2">
                 <p className="text-xs font-bold text-muted-foreground uppercase">Split Name</p>
                 <Input 
-                  placeholder="e.g., Chest" 
+                  placeholder="e.g., Chest + Triceps" 
                   value={newSplitName}
                   onChange={(e) => setNewSplitName(e.target.value)}
                   autoFocus

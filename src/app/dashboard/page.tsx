@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, Info, Utensils, CheckCircle2, Calendar } from "lucide-react";
+import { TrendingUp, Info, Utensils, CheckCircle2, Calendar, Scale } from "lucide-react";
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { doc, query, collection, orderBy, limit, setDoc } from "firebase/firestore";
 import { format, differenceInDays, addDays, subDays, startOfDay } from 'date-fns';
@@ -17,11 +18,16 @@ export default function DashboardPage() {
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(userRef);
 
+  // Real-time query for the latest weight entry
   const weightQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(db, 'users', user.uid, 'weightLogs'), orderBy('date', 'desc'), orderBy('createdAt', 'desc'), limit(1));
+    return query(
+      collection(db, 'users', user.uid, 'weightLogs'), 
+      orderBy('createdAt', 'desc'), 
+      limit(1)
+    );
   }, [db, user]);
-  const { data: latestWeight } = useCollection(weightQuery);
+  const { data: latestWeightData } = useCollection(weightQuery);
 
   const mealQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -29,10 +35,11 @@ export default function DashboardPage() {
   }, [db, user]);
   const { data: recentMeals } = useCollection(mealQuery);
 
-  const currentWeight = latestWeight?.[0]?.weight || profile?.currentWeight || 0;
+  // Priority: Latest Logged Weight > Profile Initial Weight > 0
+  const currentWeight = latestWeightData?.[0]?.weight || profile?.currentWeight || 0;
   const targetWeight = profile?.targetWeight || 0;
   
-  const progress = targetWeight > 0 ? Math.min(100, Math.max(0, (currentWeight / targetWeight) * 100)) : 0;
+  const progress = targetWeight > 0 ? Math.min(100, (currentWeight / targetWeight) * 100) : 0;
   const hasLoggedMealToday = recentMeals?.some(m => m.date === format(new Date(), 'yyyy-MM-dd'));
 
   // Workout Cycle Logic
@@ -43,7 +50,6 @@ export default function DashboardPage() {
     if (profile.workoutStartDate) {
       startDate = startOfDay(new Date(profile.workoutStartDate));
     } else {
-      // Initialize start date if it doesn't exist
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       startDate = startOfDay(new Date());
       setDoc(doc(db, 'users', user.uid), { workoutStartDate: todayStr }, { merge: true });
@@ -54,7 +60,6 @@ export default function DashboardPage() {
 
     const getWorkout = (date: Date) => {
       const diff = differenceInDays(date, startDate);
-      // Handle negative diff if startDate is in future
       const index = ((diff % 3) + 3) % 3;
       return cycle[index];
     };
@@ -96,42 +101,42 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Goal Progress */}
-      <Card>
+      {/* Goal Progress - White Box Style */}
+      <Card className="shadow-md border-none">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
-              <TrendingUp className="h-4 w-4" />
-              Weight Goal Progress
+            <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary uppercase tracking-wider">
+              <Scale className="h-4 w-4" />
+              Latest Weight Entry
             </CardTitle>
-            <span className="text-xs font-medium text-primary">
-              {currentWeight > 0 ? `${progress.toFixed(1)}%` : 'No Data'}
+            <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+              {currentWeight > 0 ? `${currentWeight} KG` : 'NO DATA'}
             </span>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Progress value={progress} className="h-3" />
-          <div className="flex justify-between text-xs font-medium">
+          <Progress value={progress} className="h-3 bg-muted" />
+          <div className="flex justify-between items-end text-xs font-bold uppercase tracking-tight">
             <div className="space-y-1">
-              <p className="text-muted-foreground">Latest Log</p>
-              <p className="text-lg font-bold">{currentWeight > 0 ? `${currentWeight} kg` : '--'}</p>
+              <p className="text-muted-foreground opacity-70">Current Progress</p>
+              <p className="text-xl font-black">{currentWeight > 0 ? `${currentWeight} kg` : '--'}</p>
             </div>
             <div className="space-y-1 text-right">
-              <p className="text-muted-foreground">Target</p>
-              <p className="text-lg font-bold">{targetWeight > 0 ? `${targetWeight} kg` : '--'}</p>
+              <p className="text-muted-foreground opacity-70">Goal Target</p>
+              <p className="text-xl font-black text-primary">{targetWeight > 0 ? `${targetWeight} kg` : '--'}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Consistency Quick Check */}
-      <Card className={cn("border-l-4", hasLoggedMealToday ? "border-l-primary bg-primary/5" : "border-l-muted bg-muted/10")}>
+      <Card className={cn("border-l-4 shadow-sm", hasLoggedMealToday ? "border-l-primary bg-primary/5" : "border-l-muted bg-muted/10")}>
         <CardContent className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Utensils className={cn("h-5 w-5", hasLoggedMealToday ? "text-primary" : "text-muted-foreground")} />
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Diet Today</p>
-              <p className="text-sm font-medium">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Diet Status</p>
+              <p className="text-sm font-bold">
                 {hasLoggedMealToday ? "Consistency maintained! ✔" : "No meals logged yet today"}
               </p>
             </div>
@@ -142,11 +147,11 @@ export default function DashboardPage() {
 
       {/* Real Data Notification */}
       {currentWeight === 0 && (
-        <Card className="bg-accent/10 border-accent/20">
+        <Card className="bg-accent/10 border-dashed border-accent/40 border-2">
           <CardContent className="p-4 flex items-center gap-3">
             <Info className="h-5 w-5 text-accent" />
-            <p className="text-xs text-muted-foreground">
-              Your dashboard is empty. Head over to the Weight or Workout tabs to start logging real data!
+            <p className="text-xs font-medium text-muted-foreground leading-tight">
+              Your dashboard is empty. Head to the Weight or Workout tabs to start logging real data!
             </p>
           </CardContent>
         </Card>

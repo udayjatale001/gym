@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -6,14 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Scale, Plus, History, Loader2, Clock } from "lucide-react";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export default function WeightPage() {
   const db = useFirestore();
   const { user } = useUser();
+  const { toast } = useToast();
   const [newWeight, setNewWeight] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,17 +25,19 @@ export default function WeightPage() {
     if (!user) return null;
     return query(
       collection(db, 'users', user.uid, 'weightLogs'),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(50)
     );
   }, [db, user]);
 
   const { data: logs, loading } = useCollection(weightQuery);
 
   const handleAddWeight = () => {
-    if (!user || !newWeight || isNaN(parseFloat(newWeight))) return;
+    const trimmedWeight = newWeight.trim();
+    if (!user || !trimmedWeight || isNaN(parseFloat(trimmedWeight))) return;
 
     setIsSubmitting(true);
-    const weightVal = parseFloat(newWeight);
+    const weightVal = parseFloat(trimmedWeight);
     
     const weightData = {
       weight: weightVal,
@@ -42,10 +47,16 @@ export default function WeightPage() {
 
     const logsRef = collection(db, 'users', user.uid, 'weightLogs');
 
-    // Optimistically clear input
+    // Optimistic reset
     setNewWeight("");
 
     addDoc(logsRef, weightData)
+      .then(() => {
+        toast({
+          title: "Weight Logged",
+          description: `${weightVal} kg saved successfully.`,
+        });
+      })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: logsRef.path,
@@ -53,7 +64,7 @@ export default function WeightPage() {
           requestResourceData: weightData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-        // Put value back if error occurs
+        // Fallback: put value back if error
         setNewWeight(weightVal.toString());
       })
       .finally(() => {
@@ -70,7 +81,7 @@ export default function WeightPage() {
         </h2>
       </div>
 
-      {/* Input Section */}
+      {/* Redesigned Input Section */}
       <Card className="border-primary/20 shadow-md bg-white">
         <CardContent className="p-4 space-y-4">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Log New Weight</p>
@@ -91,7 +102,7 @@ export default function WeightPage() {
             <Button 
               onClick={handleAddWeight} 
               className="h-12 px-6 gap-2 font-bold shadow-lg"
-              disabled={isSubmitting || !newWeight}
+              disabled={isSubmitting || !newWeight.trim()}
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Save
@@ -100,11 +111,11 @@ export default function WeightPage() {
         </CardContent>
       </Card>
 
-      {/* History List */}
+      {/* History List (Top = Latest) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">History</h3>
-          {logs && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{logs.length} Entries</span>}
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Recent History</h3>
+          {logs && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{logs.length} Logs</span>}
         </div>
 
         <div className="space-y-2 pb-24">
@@ -122,7 +133,7 @@ export default function WeightPage() {
                     </div>
                     <div>
                       <p className="text-xl font-black text-primary leading-tight">
-                        {log.weight} <span className="text-[10px] font-bold opacity-60">kg</span>
+                        {log.weight} <span className="text-[10px] font-bold opacity-60 uppercase">kg</span>
                       </p>
                     </div>
                   </div>
@@ -140,7 +151,7 @@ export default function WeightPage() {
           ) : (
             <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
                <History className="h-10 w-10 text-muted-foreground mx-auto opacity-20 mb-3" />
-               <p className="text-xs text-muted-foreground font-medium italic">No weight logs found. Start your journey today!</p>
+               <p className="text-xs text-muted-foreground font-medium italic">No weight history found. Start logging today!</p>
             </div>
           )}
         </div>
