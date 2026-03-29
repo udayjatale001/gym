@@ -176,6 +176,24 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     }
   };
 
+  const handleDeleteExerciseInView = (index: number) => {
+    if (!savedWorkout) return;
+    const newExercises = savedWorkout.exercises.filter((_: any, i: number) => i !== index);
+    
+    if (newExercises.length === 0) {
+      handleDeleteSession();
+      return;
+    }
+
+    const updatedWorkout = { ...savedWorkout, exercises: newExercises };
+    localStorage.setItem(storageKey, JSON.stringify(updatedWorkout));
+    setSavedWorkout(updatedWorkout);
+    toast({
+      title: "Movement Removed",
+      description: "Exercise deleted from this session record.",
+    });
+  };
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -288,8 +306,18 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                           </div>
                           <h4 className="font-black text-2xl uppercase italic tracking-tighter text-foreground">{ex.name}</h4>
                         </div>
-                        <div className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black text-primary uppercase tracking-widest">
-                          {ex.sets.length} SETS
+                        <div className="flex items-center gap-2">
+                          <div className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black text-primary uppercase tracking-widest">
+                            {ex.sets.length} SETS
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground/30 hover:text-destructive transition-colors"
+                            onClick={() => handleDeleteExerciseInView(i)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                       
