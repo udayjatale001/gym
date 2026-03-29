@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp } from "lucide-react";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp, TrendingDown, Info } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 
 type MealType = 'Breakfast' | 'Snacks' | 'Lunch' | 'Dinner';
 
@@ -35,6 +36,7 @@ export default function DietPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewingMealId, setViewingMealId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [analysisMealId, setAnalysisMealId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('fitstride_diet_logs_v2');
@@ -63,6 +65,8 @@ export default function DietPage() {
   };
 
   const currentViewingMeal = meals.find(m => m.id === viewingMealId);
+  const currentAnalysisMeal = meals.find(m => m.id === analysisMealId);
+
   const stats = (() => {
     let totalTaken = 0, totalSkipped = 0;
     meals.forEach(m => Object.values(m.checklist).forEach(s => s === 'taken' ? totalTaken++ : totalSkipped++));
@@ -175,14 +179,22 @@ export default function DietPage() {
           onClear={(day: number) => {
             setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) as any, amounts: Object.fromEntries(Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)) as any } : m));
           }}
-          onClose={() => setViewingMealId(null)} 
+          onClose={() => setViewingMealId(null)}
+          onShowAnalysis={(id: string) => setAnalysisMealId(id)}
+        />
+      )}
+
+      {currentAnalysisMeal && (
+        <MealAnalysisSheet
+          meal={currentAnalysisMeal}
+          onClose={() => setAnalysisMealId(null)}
         />
       )}
     </div>
   );
 }
 
-function ChecklistSheet({ meal, onUpdate, onClear, onClose }: { meal: LocalMeal, onUpdate: any, onClear: any, onClose: any }) {
+function ChecklistSheet({ meal, onUpdate, onClear, onClose, onShowAnalysis }: { meal: LocalMeal, onUpdate: any, onClear: any, onClose: any, onShowAnalysis: any }) {
   return (
     <Sheet open={!!meal} onOpenChange={open => !open && onClose()}>
       <SheetContent side="bottom" className="h-[95svh] p-0 overflow-hidden border-none rounded-t-[3rem] md:rounded-t-[4rem] bg-background">
@@ -190,7 +202,15 @@ function ChecklistSheet({ meal, onUpdate, onClear, onClose }: { meal: LocalMeal,
           <SheetHeader className="flex flex-row items-center gap-4 md:gap-6">
             <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 md:h-14 md:w-14 rounded-[1.25rem] md:rounded-[1.5rem] border-4 active:scale-90 shadow-xl bg-card shrink-0"><ArrowLeft className="h-6 w-6 md:h-8 md:w-8" /></Button>
             <div className="space-y-1 min-w-0">
-              <SheetTitle className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">📈 {meal.mealName}</SheetTitle>
+              <SheetTitle className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate flex items-center gap-2">
+                <button 
+                  onClick={() => onShowAnalysis(meal.id)}
+                  className="text-2xl active:scale-75 transition-transform"
+                >
+                  📈
+                </button>
+                {meal.mealName}
+              </SheetTitle>
               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] opacity-50 truncate">{meal.mealType} • 30-DAY BLOCK</p>
             </div>
           </SheetHeader>
@@ -198,6 +218,117 @@ function ChecklistSheet({ meal, onUpdate, onClear, onClose }: { meal: LocalMeal,
             {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
               <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} onMark={(s: string, a: string) => onUpdate(day, s, a)} onClear={() => onClear(day)} />
             ))}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function MealAnalysisSheet({ meal, onClose }: { meal: LocalMeal, onClose: any }) {
+  const analysisData = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => {
+      const day = i + 1;
+      const raw = meal.amounts[day] || "0";
+      // Extract numbers only (e.g., "50G" -> 50)
+      const value = parseFloat(raw.replace(/[^0-9.]/g, '')) || 0;
+      return { day, value };
+    }).filter(d => meal.checklist[d.day] === 'taken');
+  }, [meal]);
+
+  const trendData = useMemo(() => {
+    if (analysisData.length < 2) return { value: 0, isImproving: true };
+    const last = analysisData[analysisData.length - 1].value;
+    const prev = analysisData[analysisData.length - 2].value;
+    const diff = prev === 0 ? 0 : ((last - prev) / prev) * 100;
+    return { value: Math.abs(diff).toFixed(1), isImproving: diff >= 0 };
+  }, [analysisData]);
+
+  return (
+    <Sheet open={!!meal} onOpenChange={open => !open && onClose()}>
+      <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[85svh] border-none p-0 overflow-hidden bg-background">
+        <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
+          <SheetHeader>
+            <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center leading-none">DIET MARKET</SheetTitle>
+            <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">{meal.mealName} PERFORMANCE</p>
+          </SheetHeader>
+          
+          <div className="space-y-8">
+            <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card p-8 space-y-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <h4 className="text-2xl font-black uppercase tracking-tighter italic">{meal.mealName}</h4>
+                  <div className={cn(
+                    "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black",
+                    trendData.isImproving ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+                  )}>
+                    {trendData.isImproving ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    {trendData.value}% PORTION TREND
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-black text-primary italic leading-none">
+                    {analysisData.length > 0 ? analysisData[analysisData.length - 1].value : 0}
+                  </p>
+                  <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60 mt-1">LATEST PORTION</p>
+                </div>
+              </div>
+
+              <div className="h-60 w-full mt-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={analysisData}>
+                    <defs>
+                      <linearGradient id="dietGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="day" hide />
+                    <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-background/90 backdrop-blur-xl border-2 border-primary/20 p-3 rounded-2xl shadow-2xl">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">DAY {payload[0].payload.day}</p>
+                              <p className="text-xl font-black italic">{payload[0].value}G</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={5} 
+                      fill="url(#dietGradient)" 
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            <div className="grid grid-cols-2 gap-6">
+              <Card className="bg-card border-none rounded-[2rem] p-6 text-center shadow-xl">
+                <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-50">ENTRIES</p>
+                <p className="text-4xl font-black italic text-primary">{analysisData.length}</p>
+              </Card>
+              <Card className="bg-card border-none rounded-[2rem] p-6 text-center shadow-xl">
+                <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-50">AVG PORTION</p>
+                <p className="text-4xl font-black italic text-primary">
+                  {analysisData.length > 0 
+                    ? Math.round(analysisData.reduce((acc, curr) => acc + curr.value, 0) / analysisData.length)
+                    : 0}
+                </p>
+              </Card>
+            </div>
+
+            <Button className="w-full h-20 rounded-[2rem] font-black uppercase tracking-widest italic text-xl shadow-2xl bg-primary active:scale-95" onClick={onClose}>
+              CLOSE ANALYSIS
+            </Button>
           </div>
         </div>
       </SheetContent>
@@ -218,7 +349,7 @@ function DayDialog({ day, status, amount, onMark, onClear }: { day: number, stat
             <div className="flex flex-col items-center justify-center w-full px-1 overflow-hidden">
               <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 mb-0.5 text-primary shrink-0" />
               {amount && (
-                <span className="text-[8px] md:text-[10px] font-black uppercase leading-none text-center line-clamp-2 w-full">
+                <span className="text-[10px] font-black uppercase leading-none text-center line-clamp-1 w-full scale-90">
                   {amount}
                 </span>
               )}
