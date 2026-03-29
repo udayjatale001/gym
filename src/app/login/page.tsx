@@ -3,13 +3,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Dumbbell, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -17,27 +14,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const auth = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
-
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    
+    // Direct navigation to dashboard without Firebase Auth
+    setTimeout(() => {
       router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (

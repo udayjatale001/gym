@@ -3,14 +3,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,57 +16,17 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  const auth = useAuth();
-  const db = useFirestore();
   const router = useRouter();
-  const { toast } = useToast();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!name || !email || !password) return;
-    if (password !== confirmPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Passwords do not match.',
-      });
-      return;
-    }
-
     setIsLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
 
-      await updateProfile(user, { displayName: name });
-
-      // Create User Profile in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        displayName: name,
-        email: email,
-        currentWeight: 0,
-        targetWeight: 0,
-        workoutStartDate: new Date().toISOString().split('T')[0],
-        createdAt: new Date().toISOString(),
-      });
-
-      toast({
-        title: 'Account Created',
-        description: 'Welcome to FitStride!',
-      });
-
+    // Direct navigation to dashboard without saving to Firebase
+    setTimeout(() => {
       router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Signup Failed',
-        description: error.message || 'Could not create account.',
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
