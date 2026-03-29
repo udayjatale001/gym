@@ -5,7 +5,7 @@ import { use, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, History, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, History, Loader2, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser } from "@/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -27,7 +27,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const docId = `${type}-day-${day}`;
 
   useEffect(() => {
-    // Load display name from local storage
+    // Load display name from local storage (where splits are stored)
     const saved = localStorage.getItem('fitstride_splits');
     if (saved) {
       const splits = JSON.parse(saved);
@@ -77,8 +77,8 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     setDoc(logRef, logData, { merge: true })
       .then(() => {
         toast({
-          title: "Workout Saved",
-          description: `Logged Day ${day}: ${displayName}.`,
+          title: "Log Saved",
+          description: `Entry for Day ${day} updated successfully.`,
         });
       })
       .catch(async (error) => {
@@ -95,25 +95,28 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#fdfdfd] relative">
+    <div className="flex flex-col min-h-svh bg-[#fdfdfd] relative overflow-hidden">
       {/* Paper texture overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
       
-      <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <div className="p-4 border-b bg-white flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-3">
           <Link href={`/dashboard/workout/${type}`}>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <h2 className="text-lg font-black uppercase tracking-tight">Day {day}: {displayName}</h2>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase">Training Notepad</p>
+            <h2 className="text-lg font-black uppercase tracking-tight">{displayName} • Day {day}</h2>
+            <div className="flex items-center gap-1.5">
+              <BookOpen className="h-3 w-3 text-primary" />
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Training Journal</p>
+            </div>
           </div>
         </div>
         <Button 
           size="sm" 
-          className="gap-2 font-bold shadow-lg bg-primary hover:bg-primary/90" 
+          className="gap-2 font-bold shadow-lg bg-primary hover:bg-primary/90 px-6 rounded-full" 
           onClick={handleSave}
           disabled={isSaving}
         >
@@ -122,37 +125,48 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         </Button>
       </div>
 
-      <div className="flex-1 p-4 pb-32 relative flex flex-col">
-        {/* Notebook Lines Effect */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div key={i} className="h-12 border-b border-black w-full" />
-          ))}
-          <div className="absolute top-0 left-8 h-full w-[1px] bg-red-400 opacity-20" />
+      <div className="flex-1 relative p-0 flex flex-col bg-white">
+        {/* Rule Lines Layer */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          {/* Vertical Margin Line */}
+          <div className="absolute top-0 left-12 h-full w-[1.5px] bg-red-400 opacity-20" />
+          {/* Horizontal Lines */}
+          <div className="h-full w-full">
+            {Array.from({ length: 50 }).map((_, i) => (
+              <div key={i} className="h-10 border-b border-sky-100 w-full" />
+            ))}
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center relative z-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
           </div>
         ) : (
-          <div className="relative flex-1 flex flex-col">
+          <div className="relative z-10 flex-1 flex flex-col">
             <Textarea
               value={logText}
               onChange={(e) => setLogText(e.target.value)}
-              placeholder="Write your workout details freely here... (e.g. Bench Press: 3x10 @ 60kg)"
-              className="flex-1 min-h-[400px] bg-transparent border-none shadow-none focus-visible:ring-0 text-base leading-[3rem] font-medium resize-none p-0 pt-2 selection:bg-primary/20"
-              style={{ lineHeight: '3rem' }}
+              placeholder="Write your session details here...&#10;Bench Press: 3x10 @ 80kg&#10;Felt strong today!"
+              className="flex-1 min-h-full bg-transparent border-none shadow-none focus-visible:ring-0 text-base leading-10 font-medium resize-none pl-16 pr-6 pt-0 selection:bg-primary/20 placeholder:opacity-30"
+              style={{ lineHeight: '2.5rem' }}
             />
             
-            {!logText && (
-              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center opacity-10">
-                <History className="h-16 w-16 mb-4" />
-                <p className="font-bold uppercase tracking-widest text-sm">Empty Journal</p>
+            {!logText && !isLoading && (
+              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center opacity-[0.05] mt-10">
+                <History className="h-24 w-24" />
+                <p className="font-bold uppercase tracking-[0.2em] text-lg mt-4">Empty Entry</p>
               </div>
             )}
           </div>
         )}
+      </div>
+
+      <div className="p-4 bg-muted/20 border-t flex items-center justify-center gap-2">
+        <History className="h-3 w-3 text-muted-foreground" />
+        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+          {logText ? 'Autosave not active. Click SAVE to sync.' : 'Ready for your workout input'}
+        </p>
       </div>
     </div>
   );
