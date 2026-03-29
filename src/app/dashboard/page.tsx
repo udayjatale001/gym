@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Info, Utensils, CheckCircle2, Calendar, Scale, TrendingUp } from "lucide-react";
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, query, collection, orderBy, limit } from "firebase/firestore";
+import { doc, query, collection, orderBy } from "firebase/firestore";
 import { format, addDays, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -20,22 +21,32 @@ export default function DashboardPage() {
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(userRef);
 
+  // Fetch all weight logs to determine start vs current progress
   const weightQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(db, 'users', user.uid, 'weightLogs'), orderBy('createdAt', 'desc'), limit(1));
+    return query(collection(db, 'users', user.uid, 'weightLogs'), orderBy('createdAt', 'desc'));
   }, [db, user]);
-  const { data: latestWeightData } = useCollection(weightQuery);
+  const { data: weightLogs } = useCollection(weightQuery);
 
   const mealQuery = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(db, 'users', user.uid, 'mealLogs'), orderBy('timestamp', 'desc'), limit(5));
+    return query(collection(db, 'users', user.uid, 'mealLogs'), orderBy('timestamp', 'desc'));
   }, [db, user]);
   const { data: recentMeals } = useCollection(mealQuery);
 
-  const currentWeight = latestWeightData?.[0]?.weight || profile?.currentWeight || 0;
+  const currentWeight = weightLogs?.[0]?.weight || profile?.currentWeight || 0;
   const targetWeight = profile?.targetWeight || 0;
   
-  const progress = targetWeight > 0 ? Math.min(100, (currentWeight / targetWeight) * 100) : 0;
+  // Professional progress calculation: (Start - Current) / (Start - Target)
+  const progress = (() => {
+    if (!weightLogs || weightLogs.length === 0 || targetWeight === 0) return 0;
+    const startWeight = weightLogs[weightLogs.length - 1].weight; // The oldest log
+    if (startWeight === targetWeight) return 100;
+    const totalDist = Math.abs(startWeight - targetWeight);
+    const covered = Math.abs(startWeight - currentWeight);
+    return Math.min(100, Math.max(0, (covered / totalDist) * 100));
+  })();
+
   const hasLoggedMealToday = recentMeals?.some(m => m.date === format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
@@ -88,7 +99,7 @@ export default function DashboardPage() {
               BODY MASS PROGRESS
             </CardTitle>
             <span className="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-full italic">
-              {currentWeight > 0 ? `${currentWeight} KG` : 'PENDING'}
+              {currentWeight > 0 ? `${currentWeight} KG` : 'AWAITING LOG'}
             </span>
           </div>
         </CardHeader>
