@@ -7,198 +7,199 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2 } from "lucide-react";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, query, orderBy, limit, serverTimestamp, doc, setDoc } from "firebase/firestore";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
 
 type MealType = 'Breakfast' | 'Snacks' | 'Lunch' | 'Dinner';
 
+interface LocalMeal {
+  id: string;
+  mealType: MealType;
+  mealName: string;
+  timestamp: string;
+  date: string;
+  checklist: Record<number, 'taken' | 'skipped'>;
+}
+
 export default function DietPage() {
-  const db = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   
+  // Using local state as requested to avoid backend changes
+  const [meals, setMeals] = useState<LocalMeal[]>([]);
   const [isLogOpen, setIsLogOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<MealType | null>(null);
   const [mealName, setMealName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [viewingMeal, setViewingMeal] = useState<any>(null);
-
-  const mealLogsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(db, 'users', user.uid, 'mealLogs'),
-      orderBy('timestamp', 'desc'),
-      limit(50)
-    );
-  }, [db, user]);
-
-  const { data: meals, loading } = useCollection(mealLogsQuery);
+  const [viewingMealId, setViewingMealId] = useState<string | null>(null);
 
   const handleLogMeal = () => {
-    if (!user || !selectedType || !mealName.trim()) return;
+    if (!selectedType || !mealName.trim()) return;
 
     setIsSubmitting(true);
+    
+    // Simulating a brief delay for a polished "pro" feel
+    setTimeout(() => {
+      const newMeal: LocalMeal = {
+        id: Math.random().toString(36).substr(2, 9),
+        mealType: selectedType,
+        mealName: mealName.trim(),
+        timestamp: new Date().toISOString(),
+        date: format(new Date(), 'yyyy-MM-dd'),
+        checklist: {}
+      };
 
-    const mealData = {
-      mealType: selectedType,
-      mealName: mealName.trim(),
-      timestamp: new Date().toISOString(),
-      date: format(new Date(), 'yyyy-MM-dd'),
-      createdAt: serverTimestamp()
-    };
-
-    const logsRef = collection(db, 'users', user.uid, 'mealLogs');
-
-    addDoc(logsRef, mealData)
-      .then(() => {
-        toast({
-          title: "Meal Tracked!",
-          description: `${mealData.mealType}: ${mealData.mealName}`,
-        });
-        setIsLogOpen(false);
-        setStep(1);
-        setMealName("");
-        setSelectedType(null);
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: logsRef.path,
-          operation: 'create',
-          requestResourceData: mealData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
+      setMeals(prev => [newMeal, ...prev]);
+      
+      toast({
+        title: "Meal Tracked!",
+        description: `${newMeal.mealType}: ${newMeal.mealName}`,
       });
+      
+      setIsLogOpen(false);
+      setStep(1);
+      setMealName("");
+      setSelectedType(null);
+      setIsSubmitting(false);
+    }, 400);
   };
 
+  const handleUpdateChecklist = (mealId: string, day: number, status: 'taken' | 'skipped') => {
+    setMeals(prev => prev.map(m => 
+      m.id === mealId 
+        ? { ...m, checklist: { ...m.checklist, [day]: status } }
+        : m
+    ));
+  };
+
+  const currentViewingMeal = meals.find(m => m.id === viewingMealId);
+
   return (
-    <div className="p-4 space-y-6 pb-24">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <Button 
-              size="icon" 
-              className="h-10 w-10 rounded-full shadow-lg active:scale-95 transition-transform"
-              onClick={() => {
-                setStep(1);
-                setMealName("");
-                setSelectedType(null);
-                setIsLogOpen(true);
-              }}
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-            <h2 className="text-xl font-black text-primary uppercase tracking-tight italic">
-              Log Your Diet
-            </h2>
-          </div>
-          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest pl-[52px]">
-            Track meals and daily consistency
+    <div className="p-4 space-y-6 pb-24 animate-in fade-in duration-500">
+      {/* Header with + button in front */}
+      <div className="flex items-center gap-3">
+        <Button 
+          size="icon" 
+          className="h-10 w-10 rounded-full shadow-lg active:scale-90 transition-transform bg-primary hover:bg-primary/90"
+          onClick={() => {
+            setStep(1);
+            setMealName("");
+            setSelectedType(null);
+            setIsLogOpen(true);
+          }}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+        <div className="space-y-0.5">
+          <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">
+            Log Your Diet
+          </h2>
+          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
+            Precision Nutrition Tracking
           </p>
         </div>
       </div>
 
+      {/* Meal List Section */}
       <section className="space-y-3">
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />)}
-          </div>
-        ) : meals && meals.length > 0 ? (
+        {meals.length > 0 ? (
           meals.map((meal) => (
             <Card 
               key={meal.id} 
-              className="hover:border-primary transition-all cursor-pointer group shadow-sm overflow-hidden active:scale-[0.98]"
-              onClick={() => setViewingMeal(meal)}
+              className="border-2 border-muted hover:border-primary/40 transition-all cursor-pointer group shadow-sm overflow-hidden active:scale-[0.98] rounded-2xl"
+              onClick={() => setViewingMealId(meal.id)}
             >
               <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Utensils className="h-5 w-5" />
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-inner">
+                    <Utensils className="h-6 w-6" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-tight">
-                      {meal.mealType}: {meal.mealName}
+                    <h4 className="font-black text-lg uppercase tracking-tighter leading-tight">
+                      {meal.mealType}: <span className="text-primary">{meal.mealName}</span>
                     </h4>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1.5 mt-1">
+                      <Calendar className="h-3 w-3" />
                       {format(new Date(meal.timestamp), 'h:mm a • MMM dd')}
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-muted/50 group-hover:bg-primary/10 transition-colors">
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
               </CardContent>
             </Card>
           ))
         ) : (
-          <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
-            <Utensils className="h-10 w-10 text-muted-foreground mx-auto opacity-20 mb-3" />
-            <p className="text-sm font-bold text-muted-foreground uppercase tracking-tight">No meals tracked yet.</p>
-            <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase tracking-widest">Tap the + button to begin.</p>
+          <div className="text-center py-24 bg-muted/20 rounded-[2.5rem] border-4 border-dashed border-muted/50 flex flex-col items-center justify-center space-y-4">
+            <div className="h-16 w-16 rounded-full bg-muted/30 flex items-center justify-center">
+              <Utensils className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">No Fuel Logged</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1 font-bold uppercase tracking-widest">Tap the + to begin tracking</p>
+            </div>
           </div>
         )}
       </section>
 
+      {/* Log Meal Dialog */}
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-[2rem] border-none shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight">
-              {step === 1 ? 'Select Meal Type' : `Log ${selectedType}`}
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-center text-primary">
+              {step === 1 ? 'Select Category' : `Log ${selectedType}`}
             </DialogTitle>
           </DialogHeader>
 
           {step === 1 ? (
-            <div className="grid grid-cols-2 gap-3 py-4">
+            <div className="grid grid-cols-2 gap-3 py-6">
               {(['Breakfast', 'Snacks', 'Lunch', 'Dinner'] as MealType[]).map((type) => (
                 <Button
                   key={type}
                   variant="outline"
-                  className="h-24 flex flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                  className="h-28 flex flex-col gap-3 border-2 rounded-2xl hover:border-primary hover:bg-primary/5 transition-all group active:scale-95 shadow-sm"
                   onClick={() => {
                     setSelectedType(type);
                     setStep(2);
                   }}
                 >
-                  <Utensils className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                  <span className="font-black text-[10px] uppercase tracking-widest">{type}</span>
+                  <div className="h-12 w-12 rounded-full bg-muted group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                    <Utensils className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-12" />
+                  </div>
+                  <span className="font-black text-[10px] uppercase tracking-[0.2em]">{type}</span>
                 </Button>
               ))}
             </div>
           ) : (
-            <div className="py-4 space-y-4">
-              <div className="space-y-2">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">What did you eat?</p>
+            <div className="py-6 space-y-6">
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Describe your meal</p>
                 <Input 
-                  placeholder="e.g., OATS, PROTEIN SHAKE" 
+                  placeholder="e.g. OATS & WHEY" 
                   value={mealName}
                   onChange={(e) => setMealName(e.target.value)}
                   autoFocus
-                  className="font-black border-2 h-12 text-sm uppercase"
+                  className="font-black border-2 border-muted h-14 text-lg uppercase rounded-2xl focus-visible:ring-primary focus-visible:border-primary transition-all shadow-inner"
                   onKeyDown={(e) => e.key === 'Enter' && !isSubmitting && handleLogMeal()}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button 
                   variant="ghost" 
-                  className="flex-1 font-black text-[10px] uppercase" 
+                  className="flex-1 font-black text-[10px] uppercase rounded-2xl h-14 tracking-widest" 
                   onClick={() => setStep(1)}
                   disabled={isSubmitting}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
                 <Button 
-                  className="flex-2 w-full font-black text-[10px] uppercase h-11" 
+                  className="flex-[2] font-black text-[10px] uppercase h-14 rounded-2xl tracking-[0.2em] shadow-lg shadow-primary/20 active:scale-95" 
                   onClick={handleLogMeal} 
                   disabled={!mealName.trim() || isSubmitting}
                 >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Confirm Meal
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : 'Confirm Meal'}
                 </Button>
               </div>
             </div>
@@ -206,95 +207,81 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-      {viewingMeal && (
+      {/* Checklist Sheet */}
+      {currentViewingMeal && (
         <ChecklistSheet 
-          meal={viewingMeal} 
-          onClose={() => setViewingMeal(null)} 
+          meal={currentViewingMeal} 
+          onUpdate={(day, status) => handleUpdateChecklist(currentViewingMeal.id, day, status)}
+          onClose={() => setViewingMealId(null)} 
         />
       )}
     </div>
   );
 }
 
-function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
-  const db = useFirestore();
-  const { user } = useUser();
+function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate: (day: number, status: 'taken' | 'skipped') => void, onClose: () => void }) {
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
-  const checklistQuery = useMemoFirebase(() => {
-    if (!user || !meal) return null;
-    return query(collection(db, 'users', user.uid, 'mealLogs', meal.id, 'checklist'));
-  }, [db, user, meal]);
-
-  const { data: checklist } = useCollection(checklistQuery);
-
   const handleMarkDay = (day: number, status: 'taken' | 'skipped') => {
-    if (!user || !meal) return;
     setIsUpdating(day);
-
-    const dayId = `day-${day}`;
-    const entryRef = doc(db, 'users', user.uid, 'mealLogs', meal.id, 'checklist', dayId);
-    
-    const data = { day, status };
-
-    setDoc(entryRef, data)
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: entryRef.path,
-          operation: 'write',
-          requestResourceData: data,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setIsUpdating(null));
+    // Directly update local state through the prop
+    onUpdate(day, status);
+    setTimeout(() => setIsUpdating(null), 300);
   };
 
-  const getDayStatus = (day: number) => checklist?.find(e => e.day === day)?.status;
-  const totalTaken = checklist?.filter(e => e.status === 'taken').length || 0;
-  const totalSkipped = checklist?.filter(e => e.status === 'skipped').length || 0;
+  const getDayStatus = (day: number) => meal.checklist[day];
+  const checklistValues = Object.values(meal.checklist);
+  const totalTaken = checklistValues.filter(s => s === 'taken').length;
+  const totalSkipped = checklistValues.filter(s => s === 'skipped').length;
 
   return (
     <Sheet open={!!meal} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-y-auto no-scrollbar">
-        <div className="p-6 space-y-6">
+      <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-y-auto no-scrollbar border-none shadow-2xl rounded-l-[3rem]">
+        <div className="p-8 space-y-8 animate-in slide-in-from-right duration-500">
           <SheetHeader className="text-left">
-            <div className="flex items-center gap-2 mb-2">
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 -ml-2 rounded-full">
+            <div className="flex items-center gap-3 mb-4">
+              <Button variant="outline" size="icon" onClick={onClose} className="h-10 w-10 rounded-full border-2 border-muted hover:border-primary hover:text-primary active:scale-90 transition-all">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <SheetTitle className="text-xl font-black uppercase tracking-tight">{meal.mealType}: {meal.mealName}</SheetTitle>
+              <div className="space-y-0.5">
+                <SheetTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary leading-none">
+                  {meal.mealName}
+                </SheetTitle>
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
+                  {meal.mealType} • 30-Day Cycle
+                </p>
+              </div>
             </div>
-            <SheetDescription className="text-[10px] font-bold uppercase tracking-widest">30-Day Consistency Tracking</SheetDescription>
           </SheetHeader>
 
-          <Card className="bg-primary/5 border-primary/20 shadow-sm">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                Monthly Performance
+          <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] overflow-hidden">
+            <CardHeader className="p-6 pb-2">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
+                <Calendar className="h-4 w-4" />
+                Monthly Consistency
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 flex items-center justify-between">
-              <div className="flex gap-6">
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground font-black uppercase">Taken</p>
-                  <p className="text-3xl font-black text-primary leading-none">{totalTaken}</p>
+            <CardContent className="p-6 pt-0 flex items-center justify-between">
+              <div className="flex gap-10">
+                <div className="space-y-1">
+                  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Taken</p>
+                  <p className="text-4xl font-black text-primary leading-none">{totalTaken}</p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[9px] text-muted-foreground font-black uppercase">Skipped</p>
-                  <p className="text-3xl font-black text-destructive leading-none">{totalSkipped}</p>
+                <div className="space-y-1">
+                  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Skipped</p>
+                  <p className="text-4xl font-black text-destructive leading-none">{totalSkipped}</p>
                 </div>
               </div>
               {totalSkipped > 3 && (
-                <div className="bg-destructive/10 text-destructive p-2.5 rounded-xl flex items-center gap-2 max-w-[140px] border border-destructive/20">
+                <div className="bg-destructive/10 text-destructive p-3 rounded-2xl flex items-center gap-2 max-w-[140px] border border-destructive/20 animate-pulse">
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  <p className="text-[8px] font-black leading-tight uppercase tracking-tight">Consistency Gaps Found</p>
+                  <p className="text-[8px] font-black leading-tight uppercase tracking-tight">Warning: Consistency Gaps</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-5 gap-2 pb-10">
+          <div className="grid grid-cols-5 gap-3 pb-12">
             {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
               const status = getDayStatus(day);
               return (
@@ -303,33 +290,33 @@ function ChecklistSheet({ meal, onClose }: { meal: any, onClose: () => void }) {
                     <Button
                       variant="outline"
                       className={cn(
-                        "h-16 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90",
+                        "h-16 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-2xl shadow-sm",
                         status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
-                        status === 'skipped' && "bg-destructive/10 border-destructive text-destructive",
-                        !status && "bg-muted/30 border-muted/50 text-muted-foreground",
+                        status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
+                        !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
                         isUpdating === day && "animate-pulse"
                       )}
                     >
                       <span className="text-[9px] font-black mb-1 opacity-50">{day}</span>
                       {status === 'taken' && <CheckCircle2 className="h-4 w-4" />}
                       {status === 'skipped' && <XCircle className="h-4 w-4" />}
-                      {!status && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />}
+                      {!status && <div className="h-1 w-1 rounded-full bg-muted-foreground/20" />}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-xs">
+                  <DialogContent className="sm:max-w-xs rounded-[2rem] border-none shadow-2xl">
                     <DialogHeader>
-                      <DialogTitle className="text-center font-black uppercase tracking-tight">Day {day} Status</DialogTitle>
+                      <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-xl">Day {day} Status</DialogTitle>
                     </DialogHeader>
-                    <div className="flex gap-2 py-4">
+                    <div className="flex gap-3 py-6">
                       <Button 
-                        className="flex-1 font-black text-[10px] uppercase gap-2 h-11"
+                        className="flex-1 font-black text-[10px] uppercase gap-2 h-14 rounded-2xl shadow-lg shadow-primary/20"
                         onClick={() => handleMarkDay(day, 'taken')}
                       >
                         <CheckCircle2 className="h-4 w-4" /> Taken
                       </Button>
                       <Button 
                         variant="destructive" 
-                        className="flex-1 font-black text-[10px] uppercase gap-2 h-11"
+                        className="flex-1 font-black text-[10px] uppercase gap-2 h-14 rounded-2xl shadow-lg shadow-destructive/20"
                         onClick={() => handleMarkDay(day, 'skipped')}
                       >
                         <XCircle className="h-4 w-4" /> Skipped
