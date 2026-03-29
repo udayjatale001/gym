@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Utensils, CheckCircle2, Calendar, Scale, TrendingUp, Loader2 } from "lucide-react";
+import { Utensils, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote } from "lucide-react";
 import { format, addDays, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -18,11 +18,20 @@ interface LocalMeal {
   date: string;
 }
 
+const DISCIPLINE_QUOTES = [
+  "DISCIPLINE IS THE BRIDGE BETWEEN GOALS AND ACCOMPLISHMENT.",
+  "CONSISTENCY BEATS INTENSITY EVERY SINGLE TIME.",
+  "STRENGTH IS EARNED, NEVER GIVEN.",
+  "THE PAIN OF DISCIPLINE IS FAR LESS THAN THE PAIN OF REGRET.",
+  "CHAMPIONS ARE MADE IN THE REPETITIONS NO ONE SEES."
+];
+
 export default function DashboardPage() {
   const [weightLogs, setWeightLogs] = useState<LocalWeightLog[]>([]);
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [hasLoggedMealToday, setHasLoggedMealToday] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [quote, setQuote] = useState("");
   const [suggestion, setSuggestion] = useState<{ today: string; yesterday: string; tomorrow: string }>({
     today: "Rest", yesterday: "Rest", tomorrow: "Rest"
   });
@@ -52,6 +61,9 @@ export default function DashboardPage() {
     setSuggestion({
       today: getWorkout(now), yesterday: getWorkout(subDays(now, 1)), tomorrow: getWorkout(addDays(now, 1))
     });
+
+    // Random Quote
+    setQuote(DISCIPLINE_QUOTES[Math.floor(Math.random() * DISCIPLINE_QUOTES.length)]);
 
     setIsLoaded(true);
   }, []);
@@ -94,6 +106,16 @@ export default function DashboardPage() {
             <h3 className="text-6xl font-black tracking-tighter uppercase italic leading-none">
               {suggestion.today}
             </h3>
+            {quote && (
+              <div className="mt-8 px-6 py-4 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-2 flex items-center justify-center gap-2">
+                  <Quote className="h-2 w-2" /> DISCIPLINE DIRECTIVE
+                </p>
+                <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
+                  "{quote}"
+                </p>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8">
             <div className="text-left space-y-1">
