@@ -6,12 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { useAuth, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
 
 const DisciplineLogoSignup = () => (
   <div className="mx-auto h-16 w-16 flex items-center justify-center bg-primary rounded-[1.5rem] shadow-2xl rotate-3 border-b-8 border-black/20 mb-4">
@@ -39,53 +36,35 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const auth = useAuth();
-  const db = useFirestore();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({ variant: "destructive", title: "Validation Error", description: "Passwords do not match." });
-      return;
-    }
     setIsLoading(true);
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name });
-      
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        displayName: name,
-        email: email,
-        currentWeight: 0,
-        targetWeight: 0,
-        createdAt: new Date().toISOString()
-      });
-
+    // Direct bypass for prototype speed
+    setTimeout(() => {
       router.push('/dashboard');
       toast({
         title: "Discipline Initiated!",
-        description: "Welcome to GymBuddy!.",
+        description: "Welcome to GymBuddy! Squad.",
       });
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: error.message || "Could not create account.",
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md space-y-8">
-        <Link href="/login" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary gap-1 transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          BACK TO LOGIN
-        </Link>
+        <div className="flex justify-between items-center px-1">
+          <Link href="/login" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary gap-1 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            BACK TO LOGIN
+          </Link>
+          <Link href="/dashboard" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary gap-1 transition-colors">
+            <Home className="h-3.5 w-3.5" />
+            HOME
+          </Link>
+        </div>
 
         <div className="text-center space-y-2">
           <DisciplineLogoSignup />
@@ -108,7 +87,6 @@ export default function SignupPage() {
                   className="h-14 font-bold border-2 rounded-2xl"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -120,7 +98,6 @@ export default function SignupPage() {
                   className="h-14 font-bold border-2 rounded-2xl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -132,19 +109,6 @@ export default function SignupPage() {
                   className="h-14 font-bold border-2 rounded-2xl"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-[10px] font-black uppercase tracking-widest opacity-40">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  className="h-14 font-bold border-2 rounded-2xl"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
                 />
               </div>
             </CardContent>

@@ -6,11 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 
 const DisciplineLogoLarge = () => (
   <div className="mx-auto h-16 w-16 flex items-center justify-center bg-primary rounded-[1.5rem] shadow-2xl rotate-3 border-b-8 border-black/20 mb-4">
@@ -36,29 +34,20 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const auth = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    // Direct bypass for prototype speed
+    setTimeout(() => {
       router.push('/dashboard');
       toast({
         title: "Discipline Engaged!",
-        description: "Welcome back to GymBuddy!.",
+        description: "Direct access granted to GymBuddy!.",
       });
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description: error.message || "Invalid credentials. Try again.",
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -86,7 +75,6 @@ export default function LoginPage() {
                   className="h-14 font-bold border-2 rounded-2xl shadow-inner"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -98,7 +86,6 @@ export default function LoginPage() {
                   className="h-14 font-bold border-2 rounded-2xl shadow-inner"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
                 />
               </div>
             </CardContent>
@@ -106,12 +93,20 @@ export default function LoginPage() {
               <Button type="submit" className="w-full h-16 font-black text-xl uppercase italic rounded-2xl shadow-xl active:scale-95 transition-all" disabled={isLoading}>
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : 'CONFIRM ACCESS'}
               </Button>
-              <p className="text-[10px] text-center text-muted-foreground font-black uppercase tracking-widest">
-                NO ACCOUNT?{' '}
-                <Link href="/signup" className="text-primary hover:underline">
-                  JOIN THE SQUAD
-                </Link>
-              </p>
+              <div className="text-[10px] text-center text-muted-foreground font-black uppercase tracking-widest space-y-2">
+                <p>
+                  NO ACCOUNT?{' '}
+                  <Link href="/signup" className="text-primary hover:underline">
+                    JOIN THE SQUAD
+                  </Link>
+                </p>
+                <p className="flex items-center justify-center gap-2">
+                  OR GO TO{' '}
+                  <Link href="/dashboard" className="text-primary hover:underline flex items-center gap-1">
+                    <Home className="h-3 w-3" /> HOME
+                  </Link>
+                </p>
+              </div>
             </CardFooter>
           </form>
         </Card>
