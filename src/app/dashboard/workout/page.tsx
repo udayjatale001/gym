@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2 } from "lucide-react";
+import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ToastAction } from "@/components/ui/toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -93,15 +94,26 @@ export default function WorkoutPage() {
     }, 300);
   };
 
-  const handleDeleteSplit = (e: React.MouseEvent, splitId: string, splitName: string) => {
+  const handleDeleteSplit = (e: React.MouseEvent, splitId: string) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation(); // Prevent card click
+    
+    const splitToDelete = activeSplits.find(s => s.id === splitId);
+    if (!splitToDelete) return;
+
+    // Capture current state for undo
+    const previousSplits = [...activeSplits];
     
     setActiveSplits(prev => prev.filter(s => s.id !== splitId));
     
     toast({
       title: "Split Removed",
-      description: `${splitName} has been deleted.`,
+      description: `${splitToDelete.name} has been deleted.`,
+      action: (
+        <ToastAction altText="Undo" onClick={() => setActiveSplits(previousSplits)}>
+          Undo
+        </ToastAction>
+      ),
     });
   };
 
@@ -200,12 +212,12 @@ export default function WorkoutPage() {
                             </div>
                             <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
-                              onClick={(e) => handleDeleteSplit(e, cat.id, cat.name)}
+                              className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full"
+                              onClick={(e) => handleDeleteSplit(e, cat.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -238,6 +250,20 @@ export default function WorkoutPage() {
           </div>
         )}
       </div>
+      
+      {activeSplits.length < defaultCategories.length && (
+        <div className="flex justify-center pt-4">
+           <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-[10px] font-bold uppercase tracking-widest gap-2 opacity-50 hover:opacity-100"
+            onClick={() => setActiveSplits(defaultCategories)}
+           >
+             <RotateCcw className="h-3 w-3" />
+             Reset to Defaults
+           </Button>
+        </div>
+      )}
     </div>
   );
 }
