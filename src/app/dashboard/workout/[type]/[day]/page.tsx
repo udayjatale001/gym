@@ -6,10 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2, ListPlus, X, Edit2 } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Save, 
+  Plus, 
+  Trash2, 
+  Loader2, 
+  Dumbbell, 
+  LayoutGrid, 
+  CheckCircle2, 
+  ListPlus, 
+  X, 
+  Edit2,
+  AlertTriangle
+} from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
+import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 
 interface WorkoutSet {
   reps: string;
@@ -24,12 +41,21 @@ interface Exercise {
 export default function WorkoutLogPage({ params }: { params: Promise<{ type: string, day: string }> }) {
   const { type, day } = use(params);
   const { toast } = useToast();
+  const db = useFirestore();
+  const { user } = useUser();
   
   const [exercises, setExercises] = useState<Exercise[]>([{ name: "", sets: [{ reps: "", weight: "" }] }]);
-  const [localSavedLog, setLocalSavedLog] = useState<{ exercises: Exercise[] } | null>(null);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Firestore Document Reference for this specific split and day
+  const logRef = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return doc(db, 'users', user.uid, 'workoutLogs', `${type}-day-${day}`);
+  }, [db, user, type, day]);
+
+  const { data: savedLog, loading: isLoadingDoc } = useDoc(logRef);
 
   // Load split name from local storage
   useEffect(() => {
@@ -41,8 +67,14 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     } else {
       setDisplayName(type);
     }
-    setIsLoaded(true);
   }, [type]);
+
+  // If we have saved data and are not editing, set the form to the saved data
+  useEffect(() => {
+    if (savedLog && !isEditing) {
+      setExercises(savedLog.exercises || []);
+    }
+  }, [savedLog, isEditing]);
 
   const handleAddExercise = () => {
     setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }]);
@@ -80,32 +112,73 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   };
 
   const handleSave = () => {
-    if (!isEditing) {
-      setIsEditing(true);
-      return;
-    }
+    if (!user || !logRef) return;
 
     const validExercises = exercises.filter(ex => ex.name.trim() !== "" && ex.sets.some(s => s.reps.trim() !== ""));
     if (validExercises.length === 0) {
       toast({
         variant: "destructive",
         title: "Incomplete Log",
-        description: "Please add at least one exercise and its reps.",
+        description: "Please add at least one exercise with name and reps.",
       });
       return;
     }
 
-    // Set local state to show the professional list format
-    setLocalSavedLog({ exercises: validExercises });
-    setIsEditing(false);
-    
-    toast({
-      title: "Workout Saved Locally",
-      description: "Showing your session summary.",
-    });
+    setIsSubmitting(true);
+
+    const logData = {
+      workoutType: type,
+      day: parseInt(day),
+      exercises: validExercises,
+      timestamp: new Date().toISOString(),
+      updatedAt: serverTimestamp()
+    };
+
+    setDoc(logRef, logData)
+      .then(() => {
+        toast({
+          title: "Workout Saved",
+          description: "Your training session has been permanently logged.",
+        });
+        setIsEditing(false);
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: logRef.path,
+          operation: 'write',
+          requestResourceData: logData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
-  if (!isLoaded) {
+  const handleDeleteSession = () => {
+    if (!logRef || !user) return;
+    
+    if (confirm("Are you sure you want to permanently delete this session log?")) {
+      deleteDoc(logRef)
+        .then(() => {
+          toast({
+            title: "Session Deleted",
+            description: "The workout log for this day has been removed.",
+          });
+          setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
+          setIsEditing(false);
+        })
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: logRef.path,
+            operation: 'delete',
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        });
+    }
+  };
+
+  if (isLoadingDoc) {
     return (
       <div className="flex flex-col items-center justify-center min-h-svh">
         <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
@@ -113,9 +186,11 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     );
   }
 
+  const showViewMode = savedLog && !isEditing;
+
   return (
     <div className="flex flex-col min-h-svh bg-background pb-24">
-      {/* Header with Right-Aligned SAVE button */}
+      {/* Header with Sticky Save Button */}
       <div className="p-4 border-b bg-card flex items-center justify-between sticky top-0 z-20 shadow-sm backdrop-blur-md bg-white/90">
         <div className="flex items-center gap-3">
           <Link href={`/dashboard/workout/${type}`}>
@@ -129,30 +204,52 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
           </div>
         </div>
         
-        <Button 
-          size="sm" 
-          className={cn(
-            "gap-2 font-black shadow-lg px-6 rounded-full transition-all active:scale-95 h-9",
-            isEditing ? "bg-primary hover:bg-primary/90" : "bg-black text-white hover:bg-black/80"
-          )} 
-          onClick={handleSave}
-        >
-          {isEditing ? <Save className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-          {isEditing ? 'SAVE' : 'EDIT'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {showViewMode ? (
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="font-black rounded-full h-9 gap-2"
+              onClick={() => setIsEditing(true)}
+            >
+              <Edit2 className="h-4 w-4" />
+              EDIT
+            </Button>
+          ) : (
+            <Button 
+              size="sm" 
+              className="gap-2 font-black shadow-lg px-6 rounded-full transition-all active:scale-95 h-9" 
+              onClick={handleSave}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              SAVE
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="p-4 space-y-4">
-        {/* View Mode: Professional Short List Format */}
-        {!isEditing && localSavedLog ? (
+        {showViewMode ? (
+          /* View Mode: Professional Short List Format */
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex items-center gap-2 text-primary bg-primary/5 p-3 rounded-2xl border border-primary/20">
-              <CheckCircle2 className="h-5 w-5 shrink-0" />
-              <p className="text-[10px] font-black uppercase tracking-widest">Training Session Complete</p>
+            <div className="flex items-center justify-between gap-2 text-primary bg-primary/5 p-3 rounded-2xl border border-primary/20">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Training Session Complete</p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={handleDeleteSession}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
             
             <div className="grid grid-cols-1 gap-3">
-              {localSavedLog.exercises.map((ex, i) => (
+              {savedLog.exercises.map((ex: any, i: number) => (
                 <div key={i} className="bg-white border-2 border-muted rounded-2xl p-4 shadow-sm border-l-4 border-l-primary relative overflow-hidden group hover:border-primary/30 transition-all">
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2">
@@ -167,7 +264,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    {ex.sets.map((set, setIdx) => (
+                    {ex.sets.map((set: any, setIdx: number) => (
                       <div key={setIdx} className="bg-muted/30 border border-muted-foreground/10 px-3 py-1.5 rounded-xl flex items-center gap-2">
                         <span className="text-[9px] font-black text-primary opacity-50">#{setIdx + 1}</span>
                         <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-tighter">
@@ -278,16 +375,28 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
               </Card>
             ))}
 
-            <Button 
-              variant="outline" 
-              className="w-full border-dashed border-2 py-10 flex flex-col gap-2 rounded-2xl hover:bg-primary/5 hover:border-primary/40 group transition-all mt-4"
-              onClick={handleAddExercise}
-            >
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                <Plus className="h-6 w-6" />
-              </div>
-              <span className="font-black text-[10px] uppercase tracking-[0.2em]">Add New Exercise</span>
-            </Button>
+            <div className="space-y-4">
+              <Button 
+                variant="outline" 
+                className="w-full border-dashed border-2 py-10 flex flex-col gap-2 rounded-2xl hover:bg-primary/5 hover:border-primary/40 group transition-all"
+                onClick={handleAddExercise}
+              >
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <Plus className="h-6 w-6" />
+                </div>
+                <span className="font-black text-[10px] uppercase tracking-[0.2em]">Add New Exercise</span>
+              </Button>
+
+              {isEditing && (
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-muted-foreground hover:text-destructive"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel Editing
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
