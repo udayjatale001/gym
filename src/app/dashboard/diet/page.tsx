@@ -98,6 +98,19 @@ export default function DietPage() {
     ));
   };
 
+  const handleClearChecklist = (mealId: string, day: number) => {
+    setMeals(prev => prev.map(m => 
+      m.id === mealId 
+        ? { 
+            ...m, 
+            checklist: Object.fromEntries(
+              Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)
+            ) as Record<number, 'taken' | 'skipped'>
+          }
+        : m
+    ));
+  };
+
   const currentViewingMeal = meals.find(m => m.id === viewingMealId);
 
   if (!isLoaded) {
@@ -255,6 +268,7 @@ export default function DietPage() {
         <ChecklistSheet 
           meal={currentViewingMeal} 
           onUpdate={(day, status) => handleUpdateChecklist(currentViewingMeal.id, day, status)}
+          onClear={(day) => handleClearChecklist(currentViewingMeal.id, day)}
           onClose={() => setViewingMealId(null)} 
         />
       )}
@@ -262,13 +276,29 @@ export default function DietPage() {
   );
 }
 
-function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate: (day: number, status: 'taken' | 'skipped') => void, onClose: () => void }) {
+function ChecklistSheet({ 
+  meal, 
+  onUpdate, 
+  onClear, 
+  onClose 
+}: { 
+  meal: LocalMeal, 
+  onUpdate: (day: number, status: 'taken' | 'skipped') => void, 
+  onClear: (day: number) => void,
+  onClose: () => void 
+}) {
+  const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
   const handleMarkDay = (day: number, status: 'taken' | 'skipped') => {
     setIsUpdating(day);
     onUpdate(day, status);
     setTimeout(() => setIsUpdating(null), 300);
+  };
+
+  const handleClearDay = (day: number) => {
+    onClear(day);
+    toast({ title: "Status Cleared", description: `Day ${day} has been reset.` });
   };
 
   const getDayStatus = (day: number) => meal.checklist[day];
@@ -366,14 +396,7 @@ function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate
                         <Button
                           variant="ghost"
                           className="w-full font-black text-[10px] uppercase opacity-40 mt-2"
-                          onClick={() => {
-                            setMeals(prev => prev.map(m => 
-                              m.id === meal.id 
-                                ? { ...m, checklist: { ...Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) } }
-                                : m
-                            ));
-                            toast({ title: "Status Cleared", description: `Day ${day} has been reset.` });
-                          }}
+                          onClick={() => handleClearDay(day)}
                         >
                           Clear Status
                         </Button>
