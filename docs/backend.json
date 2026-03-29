@@ -31,16 +31,28 @@
     },
     "WorkoutLog": {
       "title": "Workout Log",
-      "description": "A single workout session history stored as free-form text.",
+      "description": "A single workout session history with structured exercises.",
       "type": "object",
       "properties": {
         "workoutType": { "type": "string" },
         "day": { "type": "number" },
-        "description": { "type": "string" },
+        "exercises": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "sets": { "type": "string" },
+              "reps": { "type": "string" },
+              "weight": { "type": "string" }
+            },
+            "required": ["name"]
+          }
+        },
         "timestamp": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["workoutType", "day", "description"]
+      "required": ["workoutType", "day", "exercises"]
     },
     "WorkoutSplit": {
       "title": "Workout Split",
