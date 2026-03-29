@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,12 @@ import { ToastAction } from "@/components/ui/toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, addDoc, deleteDoc, doc, serverTimestamp, setDoc, orderBy } from "firebase/firestore";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
+
+const defaultSplits = [
+  { id: 'push-default', name: "Push", focus: "Chest, Shoulders, Triceps", description: "Focus on pushing movements and upper body strength." },
+  { id: 'pull-default', name: "Pull", focus: "Back, Biceps, Rear Delts", description: "Focus on pulling movements and back definition." },
+  { id: 'legs-default', name: "Legs", focus: "Quads, Hams, Glutes, Calves", description: "Complete lower body workout for power and stability." }
+];
 
 const iconMap: Record<string, any> = {
   push: Flame,
@@ -26,22 +28,12 @@ const iconMap: Record<string, any> = {
 
 export default function WorkoutPage() {
   const { toast } = useToast();
-  const db = useFirestore();
-  const { user } = useUser();
   
+  const [splits, setSplits] = useState<any[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const splitsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(db, 'users', user.uid, 'workoutSplits'),
-      orderBy('createdAt', 'asc')
-    );
-  }, [db, user]);
-
-  const { data: splits, loading } = useCollection(splitsQuery);
-
   // Form State
   const [formData, setFormData] = useState({
     name: "",
@@ -49,73 +41,74 @@ export default function WorkoutPage() {
     description: ""
   });
 
-  const handleAddSplit = () => {
-    const { name, focus, description } = formData;
-    if (!user || !name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('fitstride_splits');
+    if (saved) {
+      setSplits(JSON.parse(saved));
+    } else {
+      setSplits(defaultSplits);
+      localStorage.setItem('fitstride_splits', JSON.stringify(defaultSplits));
+    }
+    setIsLoaded(true);
+  }, []);
 
-    setIsSubmitting(true);
-    const splitData = {
-      name: name.trim(),
-      focus: focus.trim(),
-      description: description.trim(),
-      createdAt: serverTimestamp()
-    };
-
-    const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
-
-    addDoc(splitsRef, splitData)
-      .then(() => {
-        toast({
-          title: "Split Added",
-          description: `${name} has been saved to your plan.`,
-        });
-        setIsAddOpen(false);
-        setFormData({ name: "", focus: "", description: "" });
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: splitsRef.path,
-          operation: 'create',
-          requestResourceData: splitData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+  // Update both state and localStorage
+  const updateSplits = (newSplits: any[]) => {
+    setSplits(newSplits);
+    localStorage.setItem('fitstride_splits', JSON.stringify(newSplits));
   };
 
-  const handleDeleteSplit = (e: React.MouseEvent, splitId: string, splitName: string, splitData: any) => {
+  const handleAddSplit = () => {
+    const { name, focus, description } = formData;
+    if (!name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    
+    // Simulate a brief local processing delay
+    setTimeout(() => {
+      const newSplit = {
+        id: `split-${Date.now()}`,
+        name: name.trim(),
+        focus: focus.trim(),
+        description: description.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      updateSplits([...splits, newSplit]);
+      
+      toast({
+        title: "Split Added",
+        description: `${name} has been saved locally.`,
+      });
+      
+      setIsAddOpen(false);
+      setFormData({ name: "", focus: "", description: "" });
+      setIsSubmitting(false);
+    }, 300);
+  };
+
+  const handleDeleteSplit = (e: React.MouseEvent, splitId: string) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user) return;
+    const splitToDelete = splits.find(s => s.id === splitId);
+    if (!splitToDelete) return;
 
-    const splitRef = doc(db, 'users', user.uid, 'workoutSplits', splitId);
+    const newSplits = splits.filter(s => s.id !== splitId);
+    updateSplits(newSplits);
 
-    // Permanent Deletion from Firestore
-    deleteDoc(splitRef)
-      .then(() => {
-        toast({
-          title: "Split Removed",
-          description: `${splitName} has been deleted permanently.`,
-          action: (
-            <ToastAction altText="Undo" onClick={() => {
-              // Restore data back to Firestore
-              setDoc(splitRef, splitData);
-            }}>
-              Undo
-            </ToastAction>
-          ),
-        });
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: splitRef.path,
-          operation: 'delete',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    toast({
+      title: "Split Removed",
+      description: `${splitToDelete.name} has been deleted permanently.`,
+      action: (
+        <ToastAction altText="Undo" onClick={() => {
+          updateSplits([...newSplits, splitToDelete]);
+        }}>
+          Undo
+        </ToastAction>
+      ),
+    });
   };
 
   const getIcon = (name: string) => {
@@ -136,6 +129,14 @@ export default function WorkoutPage() {
 
   const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
 
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 space-y-6 pb-24">
       <div className="flex items-center justify-between">
@@ -144,7 +145,7 @@ export default function WorkoutPage() {
             <Dumbbell className="h-6 w-6" />
             Workout Tracker
           </h2>
-          <p className="text-xs text-muted-foreground">Manage your custom training splits.</p>
+          <p className="text-xs text-muted-foreground">Manage your custom training splits locally.</p>
         </div>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -213,11 +214,7 @@ export default function WorkoutPage() {
       </div>
 
       <div className="space-y-4">
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
-          </div>
-        ) : splits && splits.length > 0 ? (
+        {splits.length > 0 ? (
           splits.map((split: any) => {
             const Icon = getIcon(split.name);
             const colorClass = getColor(split.name);
@@ -242,7 +239,7 @@ export default function WorkoutPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full"
-                                onClick={(e) => handleDeleteSplit(e, split.id, split.name, split)}
+                                onClick={(e) => handleDeleteSplit(e, split.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
