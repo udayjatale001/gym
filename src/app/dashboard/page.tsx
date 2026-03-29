@@ -93,38 +93,38 @@ export default function DashboardPage() {
     <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
       {/* Training Card */}
       <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
-        <div className="absolute top-0 right-0 h-40 w-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 blur-3xl" />
-        <CardHeader className="pb-2">
+        <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
+        <CardHeader className="pb-1 pt-6">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 opacity-80">
             <Calendar className="h-4 w-4" />
             TRAINING SCHEDULE
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8 pb-10">
-          <div className="flex flex-col items-center text-center py-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-3">Today's Discipline</p>
-            <h3 className="text-6xl font-black tracking-tighter uppercase italic leading-none">
+        <CardContent className="space-y-4 pb-6">
+          <div className="flex flex-col items-center text-center py-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">Today's Discipline</p>
+            <h3 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
               {suggestion.today}
             </h3>
             {quote && (
-              <div className="mt-8 px-6 py-4 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20">
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-2 flex items-center justify-center gap-2">
+              <div className="mt-4 px-6 py-3 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20 w-full">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1 flex items-center justify-center gap-2">
                   <Quote className="h-2 w-2" /> DISCIPLINE DIRECTIVE
                 </p>
-                <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
+                <p className="text-[10px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
                   "{quote}"
                 </p>
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8">
-            <div className="text-left space-y-1">
+          <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+            <div className="text-left space-y-0.5">
               <p className="text-[9px] opacity-50 font-black uppercase tracking-[0.2em]">Yesterday</p>
-              <p className="text-lg font-black italic uppercase tracking-tight">{suggestion.yesterday}</p>
+              <p className="text-base font-black italic uppercase tracking-tight">{suggestion.yesterday}</p>
             </div>
-            <div className="text-right space-y-1">
+            <div className="text-right space-y-0.5">
               <p className="text-[9px] opacity-50 font-black uppercase tracking-[0.2em]">Tomorrow</p>
-              <p className="text-lg font-black italic uppercase tracking-tight">{suggestion.tomorrow}</p>
+              <p className="text-base font-black italic uppercase tracking-tight">{suggestion.tomorrow}</p>
             </div>
           </div>
         </CardContent>
