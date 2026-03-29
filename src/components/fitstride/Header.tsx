@@ -30,14 +30,14 @@ export function Header() {
       <div className="flex items-center gap-3">
         <DisciplineLogo />
         <div>
-          <h1 className="text-2xl font-black text-primary tracking-tighter italic leading-none">GYMBUDDY!</h1>
+          <h1 className="text-2xl font-black text-primary tracking-tighter italic leading-none uppercase">GYMBUDDY!</h1>
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5 opacity-60">
             DISCIPLINE MODE
           </p>
         </div>
       </div>
       <Link href="/dashboard/settings">
-        <button className="h-11 w-11 rounded-2xl bg-white border-2 border-muted shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-muted/50">
+        <button className="h-11 w-11 rounded-2xl bg-muted/30 border-2 border-muted/50 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-muted/50">
           <Settings className="h-5 w-5 text-muted-foreground" />
         </button>
       </Link>

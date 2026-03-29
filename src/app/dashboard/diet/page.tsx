@@ -164,10 +164,10 @@ export default function DietPage() {
       {currentViewingMeal && (
         <ChecklistSheet 
           meal={currentViewingMeal} 
-          onUpdate={(day, status, amount) => {
+          onUpdate={(day: number, status: 'taken' | 'skipped', amount: string) => {
             setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: { ...m.checklist, [day]: status }, amounts: { ...m.amounts, [day]: amount } } : m));
           }}
-          onClear={(day) => {
+          onClear={(day: number) => {
             setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) as any, amounts: Object.fromEntries(Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)) as any } : m));
           }}
           onClose={() => setViewingMealId(null)} 
@@ -191,7 +191,7 @@ function ChecklistSheet({ meal, onUpdate, onClear, onClose }: { meal: LocalMeal,
           </SheetHeader>
           <div className="grid grid-cols-5 gap-4">
             {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
-              <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} onMark={(s, a) => onUpdate(day, s, a)} onClear={() => onClear(day)} />
+              <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} onMark={(s: string, a: string) => onUpdate(day, s, a)} onClear={() => onClear(day)} />
             ))}
           </div>
         </div>
