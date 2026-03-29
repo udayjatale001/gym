@@ -23,7 +23,12 @@ const DISCIPLINE_QUOTES = [
   "CONSISTENCY BEATS INTENSITY EVERY SINGLE TIME.",
   "STRENGTH IS EARNED, NEVER GIVEN.",
   "THE PAIN OF DISCIPLINE IS FAR LESS THAN THE PAIN OF REGRET.",
-  "CHAMPIONS ARE MADE IN THE REPETITIONS NO ONE SEES."
+  "CHAMPIONS ARE MADE IN THE REPETITIONS NO ONE SEES.",
+  "SURE, IT’S HARD. BUT IT’S HARDER TO LIVE WITH REGRET.",
+  "YOU DON'T HAVE TO BE GREAT TO START, BUT YOU HAVE TO START TO BE GREAT.",
+  "YOUR ONLY LIMIT IS YOU.",
+  "DON'T STOP WHEN YOU'RE TIRED. STOP WHEN YOU'RE DONE.",
+  "THE ONLY BAD WORKOUT IS THE ONE THAT DIDN'T HAPPEN."
 ];
 
 export default function DashboardPage() {
@@ -47,8 +52,8 @@ export default function DashboardPage() {
     const savedMeals = localStorage.getItem('fitstride_diet_logs_v2');
     if (savedMeals) {
       const meals: LocalMeal[] = JSON.parse(savedMeals);
-      const today = format(new Date(), 'yyyy-MM-dd');
-      setHasLoggedMealToday(meals.some(m => m.date === today));
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      setHasLoggedMealToday(meals.some(m => m.date === todayStr));
     }
 
     // Set Training Schedule
@@ -62,8 +67,11 @@ export default function DashboardPage() {
       today: getWorkout(now), yesterday: getWorkout(subDays(now, 1)), tomorrow: getWorkout(addDays(now, 1))
     });
 
-    // Random Quote
-    setQuote(DISCIPLINE_QUOTES[Math.floor(Math.random() * DISCIPLINE_QUOTES.length)]);
+    // Daily Quote rotation at Midnight
+    // Using a deterministic seed based on the current date (YYYYMMDD)
+    const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+    const quoteIndex = dateSeed % DISCIPLINE_QUOTES.length;
+    setQuote(DISCIPLINE_QUOTES[quoteIndex]);
 
     setIsLoaded(true);
   }, []);
@@ -72,6 +80,7 @@ export default function DashboardPage() {
   
   const progress = (() => {
     if (weightLogs.length === 0 || targetWeight === 0) return 0;
+    // Find initial weight for progress calculation (oldest log)
     const startWeight = weightLogs[weightLogs.length - 1].weight;
     if (startWeight === targetWeight) return 100;
     const totalDist = Math.abs(startWeight - targetWeight);
