@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +19,6 @@ const defaultCategories = [
     color: "bg-primary", 
     icon: Flame,
     description: "Focus on pushing movements and upper body strength.",
-    isDefault: true
   },
   { 
     id: "pull", 
@@ -29,7 +27,6 @@ const defaultCategories = [
     color: "bg-secondary", 
     icon: Target,
     description: "Focus on pulling movements and back definition.",
-    isDefault: true
   },
   { 
     id: "legs", 
@@ -38,18 +35,16 @@ const defaultCategories = [
     color: "bg-accent", 
     icon: Zap,
     description: "Complete lower body workout for power and stability.",
-    isDefault: true
   },
 ];
 
-type CustomSplit = {
+type WorkoutSplit = {
   id: string;
   name: string;
   focus: string;
   description: string;
   color: string;
   icon: any;
-  isDefault: boolean;
 };
 
 export default function WorkoutPage() {
@@ -58,8 +53,8 @@ export default function WorkoutPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Local state for custom splits (No database saving)
-  const [localCustomSplits, setLocalCustomSplits] = useState<CustomSplit[]>([]);
+  // Track all splits in local state (starts with defaults)
+  const [activeSplits, setActiveSplits] = useState<WorkoutSplit[]>(defaultCategories);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -76,17 +71,16 @@ export default function WorkoutPage() {
 
     // Simulate a brief delay for UX feel, then update local state only
     setTimeout(() => {
-      const newSplit: CustomSplit = {
+      const newSplit: WorkoutSplit = {
         id: `custom-${Date.now()}`,
         name: name.trim(),
         focus: focus.trim(),
         description: description.trim(),
         color: "bg-muted-foreground",
         icon: Dumbbell,
-        isDefault: false
       };
 
-      setLocalCustomSplits(prev => [...prev, newSplit]);
+      setActiveSplits(prev => [...prev, newSplit]);
       
       toast({
         title: "Split Added",
@@ -100,21 +94,16 @@ export default function WorkoutPage() {
   };
 
   const handleDeleteSplit = (e: React.MouseEvent, splitId: string, splitName: string) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation(); // Prevent card click
     
-    setLocalCustomSplits(prev => prev.filter(s => s.id !== splitId));
+    setActiveSplits(prev => prev.filter(s => s.id !== splitId));
     
     toast({
       title: "Split Removed",
       description: `${splitName} has been deleted.`,
     });
   };
-
-  const allSplits = [
-    ...defaultCategories,
-    ...localCustomSplits
-  ];
 
   const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
 
@@ -126,7 +115,7 @@ export default function WorkoutPage() {
             <Dumbbell className="h-6 w-6" />
             Workout Tracker
           </h2>
-          <p className="text-xs text-muted-foreground">Manage your splits locally without saving to database.</p>
+          <p className="text-xs text-muted-foreground">Manage your training splits locally.</p>
         </div>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -159,7 +148,7 @@ export default function WorkoutPage() {
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Muscles</p>
                 <Input 
-                  placeholder="e.g., Chest, Triceps, Shoulders" 
+                  placeholder="e.g., Chest, Triceps" 
                   value={formData.focus}
                   onChange={(e) => setFormData(prev => ({ ...prev, focus: e.target.value }))}
                   disabled={isSubmitting}
@@ -168,7 +157,7 @@ export default function WorkoutPage() {
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Description</p>
                 <Textarea 
-                  placeholder="Focus on pushing movements and upper body strength." 
+                  placeholder="Focus on pushing movements..." 
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   disabled={isSubmitting}
@@ -195,23 +184,23 @@ export default function WorkoutPage() {
       </div>
 
       <div className="space-y-4">
-        {allSplits.map((cat) => (
-          <div key={cat.id} className="relative group">
-            <Link href={`/dashboard/workout/${cat.id}`}>
-              <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
-                <CardContent className="p-0 flex items-stretch min-h-[160px]">
-                  <div className={cn(cat.color, "w-2 shrink-0")}></div>
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                          <div className={cn("p-2 rounded-lg", cat.color.replace('bg-', 'bg-') + "/10")}>
-                            <cat.icon className={cn("h-5 w-5", cat.color.replace('bg-', 'text-'))} />
+        {activeSplits.length > 0 ? (
+          activeSplits.map((cat) => (
+            <div key={cat.id} className="relative group">
+              <Link href={`/dashboard/workout/${cat.id}`}>
+                <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
+                  <CardContent className="p-0 flex items-stretch min-h-[160px]">
+                    <div className={cn(cat.color, "w-2 shrink-0")}></div>
+                    <div className="p-5 flex-1 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <div className={cn("p-2 rounded-lg", cat.color.replace('bg-', 'bg-') + "/10")}>
+                              <cat.icon className={cn("h-5 w-5", cat.color.replace('bg-', 'text-'))} />
+                            </div>
+                            <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
                           </div>
-                          <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {!cat.isDefault && (
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -220,30 +209,35 @@ export default function WorkoutPage() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          )}
-                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
-                          <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
-                          <p className="text-xs text-muted-foreground leading-relaxed italic">{cat.description}</p>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed italic">{cat.description}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
+            <Dumbbell className="h-10 w-10 text-muted-foreground mx-auto opacity-20 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">No splits found.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Click the + button to add one.</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
 }
-
