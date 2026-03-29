@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -140,7 +139,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar">
       {/* Training Card */}
       <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
         <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
@@ -153,11 +152,11 @@ export default function DashboardPage() {
         <CardContent className="space-y-4 pb-8">
           <div className="flex flex-col items-center text-center py-2">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">{t.todaysDiscipline}</p>
-            <h3 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
+            <h3 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic leading-none">
               {suggestion.today}
             </h3>
             {quote && (
-              <div className="mt-6 px-6 py-4 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20 w-full">
+              <div className="mt-6 px-4 md:px-6 py-4 bg-black/10 rounded-2xl border border-white/5 w-full">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1 flex items-center justify-center gap-2">
                   <Quote className="h-2.5 w-2.5" /> {t.disciplineDirective}
                 </p>
@@ -180,28 +179,28 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4">
           <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg">
             <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">{t.current}</p>
-            <p className="text-4xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
+            <p className="text-3xl md:text-4xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
           <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg">
             <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">{t.target}</p>
-            <p className="text-4xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
+            <p className="text-3xl md:text-4xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
         </div>
 
-        <Card className="p-10 rounded-[3rem] shadow-2xl border-none bg-card space-y-8 relative overflow-hidden">
+        <Card className="p-8 md:p-10 rounded-[3rem] shadow-2xl border-none bg-card space-y-8 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-30" />
           <div className="flex justify-between items-end">
             <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" /> 
               {t.transformation}
             </h3>
-            <span className="text-4xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
+            <span className="text-3xl md:text-4xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
           </div>
           
           <div className="space-y-6">
-            <div className="h-8 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/30">
+            <div className="h-8 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/30 relative">
                <div 
-                 className="h-full bg-primary transition-all duration-1000 ease-out rounded-full"
+                 className="h-full bg-primary transition-all duration-1000 ease-out rounded-full shadow-[0_0_15px_rgba(var(--primary),0.3)]"
                  style={{ width: `${progress}%` }}
                />
             </div>
@@ -209,7 +208,7 @@ export default function DashboardPage() {
             {targetWeight > 0 && weightLogs.length > 0 && (
               <div className="text-center py-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-border/50">
                 <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">{t.remainingGap}</p>
-                <p className="text-5xl font-black italic tracking-tighter">
+                <p className="text-4xl md:text-5xl font-black italic tracking-tighter">
                   {remainingGap} <span className="text-sm opacity-30 not-italic tracking-normal">KG</span>
                 </p>
               </div>
@@ -220,29 +219,29 @@ export default function DashboardPage() {
 
       {/* Water Intake Card */}
       <Card className={cn(
-        "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative",
+        "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative active:scale-[0.98]",
         waterAmount >= WATER_GOAL ? "bg-primary/10" : "bg-card border border-border/50"
       )}>
-        <CardContent className="p-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-5">
+        <CardContent className="p-6 md:p-8 space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
               <div className={cn(
-                "h-16 w-16 rounded-[1.5rem] flex items-center justify-center transition-all shadow-inner",
+                "h-14 w-14 md:h-16 md:w-16 rounded-[1.5rem] flex items-center justify-center transition-all shadow-inner shrink-0",
                 waterAmount >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
               )}>
-                <Droplet className="h-8 w-8" />
+                <Droplet className="h-7 w-7 md:h-8 md:w-8" />
               </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">{t.waterIntake}</p>
-                <p className="text-2xl font-black italic uppercase tracking-tight text-primary">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60 truncate">{t.waterIntake}</p>
+                <p className="text-xl md:text-2xl font-black italic uppercase tracking-tight text-primary truncate">
                   {(waterAmount / 1000).toFixed(1)} <span className="text-xs not-italic opacity-40">/ 4.0 {t.liters}</span>
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {waterAmount > 0 && (
-                <Button onClick={handleResetWater} variant="ghost" size="icon" className="h-12 w-12 rounded-2xl border-2 border-muted/50 text-muted-foreground/40 hover:text-destructive transition-colors active:scale-90">
-                  <RotateCcw className="h-5 w-5" />
+                <Button onClick={handleResetWater} variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-2 border-muted/50 text-muted-foreground/40 hover:text-destructive active:scale-90">
+                  <RotateCcw className="h-4 w-4" />
                 </Button>
               )}
               {waterAmount >= WATER_GOAL ? (
@@ -250,8 +249,8 @@ export default function DashboardPage() {
                   <CheckCircle2 className="h-6 w-6 text-primary" />
                 </div>
               ) : (
-                <Button onClick={handleAddWater} size="sm" className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] italic shadow-lg active:scale-90">
-                  <Plus className="h-4 w-4 mr-2" /> {t.addWater}
+                <Button onClick={handleAddWater} size="sm" className="h-10 md:h-12 px-4 md:px-6 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] italic shadow-lg active:scale-90">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> {t.addWater}
                 </Button>
               )}
             </div>
