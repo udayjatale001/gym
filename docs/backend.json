@@ -49,6 +49,7 @@
       "properties": {
         "name": { "type": "string" },
         "focus": { "type": "string" },
+        "description": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name"]

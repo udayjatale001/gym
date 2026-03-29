@@ -71,15 +71,31 @@ export default function WorkoutPage() {
 
     setIsSubmitting(true);
     
+    // Logic for intelligent mapping
+    const nameLower = trimmedName.toLowerCase();
+    let focus = "Custom Workout Split";
+    let description = "Personalized training split.";
+
+    if (nameLower.includes("push") || nameLower.includes("chest")) {
+      focus = "Chest, Shoulders, Triceps";
+      description = "Focus on pushing movements and upper body strength.";
+    } else if (nameLower.includes("pull") || nameLower.includes("back") || nameLower.includes("bicep")) {
+      focus = "Back, Biceps, Rear Delts";
+      description = "Focus on pulling movements and back definition.";
+    } else if (nameLower.includes("legs") || nameLower.includes("squat")) {
+      focus = "Quads, Hams, Glutes, Calves";
+      description = "Complete lower body workout for power and stability.";
+    }
+
     const splitData = {
       name: trimmedName,
-      focus: "Custom Workout Split",
+      focus: focus,
+      description: description,
       createdAt: serverTimestamp()
     };
 
     const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
 
-    // Initiation of write without await for snappy UI
     addDoc(splitsRef, splitData)
       .then(() => {
         toast({
@@ -131,10 +147,10 @@ export default function WorkoutPage() {
     ...(customSplits || []).map((s: any) => ({
       id: s.id,
       name: s.name,
-      focus: s.focus,
+      focus: s.focus || "Custom Workout Split",
       color: "bg-muted-foreground",
       icon: Dumbbell,
-      description: "Personalized training split.",
+      description: s.description || "Personalized training split.",
       isDefault: false
     }))
   ];
@@ -171,7 +187,7 @@ export default function WorkoutPage() {
               <div className="space-y-2">
                 <p className="text-xs font-bold text-muted-foreground uppercase">Split Name</p>
                 <Input 
-                  placeholder="e.g., Chest + Triceps" 
+                  placeholder="e.g., Chest" 
                   value={newSplitName}
                   onChange={(e) => setNewSplitName(e.target.value)}
                   autoFocus
@@ -207,8 +223,8 @@ export default function WorkoutPage() {
             <div key={cat.id} className="relative group">
               <Link href={`/dashboard/workout/${cat.id}`}>
                 <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
-                  <CardContent className="p-0 flex items-stretch h-32">
-                    <div className={cn(cat.color, "w-3")}></div>
+                  <CardContent className="p-0 flex items-stretch min-h-[140px]">
+                    <div className={cn(cat.color, "w-3 shrink-0")}></div>
                     <div className="p-5 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start">
@@ -232,8 +248,13 @@ export default function WorkoutPage() {
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                           </div>
                         </div>
-                        <p className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-tight">{cat.focus}</p>
-                        <p className="text-[10px] text-muted-foreground/80 mt-1 line-clamp-1">{cat.description}</p>
+                        <div className="mt-3 space-y-1">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
+                        </div>
+                        <div className="mt-2">
+                           <p className="text-[10px] text-muted-foreground/80 leading-relaxed italic">{cat.description}</p>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
