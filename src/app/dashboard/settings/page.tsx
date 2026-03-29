@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trash2, AlertTriangle, RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages } from "lucide-react";
+import { RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages } from "lucide-react";
 import { useFirestore, useUser, useAuth } from '@/firebase';
-import { doc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -21,7 +21,6 @@ export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [isResetting, setIsResetting] = useState(false);
   const [isCycling, setIsCycling] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -95,64 +94,6 @@ export default function SettingsPage() {
       });
     } finally {
       setIsCycling(false);
-    }
-  };
-
-  const handleFullReset = async () => {
-    if (!user || !db) return;
-    
-    const confirmMessage = lang === 'hi' 
-      ? "क्या आप वाकई अपना सारा डेटा हटाना चाहते हैं? यह प्रक्रिया वापस नहीं ली जा सकती।" 
-      : "Are you sure you want to delete all your data? This action cannot be undone.";
-
-    if (!confirm(confirmMessage)) return;
-
-    setIsResetting(true);
-    try {
-      // 1. Clear Firestore Data
-      const batch = writeBatch(db);
-      const userRef = doc(db, 'users', user.uid);
-      
-      batch.set(userRef, {
-        displayName: user.displayName || "",
-        email: user.email || "",
-        currentWeight: 0,
-        targetWeight: 0,
-        goal: "",
-        workoutStartDate: format(new Date(), 'yyyy-MM-dd'),
-        createdAt: new Date().toISOString()
-      });
-
-      const subcollections = ['weightLogs', 'workoutLogs', 'mealLogs', 'workoutSplits'];
-      for (const sub of subcollections) {
-        const querySnapshot = await getDocs(collection(db, 'users', user.uid, sub));
-        querySnapshot.forEach((document) => {
-          batch.delete(doc(db, 'users', user.uid, sub, document.id));
-        });
-      }
-      await batch.commit();
-
-      // 2. Clear LocalStorage Data
-      localStorage.clear();
-
-      toast({
-        title: lang === 'hi' ? "सिस्टम रीसेट पूरा हुआ" : "System Reset Complete",
-        description: lang === 'hi' ? "आपका सारा डेटा साफ़ कर दिया गया है।" : "All your fitness and diet data has been permanently cleared.",
-      });
-
-      // 3. Hard reload to refresh all states
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1500);
-
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Reset Failed",
-        description: "Could not clear all data. Please try again.",
-      });
-    } finally {
-      setIsResetting(false);
     }
   };
 
@@ -239,29 +180,6 @@ export default function SettingsPage() {
             >
               {isCycling ? <RefreshCcw className="h-5 w-5 animate-spin" /> : <Calendar className="h-5 w-5" />}
               {t.setTodayDay1}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-none shadow-2xl rounded-[2.5rem] bg-destructive/5 border-2 border-destructive/10 overflow-hidden">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
-            <CardTitle className="text-lg font-black uppercase tracking-tight italic">{t.dangerZone}</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-destructive/60 px-1">{t.fullSystemReset}</h4>
-            <Button 
-              variant="destructive" 
-              className="w-full h-20 rounded-[1.5rem] gap-4 font-black uppercase italic tracking-tighter text-lg shadow-xl active:scale-95 transition-all" 
-              onClick={handleFullReset}
-              disabled={isResetting}
-            >
-              {isResetting ? <RefreshCcw className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />}
-              {t.clearAllData}
             </Button>
           </div>
         </CardContent>

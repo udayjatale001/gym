@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Settings } from "lucide-react";
-import Link from "link/link"; // Note: This might be a typo in user's codebase, should be 'next/link'
 import LinkNext from "next/link";
 import { useUser } from "@/firebase";
 import { Language, translations } from '@/lib/translations';
@@ -48,7 +47,7 @@ export function Header() {
         </div>
       </div>
       <LinkNext href="/dashboard/settings" className="shrink-0">
-        <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-muted/30 border-2 border-muted/50 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-muted/50">
+        <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-background border-2 border-muted/50 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-muted/30">
           <Settings className="h-5 w-5 text-muted-foreground" />
         </button>
       </LinkNext>
