@@ -15,8 +15,13 @@ import { useToast } from '@/hooks/use-toast';
 type MealType = 'Breakfast' | 'Snacks' | 'Lunch' | 'Dinner';
 
 interface LocalMeal {
-  id: string; mealType: MealType; mealName: string; timestamp: string; date: string;
-  checklist: Record<number, 'taken' | 'skipped'>; amounts: Record<number, string>;
+  id: string; 
+  mealType: MealType; 
+  mealName: string; 
+  timestamp: string; 
+  date: string;
+  checklist: Record<number, 'taken' | 'skipped'>; 
+  amounts: Record<number, string>;
 }
 
 export default function DietPage() {
@@ -210,9 +215,13 @@ function DayDialog({ day, status, amount, onMark, onClear }: { day: number, stat
         <Button variant="outline" className={cn("h-16 md:h-20 w-full p-0 flex flex-col items-center justify-center rounded-[1rem] md:rounded-[1.5rem] border-4 active:scale-90 transition-all relative", status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner", status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner", !status && "bg-muted/30 border-muted/50 opacity-40")}>
           <span className="text-[8px] md:text-[10px] font-black absolute top-1 md:top-1.5 left-1.5 md:left-2 opacity-40 italic">{day}</span>
           {status === 'taken' ? (
-            <div className="flex flex-col items-center gap-0.5">
-              <CheckCircle2 className="h-5 w-5 md:h-7 md:w-7" />
-              {amount && <span className="text-[6px] md:text-[8px] font-black uppercase truncate max-w-[90%] px-0.5">{amount}</span>}
+            <div className="flex flex-col items-center justify-center w-full px-1 overflow-hidden">
+              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 mb-0.5 text-primary shrink-0" />
+              {amount && (
+                <span className="text-[8px] md:text-[10px] font-black uppercase leading-none text-center line-clamp-2 w-full">
+                  {amount}
+                </span>
+              )}
             </div>
           ) : status === 'skipped' ? (
             <XCircle className="h-5 w-5 md:h-7 md:w-7" />
