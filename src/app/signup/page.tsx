@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,11 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label';
 import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -22,68 +17,21 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const auth = useAuth();
-  const db = useFirestore();
   const { toast } = useToast();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Passwords mismatch",
-        description: "Please make sure both passwords are the same.",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // 1. Create initial user profile
-      await setDoc(doc(db, 'users', user.uid), {
-        displayName: name,
-        email: email,
-        currentWeight: 0,
-        targetWeight: 0,
-        goal: "",
-        workoutStartDate: format(new Date(), 'yyyy-MM-dd'),
-        createdAt: new Date().toISOString()
-      });
-
-      // 2. Seed default PPL splits into Firestore for the user
-      const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
-      const defaults = [
-        { name: "Push", focus: "Chest, Shoulders, Triceps", description: "Focus on pushing movements and upper body strength." },
-        { name: "Pull", focus: "Back, Biceps, Rear Delts", description: "Focus on pulling movements and back definition." },
-        { name: "Legs", focus: "Quads, Hams, Glutes, Calves", description: "Complete lower body workout for power and stability." }
-      ];
-
-      for (const item of defaults) {
-        await addDoc(splitsRef, {
-          ...item,
-          createdAt: serverTimestamp()
-        });
-      }
-
-      toast({
-        title: "Account Created!",
-        description: "Your fitness journey starts now.",
-      });
-      
+    // Direct navigation as requested
+    setTimeout(() => {
       router.push('/dashboard');
-    } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Signup Failed",
-        description: error.message || "An error occurred during account creation.",
+        title: "Account Ready!",
+        description: "Welcome to FitStride.",
       });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -139,7 +87,6 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
                 />
               </div>
               <div className="space-y-2">
@@ -155,7 +102,7 @@ export default function SignupPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full h-12 font-bold text-lg" disabled={isLoading}>
+              <Button type="submit" className="w-full h-12 font-black text-lg uppercase italic" disabled={isLoading}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 SIGN UP
               </Button>

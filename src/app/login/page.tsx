@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,8 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from '@/components/ui/label';
 import { Dumbbell, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
@@ -18,29 +15,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const auth = useAuth();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    // Direct navigation as requested
+    setTimeout(() => {
       router.push('/dashboard');
       toast({
         title: "Welcome back!",
-        description: "You have successfully logged in.",
+        description: "You have successfully entered Guest Mode.",
       });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "Invalid credentials. Please try again.",
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -85,7 +74,7 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full h-12 font-bold text-lg" disabled={isLoading}>
+              <Button type="submit" className="w-full h-12 font-black text-lg uppercase italic" disabled={isLoading}>
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 LOGIN
               </Button>
