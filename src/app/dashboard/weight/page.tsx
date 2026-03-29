@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Scale, Plus, History, Loader2, Clock, Trash2, Calendar, Target, TrendingUp, ChevronRight } from "lucide-react";
+import { Scale, Plus, History, Loader2, Clock, Trash2, Calendar, Target, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -82,6 +82,7 @@ export default function WeightPage() {
       title: "Goal Saved",
       description: "Your target weight has been updated locally.",
     });
+    // Auto-close on save
     setIsProgressOpen(false);
   };
 
@@ -113,7 +114,7 @@ export default function WeightPage() {
   }
 
   return (
-    <div className="p-4 space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 space-y-8 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
           <div className="h-16 w-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 -rotate-2 border-b-4 border-primary-foreground/20">

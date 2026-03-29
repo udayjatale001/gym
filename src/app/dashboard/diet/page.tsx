@@ -130,7 +130,7 @@ export default function DietPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 pb-28 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="p-4 space-y-6 pb-28 min-h-svh animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex items-center gap-4 pt-2">
         <Button 
           size="icon" 
