@@ -223,52 +223,64 @@ export default function DashboardPage() {
         waterAmount >= WATER_GOAL ? "bg-primary/10" : "bg-card border border-border/50"
       )}>
         <CardContent className="p-6 md:p-8 space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className={cn(
-                "h-14 w-14 md:h-16 md:w-16 rounded-[1.5rem] flex items-center justify-center transition-all shadow-inner shrink-0",
-                waterAmount >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
-              )}>
-                <Droplet className="h-7 w-7 md:h-8 md:w-8" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60 truncate">{t.waterIntake}</p>
-                <p className="text-xl md:text-2xl font-black italic uppercase tracking-tight text-primary truncate">
-                  {(waterAmount / 1000).toFixed(1)} <span className="text-xs not-italic opacity-40">/ 4.0 {t.liters}</span>
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {waterAmount > 0 && (
-                <Button onClick={handleResetWater} variant="ghost" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-2 border-muted/50 text-muted-foreground/40 hover:text-destructive active:scale-90">
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              )}
-              {waterAmount >= WATER_GOAL ? (
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
-                  <CheckCircle2 className="h-6 w-6 text-primary" />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={cn(
+                  "h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0",
+                  waterAmount >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
+                )}>
+                  <Droplet className="h-6 w-6" />
                 </div>
-              ) : (
-                <Button onClick={handleAddWater} size="sm" className="h-10 md:h-12 px-4 md:px-6 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] italic shadow-lg active:scale-90">
-                  <Plus className="h-3.5 w-3.5 mr-1" /> {t.addWater}
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="h-4 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/10">
-              <div 
-                className={cn(
-                  "h-full transition-all duration-700 ease-out rounded-full",
-                  waterAmount >= WATER_GOAL ? "bg-primary" : "bg-primary/40"
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60 truncate">{t.waterIntake}</p>
+                  <p className="text-lg md:text-xl font-black italic uppercase tracking-tight text-primary truncate">
+                    {(waterAmount / 1000).toFixed(1)} <span className="text-[10px] not-italic opacity-40">/ 4.0 {t.liters}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {waterAmount > 0 && (
+                  <Button 
+                    onClick={handleResetWater} 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-10 w-10 rounded-xl border-2 border-muted/50 text-muted-foreground/40 hover:text-destructive active:scale-90 transition-all"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
                 )}
-                style={{ width: `${waterProgress}%` }}
-              />
+                {waterAmount >= WATER_GOAL ? (
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={handleAddWater} 
+                    size="sm" 
+                    className="h-10 px-3 md:px-4 rounded-xl font-black uppercase tracking-tighter text-[9px] italic shadow-lg active:scale-90 whitespace-nowrap bg-primary"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> {t.addWater}
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex justify-between items-center px-1">
-              <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{t.dailyGoal}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest opacity-40 italic">{Math.round(waterProgress)}%</p>
+            
+            <div className="space-y-2">
+              <div className="h-3 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/10">
+                <div 
+                  className={cn(
+                    "h-full transition-all duration-700 ease-out rounded-full",
+                    waterAmount >= WATER_GOAL ? "bg-primary" : "bg-primary/40"
+                  )}
+                  style={{ width: `${waterProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center px-1">
+                <p className="text-[8px] font-black uppercase tracking-widest opacity-40">{t.dailyGoal}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest opacity-40 italic">{Math.round(waterProgress)}%</p>
+              </div>
             </div>
           </div>
         </CardContent>
