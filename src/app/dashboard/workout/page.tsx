@@ -7,6 +7,7 @@ import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2 } fro
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy, doc, deleteDoc } from "firebase/firestore";
@@ -51,8 +52,14 @@ export default function WorkoutPage() {
   const { toast } = useToast();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newSplitName, setNewSplitName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    focus: "",
+    description: ""
+  });
 
   // Fetch custom splits with real-time updates
   const splitsQuery = useMemoFirebase(() => {
@@ -66,45 +73,28 @@ export default function WorkoutPage() {
   const { data: customSplits, loading } = useCollection(splitsQuery);
 
   const handleAddSplit = () => {
-    const trimmedName = newSplitName.trim();
-    if (!user || !trimmedName || isSubmitting) return;
+    const { name, focus, description } = formData;
+    if (!user || !name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    
-    // Intelligent mapping logic
-    const nameLower = trimmedName.toLowerCase();
-    let focus = "Custom Workout Split";
-    let description = "Personalized training split.";
-
-    if (nameLower.includes("push") || nameLower.includes("chest") || nameLower.includes("tricep")) {
-      focus = "Chest, Shoulders, Triceps";
-      description = "Focus on pushing movements and upper body strength.";
-    } else if (nameLower.includes("pull") || nameLower.includes("back") || nameLower.includes("bicep")) {
-      focus = "Back, Biceps, Rear Delts";
-      description = "Focus on pulling movements and back definition.";
-    } else if (nameLower.includes("legs") || nameLower.includes("squat") || nameLower.includes("quad")) {
-      focus = "Quads, Hams, Glutes, Calves";
-      description = "Complete lower body workout for power and stability.";
-    }
 
     const splitData = {
-      name: trimmedName,
-      focus: focus,
-      description: description,
+      name: name.trim(),
+      focus: focus.trim(),
+      description: description.trim(),
       createdAt: serverTimestamp()
     };
 
     const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
 
-    // Initiate write - UI will update instantly via useCollection
     addDoc(splitsRef, splitData)
       .then(() => {
         toast({
           title: "Split Added",
-          description: `${trimmedName} is ready to log.`,
+          description: `${name} is ready to log.`,
         });
         setIsAddOpen(false);
-        setNewSplitName("");
+        setFormData({ name: "", focus: "", description: "" });
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -156,6 +146,8 @@ export default function WorkoutPage() {
     }))
   ];
 
+  const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
+
   return (
     <div className="p-4 space-y-6 pb-24">
       <div className="flex items-center justify-between">
@@ -173,7 +165,7 @@ export default function WorkoutPage() {
               size="icon" 
               className="rounded-full h-10 w-10 shadow-lg"
               onClick={() => {
-                setNewSplitName("");
+                setFormData({ name: "", focus: "", description: "" });
                 setIsSubmitting(false);
               }}
             >
@@ -186,14 +178,32 @@ export default function WorkoutPage() {
             </DialogHeader>
             <div className="py-4 space-y-4">
               <div className="space-y-2">
-                <p className="text-xs font-bold text-muted-foreground uppercase">Split Name</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Split Name</p>
                 <Input 
                   placeholder="e.g., Chest + Triceps" 
-                  value={newSplitName}
-                  onChange={(e) => setNewSplitName(e.target.value)}
-                  autoFocus
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   disabled={isSubmitting}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddSplit()}
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Muscles</p>
+                <Input 
+                  placeholder="e.g., Chest, Triceps, Shoulders" 
+                  value={formData.focus}
+                  onChange={(e) => setFormData(prev => ({ ...prev, focus: e.target.value }))}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Description</p>
+                <Textarea 
+                  placeholder="Focus on pushing movements and upper body strength." 
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  disabled={isSubmitting}
+                  className="resize-none"
+                  rows={3}
                 />
               </div>
             </div>
@@ -201,7 +211,7 @@ export default function WorkoutPage() {
               <Button 
                 className="w-full font-bold" 
                 onClick={handleAddSplit} 
-                disabled={!newSplitName.trim() || isSubmitting}
+                disabled={!isFormValid || isSubmitting}
               >
                 {isSubmitting ? (
                   <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...</>
@@ -217,23 +227,23 @@ export default function WorkoutPage() {
       <div className="space-y-4">
         {loading ? (
           <div className="space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-32 bg-muted animate-pulse rounded-xl" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
           </div>
         ) : (
           allSplits.map((cat) => (
             <div key={cat.id} className="relative group">
               <Link href={`/dashboard/workout/${cat.id}`}>
                 <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
-                  <CardContent className="p-0 flex items-stretch min-h-[140px]">
-                    <div className={cn(cat.color, "w-3 shrink-0")}></div>
+                  <CardContent className="p-0 flex items-stretch min-h-[160px]">
+                    <div className={cn(cat.color, "w-2 shrink-0")}></div>
                     <div className="p-5 flex-1 flex flex-col justify-between">
-                      <div>
+                      <div className="space-y-4">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
                             <div className={cn("p-2 rounded-lg", cat.color.replace('bg-', 'bg-') + "/10")}>
                               <cat.icon className={cn("h-5 w-5", cat.color.replace('bg-', 'text-'))} />
                             </div>
-                            <h4 className="font-bold text-xl">{cat.name}</h4>
+                            <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
                           </div>
                           <div className="flex items-center gap-2">
                             {!cat.isDefault && (
@@ -249,12 +259,16 @@ export default function WorkoutPage() {
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                           </div>
                         </div>
-                        <div className="mt-3 space-y-1">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
-                          <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
-                        </div>
-                        <div className="mt-2">
-                           <p className="text-[10px] text-muted-foreground/80 leading-relaxed italic">{cat.description}</p>
+
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed italic">{cat.description}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
