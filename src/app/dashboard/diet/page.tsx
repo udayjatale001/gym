@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
@@ -34,7 +34,7 @@ export default function DietPage() {
   const [viewingMealId, setViewingMealId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load meals from localStorage on mount
+  // Load persistent local data
   useEffect(() => {
     const saved = localStorage.getItem('fitstride_diet_logs');
     if (saved) {
@@ -43,7 +43,7 @@ export default function DietPage() {
     setIsLoaded(true);
   }, []);
 
-  // Save meals to localStorage whenever they change
+  // Sync to local storage on change
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem('fitstride_diet_logs', JSON.stringify(meals));
@@ -55,7 +55,7 @@ export default function DietPage() {
 
     setIsSubmitting(true);
     
-    // Simulate slight delay for "Confirm Meal" feel
+    // Simulate brief interaction delay for smoothness
     setTimeout(() => {
       const newMeal: LocalMeal = {
         id: Math.random().toString(36).substr(2, 9),
@@ -78,15 +78,15 @@ export default function DietPage() {
       setMealName("");
       setSelectedType(null);
       setIsSubmitting(false);
-    }, 400);
+    }, 300);
   };
 
   const handleDeleteMeal = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setMeals(prev => prev.filter(m => m.id !== id));
     toast({
-      title: "Meal Deleted",
-      description: "The meal entry has been removed from your local list.",
+      title: "Entry Removed",
+      description: "Meal deleted from your local history.",
     });
   };
 
@@ -115,16 +115,16 @@ export default function DietPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-svh">
         <Loader2 className="h-8 w-8 animate-spin text-primary/30" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-6 pb-24 animate-in fade-in duration-500">
-      {/* Header with + button in front */}
-      <div className="flex items-center gap-4">
+    <div className="p-4 space-y-6 pb-28 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* Dynamic Header with + Button */}
+      <div className="flex items-center gap-4 pt-2">
         <Button 
           size="icon" 
           className="h-12 w-12 rounded-2xl shadow-xl active:scale-90 transition-transform bg-primary hover:bg-primary/90 shrink-0"
@@ -147,7 +147,7 @@ export default function DietPage() {
         </div>
       </div>
 
-      {/* Meal List Section */}
+      {/* Persistent Meal List */}
       <section className="space-y-3">
         {meals.length > 0 ? (
           meals.map((meal) => (
@@ -200,9 +200,9 @@ export default function DietPage() {
         )}
       </section>
 
-      {/* Log Meal Dialog */}
+      {/* Log Meal Flow */}
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
-        <DialogContent className="sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8">
+        <DialogContent className="w-[90%] sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
           <DialogHeader>
             <DialogTitle className="text-3xl font-black uppercase tracking-tighter italic text-center text-primary">
               {step === 1 ? 'Select Category' : `Log ${selectedType}`}
@@ -229,7 +229,7 @@ export default function DietPage() {
               ))}
             </div>
           ) : (
-            <div className="py-8 space-y-8">
+            <div className="py-8 space-y-8 animate-in slide-in-from-right-4 duration-300">
               <div className="space-y-3">
                 <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Describe your meal</p>
                 <Input 
@@ -244,7 +244,7 @@ export default function DietPage() {
               <div className="flex gap-4">
                 <Button 
                   variant="ghost" 
-                  className="flex-1 font-black text-xs uppercase rounded-[1.2rem] h-16 tracking-widest" 
+                  className="flex-1 font-black text-xs uppercase rounded-[1.2rem] h-16 tracking-widest active:scale-95" 
                   onClick={() => setStep(1)}
                   disabled={isSubmitting}
                 >
@@ -263,7 +263,7 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Checklist Sheet */}
+      {/* Checklist View Sheet */}
       {currentViewingMeal && (
         <ChecklistSheet 
           meal={currentViewingMeal} 
@@ -293,6 +293,7 @@ function ChecklistSheet({
   const handleMarkDay = (day: number, status: 'taken' | 'skipped') => {
     setIsUpdating(day);
     onUpdate(day, status);
+    // Visual debounce for smoothness
     setTimeout(() => setIsUpdating(null), 300);
   };
 
@@ -308,103 +309,105 @@ function ChecklistSheet({
 
   return (
     <Sheet open={!!meal} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="h-[90svh] w-full p-0 overflow-y-auto no-scrollbar border-none shadow-2xl rounded-t-[3.5rem]">
-        <div className="p-8 space-y-10 animate-in slide-in-from-bottom duration-500">
-          <SheetHeader className="text-left">
-            <div className="flex items-center gap-4 mb-2">
-              <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 rounded-full border-2 border-muted hover:border-primary hover:text-primary active:scale-90 transition-all">
-                <ArrowLeft className="h-6 w-6" />
-              </Button>
-              <div className="space-y-0.5">
-                <SheetTitle className="text-3xl font-black uppercase tracking-tighter italic text-primary leading-none">
-                  {meal.mealName}
-                </SheetTitle>
-                <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em]">
-                  {meal.mealType} • 30-Day Consistency Cycle
-                </p>
-              </div>
-            </div>
-          </SheetHeader>
-
-          {/* Stats Banner */}
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Logged</p>
-              <p className="text-5xl font-black text-primary leading-none">{totalTaken}</p>
-              <div className="h-1.5 w-12 rounded-full bg-primary/20" />
-            </Card>
-            <Card className="bg-destructive/5 border-2 border-destructive/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Skipped</p>
-              <p className="text-5xl font-black text-destructive leading-none">{totalSkipped}</p>
-              <div className="h-1.5 w-12 rounded-full bg-destructive/20" />
-            </Card>
-          </div>
-
-          {/* Grid Layout */}
-          <div className="space-y-4 pb-12">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-[12px] font-black uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" /> Progress Grid
-              </h3>
-              {totalSkipped > 5 && (
-                <div className="flex items-center gap-1.5 text-[10px] font-black text-destructive uppercase tracking-widest animate-pulse">
-                  <AlertCircle className="h-3.5 w-3.5" /> High Skips
+      <SheetContent side="bottom" className="h-[92svh] w-full p-0 overflow-hidden border-none shadow-2xl rounded-t-[3.5rem] focus:outline-none">
+        <div className="h-full overflow-y-auto no-scrollbar pb-12">
+          <div className="p-8 space-y-10 animate-in slide-in-from-bottom-8 duration-500">
+            <SheetHeader className="text-left">
+              <div className="flex items-center gap-4 mb-2">
+                <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 rounded-full border-2 border-muted hover:border-primary hover:text-primary active:scale-90 transition-all">
+                  <ArrowLeft className="h-6 w-6" />
+                </Button>
+                <div className="space-y-0.5">
+                  <SheetTitle className="text-3xl font-black uppercase tracking-tighter italic text-primary leading-none">
+                    {meal.mealName}
+                  </SheetTitle>
+                  <p className="text-[11px] text-muted-foreground font-black uppercase tracking-[0.2em]">
+                    {meal.mealType} • 30-Day Consistency Cycle
+                  </p>
                 </div>
-              )}
+              </div>
+            </SheetHeader>
+
+            {/* Performance Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Logged</p>
+                <p className="text-5xl font-black text-primary leading-none">{totalTaken}</p>
+                <div className="h-1.5 w-12 rounded-full bg-primary/20" />
+              </Card>
+              <Card className="bg-destructive/5 border-2 border-destructive/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Skipped</p>
+                <p className="text-5xl font-black text-destructive leading-none">{totalSkipped}</p>
+                <div className="h-1.5 w-12 rounded-full bg-destructive/20" />
+              </Card>
             </div>
-            
-            <div className="grid grid-cols-5 gap-3">
-              {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
-                const status = getDayStatus(day);
-                return (
-                  <Dialog key={day}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "h-20 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-[1.2rem] shadow-sm relative overflow-hidden",
-                          status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
-                          status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
-                          !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
-                          isUpdating === day && "animate-pulse"
-                        )}
-                      >
-                        <span className="text-[11px] font-black mb-1 opacity-50 absolute top-2">{day}</span>
-                        {status === 'taken' && <CheckCircle2 className="h-6 w-6 mt-3" />}
-                        {status === 'skipped' && <XCircle className="h-6 w-6 mt-3" />}
-                        {!status && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/20 mt-3" />}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-xs rounded-[2.5rem] border-none shadow-2xl p-8">
-                      <DialogHeader>
-                        <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-2xl">Day {day} Status</DialogTitle>
-                      </DialogHeader>
-                      <div className="flex flex-col gap-3 py-8">
-                        <Button 
-                          className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-primary/20"
-                          onClick={() => handleMarkDay(day, 'taken')}
-                        >
-                          <CheckCircle2 className="h-6 w-6" /> Mark as Taken
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-destructive/20"
-                          onClick={() => handleMarkDay(day, 'skipped')}
-                        >
-                          <XCircle className="h-6 w-6" /> Mark as Skipped
-                        </Button>
+
+            {/* Consistency Grid */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2">
+                  <Calendar className="h-4 w-4" /> Progress Grid
+                </h3>
+                {totalSkipped > 5 && (
+                  <div className="flex items-center gap-1.5 text-[10px] font-black text-destructive uppercase tracking-widest animate-pulse">
+                    <AlertCircle className="h-3.5 w-3.5" /> Consistency Warning
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-5 gap-3">
+                {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
+                  const status = getDayStatus(day);
+                  return (
+                    <Dialog key={day}>
+                      <DialogTrigger asChild>
                         <Button
-                          variant="ghost"
-                          className="w-full font-black text-[10px] uppercase opacity-40 mt-2"
-                          onClick={() => handleClearDay(day)}
+                          variant="outline"
+                          className={cn(
+                            "h-20 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-[1.2rem] shadow-sm relative overflow-hidden",
+                            status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
+                            status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
+                            !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
+                            isUpdating === day && "animate-pulse"
+                          )}
                         >
-                          Clear Status
+                          <span className="text-[11px] font-black mb-1 opacity-50 absolute top-2">{day}</span>
+                          {status === 'taken' && <CheckCircle2 className="h-6 w-6 mt-3 animate-in zoom-in duration-300" />}
+                          {status === 'skipped' && <XCircle className="h-6 w-6 mt-3 animate-in zoom-in duration-300" />}
+                          {!status && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/20 mt-3" />}
                         </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                );
-              })}
+                      </DialogTrigger>
+                      <DialogContent className="w-[85%] sm:max-w-xs rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
+                        <DialogHeader>
+                          <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-2xl">Day {day} Status</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-3 py-8">
+                          <Button 
+                            className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-primary/20 active:scale-95"
+                            onClick={() => handleMarkDay(day, 'taken')}
+                          >
+                            <CheckCircle2 className="h-6 w-6" /> Mark as Taken
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-destructive/20 active:scale-95"
+                            onClick={() => handleMarkDay(day, 'skipped')}
+                          >
+                            <XCircle className="h-6 w-6" /> Mark as Skipped
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="w-full font-black text-[10px] uppercase opacity-40 mt-2 active:scale-95"
+                            onClick={() => handleClearDay(day)}
+                          >
+                            Reset Status
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
