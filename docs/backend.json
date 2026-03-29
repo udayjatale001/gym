@@ -24,37 +24,38 @@
       "type": "object",
       "properties": {
         "weight": { "type": "number" },
-        "date": { "type": "string", "format": "date" }
+        "date": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["weight", "date"]
     },
     "WorkoutLog": {
       "title": "Workout Log",
-      "description": "A single workout session history.",
+      "description": "A single workout session history stored as free-form text.",
       "type": "object",
       "properties": {
-        "date": { "type": "string", "format": "date" },
+        "workoutType": { "type": "string" },
+        "day": { "type": "number" },
         "description": { "type": "string" },
-        "durationMinutes": { "type": "number" },
-        "intensity": { "type": "string", "enum": ["low", "medium", "high"] },
-        "exercises": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": { "type": "string" },
-              "sets": { "type": "number" },
-              "reps": { "type": "number" },
-              "weight": { "type": "number" }
-            }
-          }
-        }
+        "timestamp": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["date", "description"]
+      "required": ["workoutType", "day", "description"]
+    },
+    "WorkoutSplit": {
+      "title": "Workout Split",
+      "description": "A custom user-defined workout split category.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "focus": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
     },
     "MealLog": {
       "title": "Meal Log",
-      "description": "Detailed meal entry with specific type and consistency checklist.",
+      "description": "Detailed meal entry.",
       "type": "object",
       "properties": {
         "mealType": { "type": "string", "enum": ["Breakfast", "Snacks", "Lunch", "Dinner"] },
@@ -90,6 +91,10 @@
     "/users/{userId}/workoutLogs/{logId}": {
       "schema": "WorkoutLog",
       "description": "Workout history for the user."
+    },
+    "/users/{userId}/workoutSplits/{splitId}": {
+      "schema": "WorkoutSplit",
+      "description": "Custom workout splits created by the user."
     },
     "/users/{userId}/mealLogs/{mealId}": {
       "schema": "MealLog",
