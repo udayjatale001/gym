@@ -1,19 +1,26 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, Info, Utensils, CheckCircle2, Calendar, Scale } from "lucide-react";
+import { Info, Utensils, CheckCircle2, Calendar, Scale } from "lucide-react";
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
-import { doc, query, collection, orderBy, limit, setDoc } from "firebase/firestore";
-import { format, differenceInDays, addDays, subDays, startOfDay } from 'date-fns';
+import { doc, query, collection, orderBy, limit } from "firebase/firestore";
+import { format, addDays, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const db = useFirestore();
   const { user } = useUser();
-  const [suggestion, setSuggestion] = useState<{ today: string; yesterday: string; tomorrow: string } | null>(null);
+  
+  // State initialized with valid placeholders that match the requested format
+  // We use useEffect to update based on client-side weekday to avoid hydration mismatches
+  const [suggestion, setSuggestion] = useState<{ today: string; yesterday: string; tomorrow: string }>({
+    today: "Rest",
+    yesterday: "Rest",
+    tomorrow: "Rest"
+  });
 
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc(userRef);
@@ -42,34 +49,29 @@ export default function DashboardPage() {
   const progress = targetWeight > 0 ? Math.min(100, (currentWeight / targetWeight) * 100) : 0;
   const hasLoggedMealToday = recentMeals?.some(m => m.date === format(new Date(), 'yyyy-MM-dd'));
 
-  // Workout Cycle Logic
+  // Workout Split Weekday Logic
   useEffect(() => {
-    if (!user || !profile) return;
-
-    let startDate: Date;
-    if (profile.workoutStartDate) {
-      startDate = startOfDay(new Date(profile.workoutStartDate));
-    } else {
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
-      startDate = startOfDay(new Date());
-      setDoc(doc(db, 'users', user.uid), { workoutStartDate: todayStr }, { merge: true });
-    }
-
-    const today = startOfDay(new Date());
-    const cycle = ["Push", "Pull", "Legs"];
-
     const getWorkout = (date: Date) => {
-      const diff = differenceInDays(date, startDate);
-      const index = ((diff % 3) + 3) % 3;
-      return cycle[index];
+      const day = date.getDay(); // 0 (Sun) to 6 (Sat)
+      const map: Record<number, string> = {
+        0: "Rest",
+        1: "Push",
+        2: "Pull",
+        3: "Legs",
+        4: "Push",
+        5: "Pull",
+        6: "Legs"
+      };
+      return map[day];
     };
 
+    const now = new Date();
     setSuggestion({
-      today: getWorkout(today),
-      yesterday: getWorkout(subDays(today, 1)),
-      tomorrow: getWorkout(addDays(today, 1))
+      today: getWorkout(now),
+      yesterday: getWorkout(subDays(now, 1)),
+      tomorrow: getWorkout(addDays(now, 1))
     });
-  }, [user, profile, db]);
+  }, []);
 
   return (
     <div className="p-4 space-y-6">
@@ -85,17 +87,17 @@ export default function DashboardPage() {
           <div className="flex flex-col items-center text-center py-2">
             <p className="text-xs opacity-70 mb-1">Today's Focus</p>
             <h3 className="text-3xl font-black tracking-tighter uppercase">
-              {suggestion ? suggestion.today : "Calculating..."}
+              {suggestion.today}
             </h3>
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-primary-foreground/20 pt-4">
             <div className="text-left">
               <p className="text-[10px] opacity-60 font-bold uppercase">Yesterday</p>
-              <p className="text-sm font-bold">{suggestion?.yesterday || '--'}</p>
+              <p className="text-sm font-bold">{suggestion.yesterday}</p>
             </div>
             <div className="text-right">
               <p className="text-[10px] opacity-60 font-bold uppercase">Tomorrow</p>
-              <p className="text-sm font-bold">{suggestion?.tomorrow || '--'}</p>
+              <p className="text-sm font-bold">{suggestion.tomorrow}</p>
             </div>
           </div>
         </CardContent>
