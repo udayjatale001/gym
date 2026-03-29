@@ -125,7 +125,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       <div className="p-4 space-y-6">
         {showView ? (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            <Card className={cn("border-none shadow-xl rounded-[2.5rem] p-6 flex justify-between items-center", savedWorkout.status === 'skipped' ? "bg-destructive/10" : "bg-primary/10")}>
+            <Card className={cn("border-4 rounded-[2.5rem] p-6 flex justify-between items-center bg-background shadow-none", savedWorkout.status === 'skipped' ? "border-destructive/20" : "border-primary/20")}>
                <div className="flex items-center gap-4">
                   <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center text-white shadow-lg", savedWorkout.status === 'skipped' ? "bg-destructive" : "bg-primary")}>
                     {savedWorkout.status === 'skipped' ? <Ban className="h-8 w-8" /> : <CheckCircle2 className="h-8 w-8" />}
@@ -140,7 +140,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                </Button>
             </Card>
             {savedWorkout.status === 'completed' && savedWorkout.exercises.map((ex: any, i: number) => (
-              <Card key={i} className="border-none shadow-xl rounded-[2.5rem] bg-white border-l-8 border-l-primary p-6 space-y-5">
+              <Card key={i} className="border-4 border-muted rounded-[2.5rem] bg-background border-l-8 border-l-primary p-6 space-y-5 shadow-none">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center"><Dumbbell className="h-6 w-6 text-primary" /></div>
@@ -152,7 +152,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                 </div>
                 <div className="space-y-2.5">
                   {ex.sets.map((set: any, idx: number) => (
-                    <div key={idx} className="bg-muted/20 px-6 py-4 rounded-2xl flex items-center justify-between">
+                    <div key={idx} className="bg-muted/30 px-6 py-4 rounded-2xl flex items-center justify-between border-2 border-transparent">
                       <span className="text-[10px] font-black text-primary uppercase tracking-widest italic">SET {idx+1}</span>
                       <div className="flex items-center gap-6">
                         <div className="text-right">
@@ -173,26 +173,26 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         ) : (
           <div className="space-y-6 animate-in slide-in-from-top-4">
             {exercises.map((exercise, exIdx) => (
-              <Card key={exIdx} className="border-4 border-muted rounded-[2.5rem] bg-white p-6 space-y-6 relative overflow-hidden">
+              <Card key={exIdx} className="border-4 border-muted rounded-[2.5rem] bg-background p-6 space-y-6 relative overflow-hidden shadow-none">
                 <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
                 <div className="flex justify-between items-center">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">MOVEMENT {exIdx + 1}</p>
                   {exercises.length > 1 && <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground/30 active:scale-90" onClick={() => setExercises(p => p.filter((_, i) => i !== exIdx))}><Trash2 className="h-4 w-4" /></Button>}
                 </div>
-                <Input placeholder="E.G. BENCH PRESS" value={exercise.name} onChange={(e) => { const n = [...exercises]; n[exIdx].name = e.target.value.toUpperCase(); setExercises(n); }} className="h-16 font-black border-4 border-muted text-lg rounded-2xl uppercase focus-visible:ring-primary shadow-inner" />
+                <Input placeholder="E.G. BENCH PRESS" value={exercise.name} onChange={(e) => { const n = [...exercises]; n[exIdx].name = e.target.value.toUpperCase(); setExercises(n); }} className="h-16 font-black border-4 border-muted text-lg rounded-2xl uppercase focus-visible:ring-primary shadow-inner bg-background" />
                 <div className="space-y-4">
                   {exercise.sets.map((set, setIdx) => (
                     <div key={setIdx} className="flex gap-3 items-center">
                        <div className="h-14 w-14 bg-primary text-white rounded-2xl flex items-center justify-center font-black italic shadow-lg shrink-0">#{setIdx+1}</div>
-                       <Input placeholder="REPS" value={set.reps} inputMode="numeric" onChange={(e) => { const n = [...exercises]; n[exIdx].sets[setIdx].reps = e.target.value; setExercises(n); }} className="h-14 font-black border-2 border-muted text-center text-xl rounded-2xl focus-visible:ring-primary" />
-                       <Input placeholder="KG" value={set.weight} inputMode="decimal" onChange={(e) => { const n = [...exercises]; n[exIdx].sets[setIdx].weight = e.target.value; setExercises(n); }} className="h-14 font-black border-2 border-muted text-center text-xl rounded-2xl focus-visible:ring-primary" />
+                       <Input placeholder="REPS" value={set.reps} inputMode="numeric" onChange={(e) => { const n = [...exercises]; n[exIdx].sets[setIdx].reps = e.target.value; setExercises(n); }} className="h-14 font-black border-2 border-muted text-center text-xl rounded-2xl focus-visible:ring-primary bg-background" />
+                       <Input placeholder="KG" value={set.weight} inputMode="decimal" onChange={(e) => { const n = [...exercises]; n[exIdx].sets[setIdx].weight = e.target.value; setExercises(n); }} className="h-14 font-black border-2 border-muted text-center text-xl rounded-2xl focus-visible:ring-primary bg-background" />
                     </div>
                   ))}
-                  <Button variant="outline" className="w-full h-14 border-dashed border-4 border-muted rounded-2xl font-black uppercase tracking-widest text-xs" onClick={() => { const n = [...exercises]; n[exIdx].sets.push({ reps: "", weight: "" }); setExercises(n); }}>+ ADD SET</Button>
+                  <Button variant="outline" className="w-full h-14 border-dashed border-4 border-muted rounded-2xl font-black uppercase tracking-widest text-xs bg-background" onClick={() => { const n = [...exercises]; n[exIdx].sets.push({ reps: "", weight: "" }); setExercises(n); }}>+ ADD SET</Button>
                 </div>
               </Card>
             ))}
-            <Button variant="outline" className="w-full h-24 border-dashed border-4 border-primary/30 rounded-[2.5rem] bg-primary/5 flex flex-col gap-2 active:scale-95" onClick={() => setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }])}>
+            <Button variant="outline" className="w-full h-24 border-dashed border-4 border-primary/30 rounded-[2.5rem] bg-background flex flex-col gap-2 active:scale-95" onClick={() => setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }])}>
               <Plus className="h-8 w-8 text-primary" />
               <span className="font-black text-[10px] uppercase tracking-[0.3em] text-primary">NEW MOVEMENT</span>
             </Button>
