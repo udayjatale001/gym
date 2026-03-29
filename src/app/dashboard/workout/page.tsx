@@ -9,12 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, doc, deleteDoc } from "firebase/firestore";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const defaultCategories = [
   { 
@@ -46,14 +42,25 @@ const defaultCategories = [
   },
 ];
 
+type CustomSplit = {
+  id: string;
+  name: string;
+  focus: string;
+  description: string;
+  color: string;
+  icon: any;
+  isDefault: boolean;
+};
+
 export default function WorkoutPage() {
-  const db = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Local state for custom splits (No database saving)
+  const [localCustomSplits, setLocalCustomSplits] = useState<CustomSplit[]>([]);
+
   // Form State
   const [formData, setFormData] = useState({
     name: "",
@@ -61,89 +68,52 @@ export default function WorkoutPage() {
     description: ""
   });
 
-  // Fetch custom splits with real-time updates
-  const splitsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(db, 'users', user.uid, 'workoutSplits'),
-      orderBy('createdAt', 'asc')
-    );
-  }, [db, user]);
-
-  const { data: customSplits, loading } = useCollection(splitsQuery);
-
   const handleAddSplit = () => {
     const { name, focus, description } = formData;
-    if (!user || !name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
+    if (!name.trim() || !focus.trim() || !description.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
 
-    const splitData = {
-      name: name.trim(),
-      focus: focus.trim(),
-      description: description.trim(),
-      createdAt: serverTimestamp()
-    };
+    // Simulate a brief delay for UX feel, then update local state only
+    setTimeout(() => {
+      const newSplit: CustomSplit = {
+        id: `custom-${Date.now()}`,
+        name: name.trim(),
+        focus: focus.trim(),
+        description: description.trim(),
+        color: "bg-muted-foreground",
+        icon: Dumbbell,
+        isDefault: false
+      };
 
-    const splitsRef = collection(db, 'users', user.uid, 'workoutSplits');
-
-    addDoc(splitsRef, splitData)
-      .then(() => {
-        toast({
-          title: "Split Added",
-          description: `${name} is ready to log.`,
-        });
-        setIsAddOpen(false);
-        setFormData({ name: "", focus: "", description: "" });
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: splitsRef.path,
-          operation: 'create',
-          requestResourceData: splitData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
+      setLocalCustomSplits(prev => [...prev, newSplit]);
+      
+      toast({
+        title: "Split Added",
+        description: `${name} is now in your list.`,
       });
+      
+      setIsAddOpen(false);
+      setFormData({ name: "", focus: "", description: "" });
+      setIsSubmitting(false);
+    }, 300);
   };
 
   const handleDeleteSplit = (e: React.MouseEvent, splitId: string, splitName: string) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user) return;
-
-    const splitDocRef = doc(db, 'users', user.uid, 'workoutSplits', splitId);
+    setLocalCustomSplits(prev => prev.filter(s => s.id !== splitId));
     
-    deleteDoc(splitDocRef)
-      .then(() => {
-        toast({
-          title: "Split Removed",
-          description: `${splitName} has been deleted.`,
-        });
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: splitDocRef.path,
-          operation: 'delete',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    toast({
+      title: "Split Removed",
+      description: `${splitName} has been deleted.`,
+    });
   };
 
   const allSplits = [
     ...defaultCategories,
-    ...(customSplits || []).map((s: any) => ({
-      id: s.id,
-      name: s.name,
-      focus: s.focus || "Custom Split",
-      color: "bg-muted-foreground",
-      icon: Dumbbell,
-      description: s.description || "Personalized training split.",
-      isDefault: false
-    }))
+    ...localCustomSplits
   ];
 
   const isFormValid = formData.name.trim() && formData.focus.trim() && formData.description.trim();
@@ -156,7 +126,7 @@ export default function WorkoutPage() {
             <Dumbbell className="h-6 w-6" />
             Workout Tracker
           </h2>
-          <p className="text-xs text-muted-foreground">Manage your splits and track your 30-day journey.</p>
+          <p className="text-xs text-muted-foreground">Manage your splits locally without saving to database.</p>
         </div>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -214,7 +184,7 @@ export default function WorkoutPage() {
                 disabled={!isFormValid || isSubmitting}
               >
                 {isSubmitting ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Adding...</>
                 ) : (
                   'Save Split'
                 )}
@@ -225,60 +195,55 @@ export default function WorkoutPage() {
       </div>
 
       <div className="space-y-4">
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-40 bg-muted animate-pulse rounded-xl" />)}
-          </div>
-        ) : (
-          allSplits.map((cat) => (
-            <div key={cat.id} className="relative group">
-              <Link href={`/dashboard/workout/${cat.id}`}>
-                <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
-                  <CardContent className="p-0 flex items-stretch min-h-[160px]">
-                    <div className={cn(cat.color, "w-2 shrink-0")}></div>
-                    <div className="p-5 flex-1 flex flex-col justify-between">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-2">
-                            <div className={cn("p-2 rounded-lg", cat.color.replace('bg-', 'bg-') + "/10")}>
-                              <cat.icon className={cn("h-5 w-5", cat.color.replace('bg-', 'text-'))} />
-                            </div>
-                            <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
+        {allSplits.map((cat) => (
+          <div key={cat.id} className="relative group">
+            <Link href={`/dashboard/workout/${cat.id}`}>
+              <Card className="overflow-hidden group hover:border-primary transition-all cursor-pointer shadow-sm active:scale-[0.98]">
+                <CardContent className="p-0 flex items-stretch min-h-[160px]">
+                  <div className={cn(cat.color, "w-2 shrink-0")}></div>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <div className={cn("p-2 rounded-lg", cat.color.replace('bg-', 'bg-') + "/10")}>
+                            <cat.icon className={cn("h-5 w-5", cat.color.replace('bg-', 'text-'))} />
                           </div>
-                          <div className="flex items-center gap-2">
-                            {!cat.isDefault && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
-                                onClick={(e) => handleDeleteSplit(e, cat.id, cat.name)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                          </div>
+                          <h4 className="font-black text-xl tracking-tight uppercase">{cat.name}</h4>
                         </div>
+                        <div className="flex items-center gap-2">
+                          {!cat.isDefault && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+                              onClick={(e) => handleDeleteSplit(e, cat.id, cat.name)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
 
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
-                            <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed italic">{cat.description}</p>
-                          </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Muscles</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase">{cat.focus}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">Description</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed italic">{cat.description}</p>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
-          ))
-        )}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
+
