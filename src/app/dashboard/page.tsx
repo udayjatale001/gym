@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Utensils, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote } from "lucide-react";
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
@@ -16,20 +16,23 @@ interface LocalWeightLog {
   timestamp: string;
 }
 
-interface LocalMeal {
+interface WaterLog {
   date: string;
+  amount: number;
 }
 
 export default function DashboardPage() {
   const [weightLogs, setWeightLogs] = useState<LocalWeightLog[]>([]);
   const [targetWeight, setTargetWeight] = useState<number>(0);
-  const [hasLoggedMealToday, setHasLoggedMealToday] = useState(false);
+  const [waterAmount, setWaterAmount] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [quote, setQuote] = useState("");
   const [suggestion, setSuggestion] = useState<{ today: string }>({
     today: "Rest"
   });
   const [lang, setLang] = useState<Language>('en');
+
+  const WATER_GOAL = 4000; // 4 Liters in mL
 
   useEffect(() => {
     // Load Language
@@ -44,12 +47,13 @@ export default function DashboardPage() {
     if (savedWeightLogs) setWeightLogs(JSON.parse(savedWeightLogs));
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
 
-    // Load Diet Data
-    const savedMeals = localStorage.getItem('fitstride_diet_logs_v2');
-    if (savedMeals) {
-      const meals: LocalMeal[] = JSON.parse(savedMeals);
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
-      setHasLoggedMealToday(meals.some(m => m.date === todayStr));
+    // Load Water Data
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const savedWater = localStorage.getItem('fitstride_water_logs');
+    if (savedWater) {
+      const logs: WaterLog[] = JSON.parse(savedWater);
+      const todayLog = logs.find(l => l.date === todayStr);
+      if (todayLog) setWaterAmount(todayLog.amount);
     }
 
     // Set Training Schedule (Today Only)
@@ -79,6 +83,24 @@ export default function DashboardPage() {
     setIsLoaded(true);
   }, []);
 
+  const handleAddWater = () => {
+    const newAmount = Math.min(WATER_GOAL, waterAmount + 250);
+    setWaterAmount(newAmount);
+    
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const savedWater = localStorage.getItem('fitstride_water_logs');
+    let logs: WaterLog[] = savedWater ? JSON.parse(savedWater) : [];
+    
+    const todayIndex = logs.findIndex(l => l.date === todayStr);
+    if (todayIndex > -1) {
+      logs[todayIndex].amount = newAmount;
+    } else {
+      logs.push({ date: todayStr, amount: newAmount });
+    }
+    
+    localStorage.setItem('fitstride_water_logs', JSON.stringify(logs));
+  };
+
   const t = translations[lang];
 
   const weightLogsSorted = [...weightLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -94,6 +116,7 @@ export default function DashboardPage() {
   })();
 
   const remainingGap = Math.abs(currentWeight - targetWeight).toFixed(1);
+  const waterProgress = (waterAmount / WATER_GOAL) * 100;
 
   if (!isLoaded) {
     return (
@@ -182,35 +205,53 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Diet Card */}
+      {/* Water Intake Card */}
       <Card className={cn(
-        "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden",
-        hasLoggedMealToday ? "bg-primary/10" : "bg-card border border-border/50"
+        "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative",
+        waterAmount >= WATER_GOAL ? "bg-primary/10" : "bg-card border border-border/50"
       )}>
-        <CardContent className="p-8 flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <div className={cn(
-              "h-16 w-16 rounded-[1.5rem] flex items-center justify-center transition-all shadow-inner",
-              hasLoggedMealToday ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
-            )}>
-              <Utensils className="h-8 w-8" />
+        <CardContent className="p-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              <div className={cn(
+                "h-16 w-16 rounded-[1.5rem] flex items-center justify-center transition-all shadow-inner",
+                waterAmount >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
+              )}>
+                <Droplet className="h-8 w-8" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">{t.waterIntake}</p>
+                <p className="text-2xl font-black italic uppercase tracking-tight text-primary">
+                  {(waterAmount / 1000).toFixed(1)} <span className="text-xs not-italic opacity-40">/ 4.0 {t.liters}</span>
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">{t.dietaryLoop}</p>
-              <p className="text-lg font-black italic uppercase tracking-tight">
-                {hasLoggedMealToday ? t.fuelLogged : t.awaitingLog}
-              </p>
+            {waterAmount >= WATER_GOAL ? (
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              </div>
+            ) : (
+              <Button onClick={handleAddWater} size="sm" className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] italic shadow-lg active:scale-90">
+                <Plus className="h-4 w-4 mr-2" /> {t.addWater}
+              </Button>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/10">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-700 ease-out rounded-full",
+                  waterAmount >= WATER_GOAL ? "bg-primary" : "bg-primary/40"
+                )}
+                style={{ width: `${waterProgress}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center px-1">
+              <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{t.dailyGoal}</p>
+              <p className="text-[9px] font-black uppercase tracking-widest opacity-40 italic">{Math.round(waterProgress)}%</p>
             </div>
           </div>
-          {hasLoggedMealToday ? (
-            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
-              <CheckCircle2 className="h-6 w-6 text-primary" />
-            </div>
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
-              <Loader2 className="h-5 w-5 text-muted-foreground opacity-30 animate-spin" />
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

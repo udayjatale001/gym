@@ -30,6 +30,14 @@ export const translations = {
     pull: "PULL",
     legs: "LEGS",
 
+    // Water Intake
+    waterIntake: "WATER INTAKE",
+    dailyGoal: "DAILY GOAL",
+    liters: "L",
+    addWater: "ADD 250ML",
+    hydrationSuccess: "HYDRATION SECURED",
+    stayHydrated: "STAY HYDRATED",
+
     // Weight Page
     bodyMass: "BODY MASS",
     precisionTracking: "PRECISION TRACKING",
@@ -117,6 +125,14 @@ export const translations = {
     push: "पुश",
     pull: "पुल",
     legs: "लेग्स",
+
+    // Water Intake
+    waterIntake: "पानी का सेवन",
+    dailyGoal: "दैनिक लक्ष्य",
+    liters: "ली",
+    addWater: "250ML जोड़ें",
+    hydrationSuccess: "हाइड्रेशन सफल",
+    stayHydrated: "हाइड्रेटेड रहें",
 
     // Weight Page
     bodyMass: "शरीर का वजन",
