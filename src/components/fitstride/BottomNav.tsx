@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -17,7 +16,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card border-t border-border flex items-center justify-around py-3 px-2 z-50 rounded-t-2xl shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+    <nav className="sticky bottom-0 left-0 right-0 w-full bg-card/80 backdrop-blur-xl border-t border-border/40 flex items-center justify-around py-4 px-2 z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
         return (
@@ -25,12 +24,17 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center gap-1 transition-colors duration-200",
-              isActive ? "text-primary" : "text-muted-foreground hover:text-primary/70"
+              "flex flex-col items-center gap-1.5 transition-all duration-300 active:scale-90",
+              isActive ? "text-primary scale-110" : "text-muted-foreground hover:text-primary/70"
             )}
           >
-            <item.icon className={cn("h-6 w-6", isActive && "fill-primary/10")} />
-            <span className="text-[10px] font-medium uppercase tracking-wider">{item.label}</span>
+            <item.icon className={cn("h-6 w-6 transition-all", isActive && "fill-primary/20")} />
+            <span className={cn(
+              "text-[9px] font-black uppercase tracking-[0.15em] transition-all",
+              isActive ? "opacity-100" : "opacity-60"
+            )}>
+              {item.label}
+            </span>
           </Link>
         );
       })}

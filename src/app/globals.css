@@ -23,33 +23,7 @@
     --border: 146 20% 85%;
     --input: 146 20% 85%;
     --ring: 146 60% 41%;
-    --radius: 0.75rem;
-    --chart-1: 146 60% 41%;
-    --chart-2: 180 52% 59%;
-    --chart-3: 160 40% 50%;
-    --chart-4: 190 60% 45%;
-    --chart-5: 140 30% 60%;
-  }
-  .dark {
-    --background: 146 50% 5%;
-    --foreground: 148 44% 94%;
-    --card: 146 50% 8%;
-    --card-foreground: 148 44% 94%;
-    --popover: 146 50% 8%;
-    --popover-foreground: 148 44% 94%;
-    --primary: 146 60% 41%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 180 40% 20%;
-    --secondary-foreground: 180 52% 59%;
-    --muted: 146 30% 15%;
-    --muted-foreground: 146 20% 70%;
-    --accent: 180 52% 59%;
-    --accent-foreground: 146 50% 5%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 146 30% 20%;
-    --input: 146 30% 20%;
-    --ring: 146 60% 41%;
+    --radius: 1.25rem;
   }
 }
 
@@ -62,21 +36,22 @@
     @apply bg-background text-foreground font-body;
     overflow-x: hidden;
     overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Custom Scrollbar Handling */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Mobile-First Adjustments */
 @layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
   .min-h-svh {
     min-height: 100svh;
+  }
+  .h-svh {
+    height: 100svh;
   }
 }
