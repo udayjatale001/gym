@@ -72,6 +72,8 @@ export const translations = {
     analyticsHub: "ANALYTICS HUB",
     efficiency: "EFFICIENCY",
     completed: "COMPLETED",
+    recallPrevious: "RECALL PREVIOUS",
+    cloneSuccess: "TEMPLATE APPLIED",
 
     // Settings
     account: "ACCOUNT",
@@ -90,7 +92,7 @@ export const translations = {
       "DISCIPLINE IS THE BRIDGE BETWEEN GOALS AND ACCOMPLISHMENT.",
       "CONSISTENCY BEATS INTENSITY EVERY SINGLE TIME.",
       "STRENGTH IS EARNED, NEVER GIVEN.",
-      "THE PAIN OF DISCIPLINE IS FAR LESS THAN THE PAIN OF REGRET.",
+      "THE PAIN OF DISCIPLINE IS FAR LESS THEN THE PAIN OF REGRET.",
       "CHAMPIONS ARE MADE IN THE REPETITIONS NO ONE SEES.",
       "SURE, IT’S HARD. BUT IT’S HARDER TO LIVE WITH REGRET.",
       "YOU DON'T HAVE TO BE GREAT TO START, BUT YOU HAVE TO START TO BE GREAT.",
@@ -169,6 +171,8 @@ export const translations = {
     analyticsHub: "एनालिटिक्स हब",
     efficiency: "दक्षता",
     completed: "पूरा हुआ",
+    recallPrevious: "पिछला रिकॉल",
+    cloneSuccess: "टेम्पलेट लागू",
 
     // Settings
     account: "खाता",

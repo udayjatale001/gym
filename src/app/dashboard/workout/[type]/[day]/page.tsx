@@ -1,15 +1,17 @@
+
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2, ListPlus, X, Edit2, TrendingUp, Ban } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2, ListPlus, X, Edit2, TrendingUp, Ban, History } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
+import { Language, translations } from "@/lib/translations";
 
 export default function WorkoutLogPage({ params }: { params: Promise<{ type: string, day: string }> }) {
   const { type, day } = use(params);
@@ -20,10 +22,17 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedWorkout, setSavedWorkout] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [lang, setLang] = useState<Language>('en');
+  const [previousSession, setPreviousSession] = useState<any>(null);
+  const [allExerciseNames, setAllExerciseNames] = useState<string[]>([]);
 
+  const t = translations[lang];
   const storageKey = `fitstride_workout_${type}_day_${day}`;
 
   useEffect(() => {
+    const savedLang = localStorage.getItem('language') as Language;
+    if (savedLang) setLang(savedLang);
+
     const savedSplits = localStorage.getItem('fitstride_splits');
     if (savedSplits) {
       const splits = JSON.parse(savedSplits);
@@ -36,7 +45,27 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       const parsed = JSON.parse(localData);
       setSavedWorkout(parsed);
       if (parsed.status === 'completed') setExercises(parsed.exercises);
+    } else {
+      setIsEditing(true);
     }
+
+    // Find previous session for RECALL feature
+    const currentDay = parseInt(day);
+    let foundPrev = null;
+    const names = new Set<string>();
+
+    for (let i = currentDay - 1; i >= 1; i--) {
+      const prevData = localStorage.getItem(`fitstride_workout_${type}_day_${i}`);
+      if (prevData) {
+        const parsed = JSON.parse(prevData);
+        if (parsed.status === 'completed') {
+          if (!foundPrev) foundPrev = parsed;
+          parsed.exercises.forEach((ex: any) => names.add(ex.name.toUpperCase()));
+        }
+      }
+    }
+    setPreviousSession(foundPrev);
+    setAllExerciseNames(Array.from(names));
     setIsLoaded(true);
   }, [type, day, storageKey]);
 
@@ -71,19 +100,14 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     toast({ title: "Deleted", description: "Session record removed." });
   };
 
-  const handleDeleteExercise = (exIdx: number) => {
-    if (!savedWorkout || !savedWorkout.exercises) return;
-    const newExercises = savedWorkout.exercises.filter((_: any, i: number) => i !== exIdx);
-    
-    if (newExercises.length === 0) {
-      handleDeleteSession();
-    } else {
-      const updatedWorkout = { ...savedWorkout, exercises: newExercises };
-      localStorage.setItem(storageKey, JSON.stringify(updatedWorkout));
-      setSavedWorkout(updatedWorkout);
-      setExercises(newExercises);
-      toast({ title: "Movement Removed", description: "Exercise deleted from session." });
-    }
+  const handleClonePrevious = () => {
+    if (!previousSession) return;
+    const cloned = previousSession.exercises.map((ex: any) => ({
+      name: ex.name,
+      sets: ex.sets.map(() => ({ reps: "", weight: "" }))
+    }));
+    setExercises(cloned);
+    toast({ title: t.cloneSuccess, description: `${displayName} Day ${previousSession.day} template applied.` });
   };
 
   if (!isLoaded) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" /></div>;
@@ -146,9 +170,6 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                     <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center"><Dumbbell className="h-6 w-6 text-primary" /></div>
                     <h4 className="font-black text-2xl uppercase italic tracking-tighter">{ex.name}</h4>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground/30 active:scale-90" onClick={() => handleDeleteExercise(i)}>
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
                 </div>
                 <div className="space-y-2.5">
                   {ex.sets.map((set: any, idx: number) => (
@@ -172,6 +193,21 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
           </div>
         ) : (
           <div className="space-y-6 animate-in slide-in-from-top-4">
+            {previousSession && exercises.length <= 1 && !exercises[0].name && (
+              <Button 
+                variant="outline" 
+                className="w-full h-16 rounded-[1.5rem] border-4 border-primary/20 bg-primary/5 font-black uppercase italic tracking-widest text-primary shadow-sm hover:bg-primary/10"
+                onClick={handleClonePrevious}
+              >
+                <History className="h-5 w-5 mr-3" />
+                {t.recallPrevious}
+              </Button>
+            )}
+
+            <datalist id="exercise-suggestions">
+              {allExerciseNames.map(name => <option key={name} value={name} />)}
+            </datalist>
+
             {exercises.map((exercise, exIdx) => (
               <Card key={exIdx} className="border-4 border-muted rounded-[2.5rem] bg-background p-6 space-y-6 relative overflow-hidden shadow-none">
                 <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
@@ -179,7 +215,13 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">MOVEMENT {exIdx + 1}</p>
                   {exercises.length > 1 && <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground/30 active:scale-90" onClick={() => setExercises(p => p.filter((_, i) => i !== exIdx))}><Trash2 className="h-4 w-4" /></Button>}
                 </div>
-                <Input placeholder="E.G. BENCH PRESS" value={exercise.name} onChange={(e) => { const n = [...exercises]; n[exIdx].name = e.target.value.toUpperCase(); setExercises(n); }} className="h-16 font-black border-4 border-muted text-lg rounded-2xl uppercase focus-visible:ring-primary shadow-inner bg-background" />
+                <Input 
+                  list="exercise-suggestions"
+                  placeholder="E.G. BENCH PRESS" 
+                  value={exercise.name} 
+                  onChange={(e) => { const n = [...exercises]; n[exIdx].name = e.target.value.toUpperCase(); setExercises(n); }} 
+                  className="h-16 font-black border-4 border-muted text-lg rounded-2xl uppercase focus-visible:ring-primary shadow-inner bg-background" 
+                />
                 <div className="space-y-4">
                   {exercise.sets.map((set, setIdx) => (
                     <div key={setIdx} className="flex gap-3 items-center">
