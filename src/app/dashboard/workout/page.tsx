@@ -116,6 +116,7 @@ export default function WorkoutPage() {
   const calculateOverallStats = () => {
     let totalCompleted = 0;
     let totalSkipped = 0;
+    const totalPossibleSlots = splits.length * 30;
     
     splits.forEach(split => {
       for (let i = 1; i <= 30; i++) {
@@ -129,9 +130,17 @@ export default function WorkoutPage() {
     });
 
     const totalLogged = totalCompleted + totalSkipped;
-    const percentage = totalLogged > 0 ? (totalCompleted / totalLogged) * 100 : 0;
+    const efficiencyPercentage = totalLogged > 0 ? (totalCompleted / totalLogged) * 100 : 0;
+    const completionPercentage = totalPossibleSlots > 0 ? (totalCompleted / totalPossibleSlots) * 100 : 0;
     
-    return { totalCompleted, totalSkipped, percentage, totalLogged };
+    return { 
+      totalCompleted, 
+      totalSkipped, 
+      efficiencyPercentage, 
+      completionPercentage,
+      totalLogged,
+      totalPossibleSlots 
+    };
   };
 
   const getIcon = (name: string) => {
@@ -318,7 +327,9 @@ export default function WorkoutPage() {
               <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">
                 Overall Training Consistency
               </SheetTitle>
-              <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">Across All PPL Blocks</p>
+              <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">
+                Aggregated from Push, Pull, Legs
+              </p>
             </SheetHeader>
 
             <div className="space-y-8">
@@ -340,9 +351,9 @@ export default function WorkoutPage() {
                     <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-primary" /> Training Efficiency
                     </h3>
-                    <span className="text-3xl font-black text-primary italic">{Math.round(stats.percentage)}%</span>
+                    <span className="text-3xl font-black text-primary italic">{Math.round(stats.efficiencyPercentage)}%</span>
                   </div>
-                  <Progress value={stats.percentage} className="h-8 bg-muted rounded-full shadow-inner border-2 border-muted" />
+                  <Progress value={stats.efficiencyPercentage} className="h-8 bg-muted rounded-full shadow-inner border-2 border-muted" />
                 </div>
                 
                 <div className="text-center py-6 bg-muted/20 rounded-2xl border-2 border-dashed border-muted">
@@ -350,7 +361,9 @@ export default function WorkoutPage() {
                   <p className="text-4xl font-black text-foreground italic leading-none">{stats.totalLogged} <span className="text-xs opacity-40">LOGS</span></p>
                   <div className="flex items-center justify-center gap-2 mt-4">
                     <Calendar className="h-4 w-4 text-primary" />
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Aggregated from all active blocks</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                      {stats.totalCompleted} Completed • {stats.totalSkipped} Skipped
+                    </span>
                   </div>
                 </div>
               </Card>
