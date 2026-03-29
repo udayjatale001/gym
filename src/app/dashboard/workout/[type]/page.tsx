@@ -1,16 +1,51 @@
 
 "use client";
 
-import { use, useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { use, useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Calendar, Info, Loader2, Trophy, XCircle, Ban } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { 
+  ArrowLeft, 
+  CheckCircle2, 
+  Info, 
+  Loader2, 
+  Trophy, 
+  XCircle, 
+  Ban, 
+  TrendingUp, 
+  TrendingDown, 
+  Minus,
+  Dumbbell,
+  ChevronRight
+} from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area 
+} from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface DayStatus {
   day: number;
   status: 'completed' | 'skipped' | 'none';
+  data?: any;
+}
+
+interface ExercisePoint {
+  day: number;
+  volume: number;
+  weight: number;
+  reps: number;
+  rawSets: any[];
 }
 
 export default function WorkoutGridPage({ params }: { params: Promise<{ type: string }> }) {
@@ -18,6 +53,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
   const [displayName, setDisplayName] = useState("");
   const [dayStatuses, setDayStatuses] = useState<DayStatus[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
   useEffect(() => {
     // Load Split Name
@@ -37,7 +73,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
       const data = localStorage.getItem(storageKey);
       if (data) {
         const parsed = JSON.parse(data);
-        statuses.push({ day: i, status: parsed.status || 'completed' });
+        statuses.push({ day: i, status: parsed.status || 'completed', data: parsed });
       } else {
         statuses.push({ day: i, status: 'none' });
       }
@@ -45,6 +81,42 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
     setDayStatuses(statuses);
     setIsLoaded(true);
   }, [type]);
+
+  // Aggregate Exercise Data for Analysis
+  const exerciseAnalysis = useMemo(() => {
+    const analysisMap: Record<string, ExercisePoint[]> = {};
+
+    dayStatuses.forEach((status) => {
+      if (status.status === 'completed' && status.data?.exercises) {
+        status.data.exercises.forEach((ex: any) => {
+          const name = ex.name.toUpperCase();
+          if (!analysisMap[name]) analysisMap[name] = [];
+
+          let totalVolume = 0;
+          let maxWeight = 0;
+          let totalReps = 0;
+
+          ex.sets.forEach((set: any) => {
+            const w = parseFloat(set.weight) || 0;
+            const r = parseInt(set.reps) || 0;
+            totalVolume += w * r;
+            if (w > maxWeight) maxWeight = w;
+            totalReps += r;
+          });
+
+          analysisMap[name].push({
+            day: status.day,
+            volume: totalVolume,
+            weight: maxWeight,
+            reps: totalReps,
+            rawSets: ex.sets
+          });
+        });
+      }
+    });
+
+    return analysisMap;
+  }, [dayStatuses]);
 
   if (!isLoaded) {
     return (
@@ -66,7 +138,131 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         </Link>
         <div className="space-y-1">
           <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-2 leading-none">
-            <span className="not-italic text-2xl">📈</span>
+            <Sheet open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
+              <SheetTrigger asChild>
+                <button className="text-2xl hover:scale-125 transition-transform active:scale-90" title="View Detailed Analysis">
+                  📈
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[92svh] border-none shadow-2xl p-0 overflow-hidden bg-background">
+                <div className="h-full overflow-y-auto no-scrollbar p-6 space-y-10 pb-20">
+                  <SheetHeader>
+                    <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">
+                      Performance Market
+                    </SheetTitle>
+                    <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">
+                      Progressive Overload Analysis
+                    </p>
+                  </SheetHeader>
+
+                  <div className="space-y-8">
+                    {Object.entries(exerciseAnalysis).length > 0 ? (
+                      Object.entries(exerciseAnalysis).map(([name, points]) => {
+                        const lastPoint = points[points.length - 1];
+                        const prevPoint = points.length > 1 ? points[points.length - 2] : null;
+                        
+                        const volumeChange = prevPoint 
+                          ? ((lastPoint.volume - prevPoint.volume) / prevPoint.volume) * 100 
+                          : 0;
+                        
+                        const isImproving = volumeChange > 0;
+                        const isRegressing = volumeChange < 0;
+
+                        return (
+                          <Card key={name} className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card">
+                            <CardHeader className="p-6 pb-2">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <CardTitle className="text-2xl font-black uppercase tracking-tighter italic text-foreground">
+                                    {name}
+                                  </CardTitle>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                      Day {lastPoint.day} Performance
+                                    </span>
+                                    {prevPoint && (
+                                      <div className={cn(
+                                        "px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1",
+                                        isImproving ? "bg-primary/10 text-primary" : isRegressing ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+                                      )}>
+                                        {isImproving ? <TrendingUp className="h-3 w-3" /> : isRegressing ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                        {Math.abs(volumeChange).toFixed(1)}%
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs font-black text-primary italic uppercase tracking-tighter">Vol: {lastPoint.volume.toFixed(0)}</p>
+                                  <p className="text-[8px] font-bold text-muted-foreground uppercase">KG × REPS</p>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-0">
+                              <div className="h-48 w-full mt-4">
+                                <ChartContainer config={{ 
+                                  volume: { label: "Total Volume", color: isImproving ? "hsl(var(--primary))" : isRegressing ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))" }
+                                }}>
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={points}>
+                                      <defs>
+                                        <linearGradient id={`grad-${name}`} x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="5%" stopColor={isImproving ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0.3}/>
+                                          <stop offset="95%" stopColor={isImproving ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0}/>
+                                        </linearGradient>
+                                      </defs>
+                                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsla(var(--muted-foreground), 0.1)" />
+                                      <XAxis 
+                                        dataKey="day" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fontSize: 10, fontWeight: 900, fill: "hsl(var(--muted-foreground))" }}
+                                        label={{ value: 'Day', position: 'insideBottom', offset: -5, fontSize: 8, fontWeight: 900 }}
+                                      />
+                                      <YAxis hide />
+                                      <ChartTooltip content={<ChartTooltipContent />} />
+                                      <Area 
+                                        type="monotone" 
+                                        dataKey="volume" 
+                                        stroke={isImproving ? "hsl(var(--primary))" : isRegressing ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))"} 
+                                        strokeWidth={4}
+                                        fillOpacity={1} 
+                                        fill={`url(#grad-${name})`} 
+                                      />
+                                    </AreaChart>
+                                  </ResponsiveContainer>
+                                </ChartContainer>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-muted/50">
+                                <div className="space-y-1">
+                                  <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Max Intensity</p>
+                                  <p className="text-sm font-black italic">{lastPoint.weight} KG</p>
+                                </div>
+                                <div className="text-right space-y-1">
+                                  <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Total Reps</p>
+                                  <p className="text-sm font-black italic">{lastPoint.reps} REPS</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-20 bg-muted/10 rounded-[3rem] border-4 border-dashed border-muted/30 flex flex-col items-center justify-center space-y-4">
+                        <Dumbbell className="h-12 w-12 text-muted-foreground/30" />
+                        <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">No workout data found for analysis</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest italic text-lg shadow-xl shadow-primary/20" 
+                    onClick={() => setIsAnalysisOpen(false)}
+                  >
+                    Close Analysis
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
             {displayName}
           </h2>
           <div className="flex items-center gap-2">
@@ -135,7 +331,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         <div className="space-y-1.5">
           <p className="text-xs font-black text-foreground uppercase tracking-widest leading-none italic">Training Intelligence</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-            <span className="text-primary font-black">GREEN</span> sessions are logged. <span className="text-destructive font-black">RED</span> sessions are skipped. Track your cycle consistency for maximum gains.
+            <span className="text-primary font-black">GREEN</span> sessions are logged. <span className="text-destructive font-black">RED</span> sessions are skipped. Tap the <span className="text-primary">📈</span> to view detailed exercise trends.
           </p>
         </div>
       </div>
