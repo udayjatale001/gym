@@ -77,7 +77,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
       {/* Training Card */}
       <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
         <div className="absolute top-0 right-0 h-40 w-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 blur-3xl" />

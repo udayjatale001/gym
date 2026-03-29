@@ -133,11 +133,11 @@ export default function WorkoutPage() {
         </Dialog>
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         {splits.map((split: any) => {
           const Icon = getIcon(split.name);
           return (
-            <Link key={split.id} href={`/dashboard/workout/${split.id}`}>
+            <Link key={split.id} href={`/dashboard/workout/${split.id}`} className="block">
               <Card className="overflow-hidden border-none shadow-xl rounded-[2.5rem] bg-card hover:bg-muted/30 transition-all active:scale-[0.98] relative group">
                 <CardContent className="p-8 flex items-center justify-between">
                   <div className="flex items-center gap-6">

@@ -61,7 +61,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
   const completedCount = dayStatuses.filter(s => s.status === 'completed').length;
 
   return (
-    <div className="p-4 space-y-6 pb-28 animate-in fade-in duration-500">
+    <div className="p-4 space-y-6 pb-32 animate-in fade-in duration-500">
       <div className="flex items-center gap-4 pt-2">
         <Link href="/dashboard/workout">
           <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl active:scale-90 border-2 border-muted shadow-sm">
@@ -118,7 +118,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
               <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center leading-none">PERFORMANCE MARKET</SheetTitle>
               <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">PROGRESSIVE OVERLOAD ANALYSIS</p>
             </SheetHeader>
-            <div className="space-y-8">
+            <div className="flex flex-col gap-8">
               {Object.entries(exerciseAnalysis).map(([name, points]: [string, any]) => {
                 const lastPoint = points[points.length - 1];
                 const prevPoint = points.length > 1 ? points[points.length - 2] : null;

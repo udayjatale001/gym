@@ -109,7 +109,7 @@ export default function WeightPage() {
 
       <div className="space-y-6">
         <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-3 opacity-60 px-3 italic"><History className="h-5 w-5" /> LOG HISTORY</h3>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {logs.map((log) => (
             <Card key={log.id} className="border-none shadow-xl active:scale-[0.98] rounded-[2.5rem] bg-card border-l-8 border-l-primary overflow-hidden transition-all hover:bg-muted/30">
               <CardContent className="p-8 flex items-center justify-between">

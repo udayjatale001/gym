@@ -93,7 +93,7 @@ export default function DietPage() {
         </Button>
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         {meals.map((meal) => (
           <Card key={meal.id} className="border-none shadow-xl rounded-[2.5rem] bg-card active:scale-[0.98] transition-all overflow-hidden group" onClick={() => setViewingMealId(meal.id)}>
             <CardContent className="p-8 flex items-center justify-between">
