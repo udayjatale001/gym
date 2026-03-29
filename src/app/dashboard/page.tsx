@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -58,10 +57,9 @@ export default function DashboardPage() {
 
   const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : 0;
   
-  // Progress Calculation: (Start - Current) / (Start - Target)
   const progress = (() => {
     if (weightLogs.length === 0 || targetWeight === 0) return 0;
-    const startWeight = weightLogs[weightLogs.length - 1].weight; // Oldest log
+    const startWeight = weightLogs[weightLogs.length - 1].weight;
     if (startWeight === targetWeight) return 100;
     const totalDist = Math.abs(startWeight - targetWeight);
     const covered = Math.abs(startWeight - currentWeight);
@@ -79,71 +77,72 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
       {/* Training Card */}
-      <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[2.5rem] overflow-hidden relative">
-        <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
+      <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
+        <div className="absolute top-0 right-0 h-40 w-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 blur-3xl" />
         <CardHeader className="pb-2">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 opacity-80">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 opacity-80">
             <Calendar className="h-4 w-4" />
             TRAINING SCHEDULE
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 pb-8">
-          <div className="flex flex-col items-center text-center py-4">
-            <p className="text-xs font-black uppercase tracking-widest opacity-60 mb-2">Today's Discipline</p>
-            <h3 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
+        <CardContent className="space-y-8 pb-10">
+          <div className="flex flex-col items-center text-center py-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-3">Today's Discipline</p>
+            <h3 className="text-6xl font-black tracking-tighter uppercase italic leading-none">
               {suggestion.today}
             </h3>
           </div>
-          <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
+          <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8">
             <div className="text-left space-y-1">
-              <p className="text-[9px] opacity-50 font-black uppercase tracking-widest">Yesterday</p>
-              <p className="text-sm font-black italic uppercase">{suggestion.yesterday}</p>
+              <p className="text-[9px] opacity-50 font-black uppercase tracking-[0.2em]">Yesterday</p>
+              <p className="text-lg font-black italic uppercase tracking-tight">{suggestion.yesterday}</p>
             </div>
             <div className="text-right space-y-1">
-              <p className="text-[9px] opacity-50 font-black uppercase tracking-widest">Tomorrow</p>
-              <p className="text-sm font-black italic uppercase">{suggestion.tomorrow}</p>
+              <p className="text-[9px] opacity-50 font-black uppercase tracking-[0.2em]">Tomorrow</p>
+              <p className="text-lg font-black italic uppercase tracking-tight">{suggestion.tomorrow}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Goal Metrics (Body Mass Progress) */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 px-2">
-           <Scale className="h-4 w-4 text-primary" />
-           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60 uppercase italic">BODY MASS PROGRESS</h3>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 px-2">
+           <Scale className="h-5 w-5 text-primary" />
+           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60 italic">BODY MASS PROGRESS</h3>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-primary/5 border-2 border-primary/10 rounded-[2rem] p-5 text-center shadow-lg">
-            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">CURRENT</p>
-            <p className="text-3xl font-black italic text-primary">{currentWeight || "--"}<span className="text-xs ml-0.5">KG</span></p>
+          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg group hover:border-primary/30 transition-all">
+            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">CURRENT</p>
+            <p className="text-4xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
-          <Card className="bg-accent/5 border-2 border-accent/10 rounded-[2rem] p-5 text-center shadow-lg">
-            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">TARGET</p>
-            <p className="text-3xl font-black italic text-accent">{targetWeight || "--"}<span className="text-xs ml-0.5">KG</span></p>
+          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg group hover:border-accent/30 transition-all">
+            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">TARGET</p>
+            <p className="text-4xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
         </div>
 
-        <Card className="p-8 rounded-[2.5rem] shadow-xl border-none bg-white space-y-6 group">
+        <Card className="p-10 rounded-[3rem] shadow-2xl border-none bg-card space-y-8 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-30" />
           <div className="flex justify-between items-end">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" /> 
               TRANSFORMATION
             </h3>
-            <span className="text-3xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
+            <span className="text-4xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
           </div>
           
-          <div className="space-y-4">
-            <Progress value={progress} className="h-6 bg-muted rounded-full shadow-inner" />
+          <div className="space-y-6">
+            <Progress value={progress} className="h-8 bg-muted/50 rounded-full shadow-inner border border-border/30" />
             
             {targetWeight > 0 && weightLogs.length > 0 && (
-              <div className="text-center py-4 bg-muted/10 rounded-[1.5rem] border-2 border-dashed border-muted group-hover:border-primary/20 transition-colors">
-                <p className="text-[9px] font-black uppercase opacity-40 tracking-widest mb-1">REMAINING GAP</p>
-                <p className="text-4xl font-black italic tracking-tighter">
-                  {remainingGap} <span className="text-sm opacity-40 not-italic">KG</span>
+              <div className="text-center py-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-border/50">
+                <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">REMAINING GAP</p>
+                <p className="text-5xl font-black italic tracking-tighter">
+                  {remainingGap} <span className="text-sm opacity-30 not-italic tracking-normal">KG</span>
                 </p>
               </div>
             )}
@@ -153,25 +152,33 @@ export default function DashboardPage() {
 
       {/* Diet Card */}
       <Card className={cn(
-        "border-none shadow-lg rounded-[2rem] transition-all duration-500",
-        hasLoggedMealToday ? "bg-primary/5 border-l-8 border-l-primary" : "bg-muted/30 border-l-8 border-l-muted"
+        "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden",
+        hasLoggedMealToday ? "bg-primary/10" : "bg-card border border-border/50"
       )}>
-        <CardContent className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <CardContent className="p-8 flex items-center justify-between">
+          <div className="flex items-center gap-5">
             <div className={cn(
-              "h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-inner",
-              hasLoggedMealToday ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+              "h-16 w-16 rounded-[1.5rem] flex items-center justify-center transition-all shadow-inner",
+              hasLoggedMealToday ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
             )}>
-              <Utensils className="h-6 w-6" />
+              <Utensils className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Dietary Loop</p>
-              <p className="text-sm font-black italic uppercase">
-                {hasLoggedMealToday ? "FUEL LOGGED • STREAK ACTIVE" : "AWAITING MEAL LOG..."}
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">Dietary Loop</p>
+              <p className="text-lg font-black italic uppercase tracking-tight">
+                {hasLoggedMealToday ? "FUEL LOGGED" : "AWAITING LOG"}
               </p>
             </div>
           </div>
-          {hasLoggedMealToday && <CheckCircle2 className="h-6 w-6 text-primary animate-in zoom-in duration-500" />}
+          {hasLoggedMealToday ? (
+            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
+              <CheckCircle2 className="h-6 w-6 text-primary" />
+            </div>
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 text-muted-foreground opacity-30 animate-spin" />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

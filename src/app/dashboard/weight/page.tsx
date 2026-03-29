@@ -75,70 +75,87 @@ export default function WeightPage() {
   if (!isLoaded) return <div className="flex justify-center py-20 h-svh items-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
-    <div className="p-4 space-y-8 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 space-y-10 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 -rotate-2 border-b-4 border-primary-foreground/20">
+          <div className="h-16 w-16 rounded-[1.8rem] bg-primary flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/30 border-b-4 border-black/20">
             <Scale className="h-9 w-9" />
           </div>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
               <h2 className="text-3xl font-black text-primary uppercase tracking-tighter italic leading-none">BODY MASS</h2>
               <button className="text-3xl active:scale-75 transition-transform" onClick={() => setIsProgressOpen(true)}>📈</button>
             </div>
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.25em] opacity-60">PRECISION TRACKING</p>
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-60">PRECISION TRACKING</p>
           </div>
         </div>
       </div>
 
-      <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[3rem] overflow-hidden bg-white relative">
-        <CardContent className="p-10 space-y-8">
+      <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-card relative">
+        <div className="absolute top-0 left-0 w-full h-2 bg-primary/20" />
+        <CardContent className="p-10 space-y-10">
           <div className="space-y-4">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] px-1">CURRENT MASS (KG)</p>
+            <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.4em] px-2 opacity-60">CURRENT MASS (KG)</p>
             <div className="relative">
-              <Input type="text" inputMode="decimal" placeholder="00.0" className="h-24 text-5xl font-black border-4 border-muted rounded-[2rem] focus-visible:ring-primary shadow-inner pl-8 pr-20 bg-muted/5 placeholder:text-muted-foreground/10" value={newWeight} onChange={(e) => setNewWeight(e.target.value.replace(/[^0-9.]/g, ''))} />
-              <span className="absolute right-8 top-1/2 -translate-y-1/2 text-2xl font-black text-primary/20 italic">KG</span>
+              <Input type="text" inputMode="decimal" placeholder="00.0" className="h-28 text-6xl font-black border-4 border-muted rounded-[2rem] focus-visible:ring-primary shadow-inner pl-10 pr-24 bg-muted/5 placeholder:text-muted-foreground/10 text-primary" value={newWeight} onChange={(e) => setNewWeight(e.target.value.replace(/[^0-9.]/g, ''))} />
+              <span className="absolute right-10 top-1/2 -translate-y-1/2 text-3xl font-black text-primary/30 italic">KG</span>
             </div>
           </div>
-          <Button onClick={handleAddWeight} className="w-full h-20 text-xl font-black uppercase italic rounded-[1.8rem] shadow-2xl active:scale-95 transition-all bg-primary" disabled={isSubmitting || !newWeight.trim()}>
-            {isSubmitting ? <Loader2 className="h-7 w-7 animate-spin" /> : <span className="flex items-center gap-3"><Plus className="h-7 w-7" /> CONFIRM ENTRY</span>}
+          <Button onClick={handleAddWeight} className="w-full h-24 text-2xl font-black uppercase italic rounded-[2rem] shadow-2xl active:scale-95 transition-all bg-primary" disabled={isSubmitting || !newWeight.trim()}>
+            {isSubmitting ? <Loader2 className="h-8 w-8 animate-spin" /> : <span className="flex items-center gap-4"><Plus className="h-8 w-8" /> CONFIRM ENTRY</span>}
           </Button>
         </CardContent>
       </Card>
 
-      <div className="space-y-5">
-        <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2.5 opacity-60 px-2"><History className="h-4 w-4" /> LOGGED HISTORY</h3>
-        {logs.map((log) => (
-          <Card key={log.id} className="border-none shadow-lg active:scale-[0.98] rounded-[2rem] bg-white border-l-8 border-l-primary overflow-hidden">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-2xl bg-muted/50 flex items-center justify-center text-primary shadow-inner"><Scale className="h-7 w-7" /></div>
-                <div>
-                  <p className="text-3xl font-black text-primary italic leading-none">{log.weight}<span className="text-[10px] uppercase not-italic opacity-40 ml-1.5 font-bold">KG</span></p>
-                  <p className="text-[9px] text-muted-foreground font-black uppercase mt-1.5 opacity-60 flex items-center gap-2"><Calendar className="h-3 w-3" />{format(new Date(log.timestamp), 'MMM dd • h:mm a')}</p>
+      <div className="space-y-6">
+        <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-3 opacity-60 px-3 italic"><History className="h-5 w-5" /> LOG HISTORY</h3>
+        <div className="space-y-4">
+          {logs.map((log) => (
+            <Card key={log.id} className="border-none shadow-xl active:scale-[0.98] rounded-[2.5rem] bg-card border-l-8 border-l-primary overflow-hidden transition-all hover:bg-muted/30">
+              <CardContent className="p-8 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="h-16 w-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary shadow-inner"><Scale className="h-8 w-8" /></div>
+                  <div>
+                    <p className="text-4xl font-black text-primary italic leading-none">{log.weight}<span className="text-[12px] uppercase not-italic opacity-30 ml-2 font-bold tracking-widest">KG</span></p>
+                    <p className="text-[10px] text-muted-foreground font-black uppercase mt-2 opacity-50 flex items-center gap-2 tracking-widest"><Calendar className="h-3.5 w-3.5" />{format(new Date(log.timestamp), 'MMM dd • h:mm a')}</p>
+                  </div>
                 </div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full text-muted-foreground/30 active:scale-90" onClick={() => setLogs(p => p.filter(l => l.id !== log.id))}><Trash2 className="h-5 w-5" /></Button>
-            </CardContent>
-          </Card>
-        ))}
+                <Button variant="ghost" size="icon" className="h-14 w-14 rounded-full text-muted-foreground/20 hover:text-destructive active:scale-90" onClick={() => setLogs(p => p.filter(l => l.id !== log.id))}><Trash2 className="h-6 w-6" /></Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       <Sheet open={isProgressOpen} onOpenChange={setIsProgressOpen}>
-        <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[80svh] border-none p-0 overflow-hidden bg-background">
-          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10">
-            <SheetHeader><SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">GOAL METRICS</SheetTitle></SheetHeader>
-            <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-primary/5 border-2 border-primary/10 rounded-[2rem] p-6 text-center shadow-lg"><p className="text-[10px] font-black uppercase mb-1">CURRENT</p><p className="text-4xl font-black italic text-primary">{currentWeight || "--"}<span className="text-sm">KG</span></p></Card>
-                <Card className="bg-accent/5 border-2 border-accent/10 rounded-[2rem] p-6 text-center shadow-lg"><p className="text-[10px] font-black uppercase mb-1">TARGET</p><Input type="text" inputMode="decimal" placeholder="00.0" value={targetWeight} onChange={(e) => setTargetWeight(e.target.value.replace(/[^0-9.]/g, ''))} className="text-center font-black text-2xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent placeholder:text-accent/20 shadow-none" /></Card>
+        <SheetContent side="bottom" className="rounded-t-[4rem] h-[85svh] border-none p-0 overflow-hidden bg-background">
+          <div className="h-full overflow-y-auto no-scrollbar p-10 space-y-12">
+            <SheetHeader><SheetTitle className="text-4xl font-black uppercase italic tracking-tighter text-primary text-center">GOAL METRICS</SheetTitle></SheetHeader>
+            <div className="space-y-10">
+              <div className="grid grid-cols-2 gap-6">
+                <Card className="bg-card border-none rounded-[2.5rem] p-8 text-center shadow-2xl">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3 opacity-60">CURRENT</p>
+                  <p className="text-5xl font-black italic text-primary">{currentWeight || "--"}<span className="text-sm italic opacity-40 ml-1">KG</span></p>
+                </Card>
+                <Card className="bg-card border-none rounded-[2.5rem] p-8 text-center shadow-2xl">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3 opacity-60">TARGET</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <Input type="text" inputMode="decimal" placeholder="00.0" value={targetWeight} onChange={(e) => setTargetWeight(e.target.value.replace(/[^0-9.]/g, ''))} className="text-center font-black text-3xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent placeholder:text-accent/20 shadow-none w-24" />
+                    <span className="text-sm font-black italic text-accent opacity-40">KG</span>
+                  </div>
+                </Card>
               </div>
-              <Card className="p-8 rounded-[2.5rem] shadow-xl bg-white space-y-6">
-                 <div className="flex justify-between items-end mb-4"><h3 className="text-xs font-black uppercase tracking-widest opacity-60 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> DISCIPLINE</h3><span className="text-2xl font-black text-primary italic">{Math.round(progressValue)}%</span></div>
-                 <Progress value={progressValue} className="h-6 bg-muted rounded-full" />
-                 {goalWeight > 0 && <div className="text-center py-4 bg-muted/10 rounded-2xl border-2 border-dashed border-muted"><p className="text-[10px] font-black uppercase opacity-60">REMAINING GAP</p><p className="text-3xl font-black italic">{Math.abs(currentWeight - goalWeight).toFixed(1)} <span className="text-xs opacity-40">KG</span></p></div>}
+              <Card className="p-12 rounded-[3.5rem] shadow-2xl bg-card border-none space-y-10 relative overflow-hidden">
+                 <div className="flex justify-between items-end mb-6"><h3 className="text-[11px] font-black uppercase tracking-[0.3em] opacity-60 flex items-center gap-3"><TrendingUp className="h-5 w-5 text-primary" /> DISCIPLINE</h3><span className="text-3xl font-black text-primary italic leading-none">{Math.round(progressValue)}%</span></div>
+                 <Progress value={progressValue} className="h-8 bg-muted rounded-full shadow-inner" />
+                 {goalWeight > 0 && (
+                  <div className="text-center py-8 bg-muted/10 rounded-[2rem] border-4 border-dashed border-border/50">
+                    <p className="text-[10px] font-black uppercase opacity-50 tracking-[0.4em] mb-3">REMAINING GAP</p>
+                    <p className="text-5xl font-black italic tracking-tighter">{Math.abs(currentWeight - goalWeight).toFixed(1)} <span className="text-sm italic opacity-30 tracking-normal">KG</span></p>
+                  </div>
+                 )}
               </Card>
-              <Button className="w-full h-20 rounded-[1.8rem] font-black uppercase italic text-xl shadow-2xl bg-primary active:scale-95" onClick={handleSaveTarget}>SAVE DISCIPLINE</Button>
+              <Button className="w-full h-24 rounded-[2rem] font-black uppercase italic text-2xl shadow-2xl bg-primary active:scale-95" onClick={handleSaveTarget}>SAVE DISCIPLINE</Button>
             </div>
           </div>
         </SheetContent>

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 148 44% 94%;
+    --background: 148 44% 96%;
     --foreground: 146 50% 10%;
     --card: 0 0% 100%;
     --card-foreground: 146 50% 10%;
@@ -20,31 +20,31 @@
     --accent-foreground: 146 50% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 146 20% 85%;
-    --input: 146 20% 85%;
+    --border: 146 20% 88%;
+    --input: 146 20% 88%;
     --ring: 146 60% 41%;
-    --radius: 1.25rem;
+    --radius: 1.5rem;
   }
 
   .dark {
-    --background: 146 50% 3%;
+    --background: 146 50% 4%;
     --foreground: 0 0% 98%;
-    --card: 146 40% 7%;
+    --card: 146 40% 8%;
     --card-foreground: 0 0% 98%;
-    --popover: 146 40% 7%;
+    --popover: 146 40% 8%;
     --popover-foreground: 0 0% 98%;
     --primary: 146 70% 50%;
     --primary-foreground: 146 50% 5%;
-    --secondary: 146 30% 12%;
+    --secondary: 146 30% 14%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 146 30% 10%;
+    --muted: 146 30% 12%;
     --muted-foreground: 146 15% 70%;
-    --accent: 146 30% 15%;
+    --accent: 146 30% 18%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 146 30% 15%;
-    --input: 146 30% 15%;
+    --border: 146 30% 18%;
+    --input: 146 30% 18%;
     --ring: 146 70% 50%;
   }
 }
@@ -59,7 +59,7 @@
     overflow-x: hidden;
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
