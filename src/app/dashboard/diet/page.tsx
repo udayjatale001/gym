@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -25,7 +25,6 @@ interface LocalMeal {
 export default function DietPage() {
   const { toast } = useToast();
   
-  // Using local state as requested to avoid backend changes
   const [meals, setMeals] = useState<LocalMeal[]>([]);
   const [isLogOpen, setIsLogOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -33,13 +32,29 @@ export default function DietPage() {
   const [mealName, setMealName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewingMealId, setViewingMealId] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load meals from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('fitstride_diet_logs');
+    if (saved) {
+      setMeals(JSON.parse(saved));
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save meals to localStorage whenever they change
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('fitstride_diet_logs', JSON.stringify(meals));
+    }
+  }, [meals, isLoaded]);
 
   const handleLogMeal = () => {
     if (!selectedType || !mealName.trim()) return;
 
     setIsSubmitting(true);
     
-    // Simulating a brief delay for a polished "pro" feel
     setTimeout(() => {
       const newMeal: LocalMeal = {
         id: Math.random().toString(36).substr(2, 9),
@@ -65,6 +80,15 @@ export default function DietPage() {
     }, 400);
   };
 
+  const handleDeleteMeal = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setMeals(prev => prev.filter(m => m.id !== id));
+    toast({
+      title: "Meal Deleted",
+      description: "The meal has been removed from your local list.",
+    });
+  };
+
   const handleUpdateChecklist = (mealId: string, day: number, status: 'taken' | 'skipped') => {
     setMeals(prev => prev.map(m => 
       m.id === mealId 
@@ -74,6 +98,14 @@ export default function DietPage() {
   };
 
   const currentViewingMeal = meals.find(m => m.id === viewingMealId);
+
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary/30" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6 pb-24 animate-in fade-in duration-500">
@@ -125,8 +157,18 @@ export default function DietPage() {
                     </p>
                   </div>
                 </div>
-                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-muted/50 group-hover:bg-primary/10 transition-colors">
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    onClick={(e) => handleDeleteMeal(e, meal.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <div className="h-8 w-8 rounded-full flex items-center justify-center bg-muted/50 group-hover:bg-primary/10 transition-colors">
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -224,7 +266,6 @@ function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate
 
   const handleMarkDay = (day: number, status: 'taken' | 'skipped') => {
     setIsUpdating(day);
-    // Directly update local state through the prop
     onUpdate(day, status);
     setTimeout(() => setIsUpdating(null), 300);
   };
@@ -256,10 +297,10 @@ function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate
 
           <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] overflow-hidden">
             <CardHeader className="p-6 pb-2">
-              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
                 <Calendar className="h-4 w-4" />
                 Monthly Consistency
-              </CardTitle>
+              </h3>
             </CardHeader>
             <CardContent className="p-6 pt-0 flex items-center justify-between">
               <div className="flex gap-10">
@@ -332,3 +373,5 @@ function ChecklistSheet({ meal, onUpdate, onClose }: { meal: LocalMeal, onUpdate
     </Sheet>
   );
 }
+
+import { DialogTrigger } from '@/components/ui/dialog';
