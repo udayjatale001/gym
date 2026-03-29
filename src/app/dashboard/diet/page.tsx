@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2 } from "lucide-react";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ interface LocalMeal {
   timestamp: string;
   date: string;
   checklist: Record<number, 'taken' | 'skipped'>;
+  amounts: Record<number, string>;
 }
 
 export default function DietPage() {
@@ -36,7 +37,7 @@ export default function DietPage() {
 
   // Load persistent local data
   useEffect(() => {
-    const saved = localStorage.getItem('fitstride_diet_logs');
+    const saved = localStorage.getItem('fitstride_diet_logs_v2');
     if (saved) {
       setMeals(JSON.parse(saved));
     }
@@ -46,7 +47,7 @@ export default function DietPage() {
   // Sync to local storage on change
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('fitstride_diet_logs', JSON.stringify(meals));
+      localStorage.setItem('fitstride_diet_logs_v2', JSON.stringify(meals));
     }
   }, [meals, isLoaded]);
 
@@ -55,7 +56,6 @@ export default function DietPage() {
 
     setIsSubmitting(true);
     
-    // Simulate brief interaction delay for smoothness
     setTimeout(() => {
       const newMeal: LocalMeal = {
         id: Math.random().toString(36).substr(2, 9),
@@ -63,7 +63,8 @@ export default function DietPage() {
         mealName: mealName.trim().toUpperCase(),
         timestamp: new Date().toISOString(),
         date: format(new Date(), 'yyyy-MM-dd'),
-        checklist: {}
+        checklist: {},
+        amounts: {}
       };
 
       setMeals(prev => [newMeal, ...prev]);
@@ -90,10 +91,14 @@ export default function DietPage() {
     });
   };
 
-  const handleUpdateChecklist = (mealId: string, day: number, status: 'taken' | 'skipped') => {
+  const handleUpdateChecklist = (mealId: string, day: number, status: 'taken' | 'skipped', amount: string) => {
     setMeals(prev => prev.map(m => 
       m.id === mealId 
-        ? { ...m, checklist: { ...m.checklist, [day]: status } }
+        ? { 
+            ...m, 
+            checklist: { ...m.checklist, [day]: status },
+            amounts: { ...m.amounts, [day]: amount }
+          }
         : m
     ));
   };
@@ -105,7 +110,10 @@ export default function DietPage() {
             ...m, 
             checklist: Object.fromEntries(
               Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)
-            ) as Record<number, 'taken' | 'skipped'>
+            ) as Record<number, 'taken' | 'skipped'>,
+            amounts: Object.fromEntries(
+              Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)
+            ) as Record<number, string>
           }
         : m
     ));
@@ -123,7 +131,6 @@ export default function DietPage() {
 
   return (
     <div className="p-4 space-y-6 pb-28 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {/* Dynamic Header with + Button */}
       <div className="flex items-center gap-4 pt-2">
         <Button 
           size="icon" 
@@ -147,7 +154,6 @@ export default function DietPage() {
         </div>
       </div>
 
-      {/* Persistent Meal List */}
       <section className="space-y-3">
         {meals.length > 0 ? (
           meals.map((meal) => (
@@ -200,7 +206,6 @@ export default function DietPage() {
         )}
       </section>
 
-      {/* Log Meal Flow */}
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
         <DialogContent className="w-[90%] sm:max-w-md rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
           <DialogHeader>
@@ -263,11 +268,10 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Checklist View Sheet */}
       {currentViewingMeal && (
         <ChecklistSheet 
           meal={currentViewingMeal} 
-          onUpdate={(day, status) => handleUpdateChecklist(currentViewingMeal.id, day, status)}
+          onUpdate={(day, status, amount) => handleUpdateChecklist(currentViewingMeal.id, day, status, amount)}
           onClear={(day) => handleClearChecklist(currentViewingMeal.id, day)}
           onClose={() => setViewingMealId(null)} 
         />
@@ -283,17 +287,19 @@ function ChecklistSheet({
   onClose 
 }: { 
   meal: LocalMeal, 
-  onUpdate: (day: number, status: 'taken' | 'skipped') => void, 
+  onUpdate: (day: number, status: 'taken' | 'skipped', amount: string) => void, 
   onClear: (day: number) => void,
   onClose: () => void 
 }) {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
-  const handleMarkDay = (day: number, status: 'taken' | 'skipped') => {
+  const getDayStatus = (day: number) => meal.checklist[day];
+  const getDayAmount = (day: number) => meal.amounts[day] || "";
+
+  const handleMarkDay = (day: number, status: 'taken' | 'skipped', amount: string) => {
     setIsUpdating(day);
-    onUpdate(day, status);
-    // Visual debounce for smoothness
+    onUpdate(day, status, amount);
     setTimeout(() => setIsUpdating(null), 300);
   };
 
@@ -302,7 +308,6 @@ function ChecklistSheet({
     toast({ title: "Status Cleared", description: `Day ${day} has been reset.` });
   };
 
-  const getDayStatus = (day: number) => meal.checklist[day];
   const checklistValues = Object.values(meal.checklist);
   const totalTaken = checklistValues.filter(s => s === 'taken').length;
   const totalSkipped = checklistValues.filter(s => s === 'skipped').length;
@@ -328,7 +333,6 @@ function ChecklistSheet({
               </div>
             </SheetHeader>
 
-            {/* Performance Stats */}
             <div className="grid grid-cols-2 gap-4">
               <Card className="bg-primary/5 border-2 border-primary/20 shadow-lg rounded-[2rem] p-6 flex flex-col items-center justify-center space-y-2">
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Days Logged</p>
@@ -342,7 +346,6 @@ function ChecklistSheet({
               </Card>
             </div>
 
-            {/* Consistency Grid */}
             <div className="space-y-4">
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-[12px] font-black uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2">
@@ -358,53 +361,17 @@ function ChecklistSheet({
               <div className="grid grid-cols-5 gap-3">
                 {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => {
                   const status = getDayStatus(day);
+                  const amount = getDayAmount(day);
                   return (
-                    <Dialog key={day}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "h-20 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-[1.2rem] shadow-sm relative overflow-hidden",
-                            status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
-                            status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
-                            !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
-                            isUpdating === day && "animate-pulse"
-                          )}
-                        >
-                          <span className="text-[11px] font-black mb-1 opacity-50 absolute top-2">{day}</span>
-                          {status === 'taken' && <CheckCircle2 className="h-6 w-6 mt-3 animate-in zoom-in duration-300" />}
-                          {status === 'skipped' && <XCircle className="h-6 w-6 mt-3 animate-in zoom-in duration-300" />}
-                          {!status && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/20 mt-3" />}
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="w-[85%] sm:max-w-xs rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
-                        <DialogHeader>
-                          <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-2xl">Day {day} Status</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex flex-col gap-3 py-8">
-                          <Button 
-                            className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-primary/20 active:scale-95"
-                            onClick={() => handleMarkDay(day, 'taken')}
-                          >
-                            <CheckCircle2 className="h-6 w-6" /> Mark as Taken
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-destructive/20 active:scale-95"
-                            onClick={() => handleMarkDay(day, 'skipped')}
-                          >
-                            <XCircle className="h-6 w-6" /> Mark as Skipped
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full font-black text-[10px] uppercase opacity-40 mt-2 active:scale-95"
-                            onClick={() => handleClearDay(day)}
-                          >
-                            Reset Status
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <DayDialog 
+                      key={day}
+                      day={day}
+                      status={status}
+                      amount={amount}
+                      isUpdating={isUpdating === day}
+                      onMark={(s, a) => handleMarkDay(day, s, a)}
+                      onClear={() => handleClearDay(day)}
+                    />
                   );
                 })}
               </div>
@@ -413,5 +380,95 @@ function ChecklistSheet({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function DayDialog({ 
+  day, 
+  status, 
+  amount, 
+  isUpdating, 
+  onMark, 
+  onClear 
+}: { 
+  day: number, 
+  status?: 'taken' | 'skipped', 
+  amount: string,
+  isUpdating: boolean,
+  onMark: (status: 'taken' | 'skipped', amount: string) => void,
+  onClear: () => void
+}) {
+  const [tempAmount, setTempAmount] = useState(amount);
+
+  useEffect(() => {
+    setTempAmount(amount);
+  }, [amount]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "h-20 flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 rounded-[1.2rem] shadow-sm relative overflow-hidden",
+            status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner",
+            status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
+            !status && "bg-muted/30 border-muted/50 text-muted-foreground/30",
+            isUpdating && "animate-pulse"
+          )}
+        >
+          <span className="text-[8px] font-black mb-1 opacity-50 absolute top-1 left-2">{day}</span>
+          {status === 'taken' && (
+            <div className="flex flex-col items-center animate-in zoom-in duration-300">
+              <CheckCircle2 className="h-5 w-5 mb-0.5" />
+              {amount && <span className="text-[8px] font-black uppercase tracking-tighter truncate max-w-[40px]">{amount}</span>}
+            </div>
+          )}
+          {status === 'skipped' && <XCircle className="h-6 w-6 mt-1 animate-in zoom-in duration-300" />}
+          {!status && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/20 mt-2" />}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[85%] sm:max-w-xs rounded-[2.5rem] border-none shadow-2xl p-8 focus:outline-none">
+        <DialogHeader>
+          <DialogTitle className="text-center font-black uppercase tracking-tighter italic text-2xl">Day {day} Intake</DialogTitle>
+        </DialogHeader>
+        <div className="py-6 space-y-6">
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Amount (g / Servings)</p>
+            <div className="relative">
+              <Input 
+                placeholder="e.g. 250g or 1" 
+                value={tempAmount}
+                onChange={(e) => setTempAmount(e.target.value.toUpperCase())}
+                className="font-black border-2 h-14 text-lg uppercase rounded-[1rem] focus-visible:ring-primary shadow-inner pl-10"
+              />
+              <Scale className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/40" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Button 
+              className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-primary/20 active:scale-95"
+              onClick={() => onMark('taken', tempAmount)}
+            >
+              <CheckCircle2 className="h-6 w-6" /> Log Portion
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="w-full font-black text-xs uppercase gap-3 h-16 rounded-[1.2rem] shadow-lg shadow-destructive/20 active:scale-95"
+              onClick={() => onMark('skipped', "")}
+            >
+              <XCircle className="h-6 w-6" /> Mark as Skipped
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full font-black text-[10px] uppercase opacity-40 mt-2 active:scale-95"
+              onClick={onClear}
+            >
+              Reset Status
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
