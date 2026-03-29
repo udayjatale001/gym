@@ -2,20 +2,46 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, RefreshCcw, Calendar, History } from "lucide-react";
-import { useFirestore, useUser } from '@/firebase';
+import { Trash2, AlertTriangle, RefreshCcw, Calendar, History, LogOut, User } from "lucide-react";
+import { useFirestore, useUser, useAuth } from '@/firebase';
 import { doc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 export default function SettingsPage() {
   const db = useFirestore();
+  const auth = useAuth();
   const { user } = useUser();
+  const router = useRouter();
   const { toast } = useToast();
+  
   const [isResetting, setIsResetting] = useState(false);
   const [isCycling, setIsCycling] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut(auth);
+      router.push('/login');
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "Could not sign out. Please try again.",
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const handleResetCycle = async () => {
     if (!user || !db) return;
@@ -59,7 +85,7 @@ export default function SettingsPage() {
       });
 
       // 2. Clear subcollections
-      const subcollections = ['weightLogs', 'workoutLogs', 'mealLogs'];
+      const subcollections = ['weightLogs', 'workoutLogs', 'mealLogs', 'workoutSplits'];
       
       for (const sub of subcollections) {
         const querySnapshot = await getDocs(collection(db, 'users', user.uid, sub));
@@ -86,11 +112,32 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 pb-24">
       <div className="space-y-1">
         <h2 className="text-xl font-bold">Settings</h2>
         <p className="text-xs text-muted-foreground">Manage your account and data.</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            Account
+          </CardTitle>
+          <CardDescription>Logged in as {user?.email}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            variant="outline" 
+            className="w-full gap-2 border-primary/20 hover:bg-primary/5" 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+            Sign Out
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
