@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -102,33 +101,50 @@ export default function SettingsPage() {
   const handleFullReset = async () => {
     if (!user || !db) return;
     
+    const confirmMessage = lang === 'hi' 
+      ? "क्या आप वाकई अपना सारा डेटा हटाना चाहते हैं? यह प्रक्रिया वापस नहीं ली जा सकती।" 
+      : "Are you sure you want to delete all your data? This action cannot be undone.";
+
+    if (!confirm(confirmMessage)) return;
+
     setIsResetting(true);
     try {
+      // 1. Clear Firestore Data
       const batch = writeBatch(db);
-
       const userRef = doc(db, 'users', user.uid);
-      batch.update(userRef, {
+      
+      batch.set(userRef, {
+        displayName: user.displayName || "",
+        email: user.email || "",
         currentWeight: 0,
         targetWeight: 0,
         goal: "",
-        workoutStartDate: format(new Date(), 'yyyy-MM-dd')
+        workoutStartDate: format(new Date(), 'yyyy-MM-dd'),
+        createdAt: new Date().toISOString()
       });
 
       const subcollections = ['weightLogs', 'workoutLogs', 'mealLogs', 'workoutSplits'];
-      
       for (const sub of subcollections) {
         const querySnapshot = await getDocs(collection(db, 'users', user.uid, sub));
         querySnapshot.forEach((document) => {
           batch.delete(doc(db, 'users', user.uid, sub, document.id));
         });
       }
-
       await batch.commit();
-      
+
+      // 2. Clear LocalStorage Data
+      localStorage.clear();
+
       toast({
         title: lang === 'hi' ? "सिस्टम रीसेट पूरा हुआ" : "System Reset Complete",
         description: lang === 'hi' ? "आपका सारा डेटा साफ़ कर दिया गया है।" : "All your fitness and diet data has been permanently cleared.",
       });
+
+      // 3. Hard reload to refresh all states
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+
     } catch (error) {
       toast({
         variant: "destructive",
@@ -141,102 +157,110 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 space-y-6 pb-24">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">{t.settings}</h2>
+    <div className="p-4 space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500 no-scrollbar">
+      <div className="flex items-center gap-4 pt-6 px-1">
+        <div className="h-12 w-12 rounded-[1.25rem] bg-primary flex items-center justify-center text-primary-foreground shadow-lg rotate-3 border-b-4 border-black/20">
+          <User className="h-6 w-6" />
+        </div>
+        <div className="space-y-0.5">
+          <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">{t.settings}</h2>
+          <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-60">Control Center</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+      <Card className="border-none shadow-xl rounded-[2.5rem] bg-card overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic">
             <User className="h-5 w-5 text-primary" />
             {t.account}
           </CardTitle>
-          <CardDescription>{user?.email}</CardDescription>
+          <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">{user?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-muted">
+          <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-muted/30 border-2 border-muted/50 transition-all active:scale-[0.98]">
             <div className="flex items-center gap-3">
               {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
               <div className="space-y-0.5">
-                <p className="text-sm font-bold">{t.darkMode}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Elite Interface</p>
+                <p className="text-sm font-black uppercase italic tracking-tight">{t.darkMode}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-40">Elite Interface</p>
               </div>
             </div>
             <Switch 
               checked={isDarkMode} 
               onCheckedChange={toggleTheme}
+              className="data-[state=checked]:bg-primary"
             />
           </div>
 
           {/* Hindi Mode Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-muted">
+          <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-muted/30 border-2 border-muted/50 transition-all active:scale-[0.98]">
             <div className="flex items-center gap-3">
               <Languages className="h-5 w-5 text-primary" />
               <div className="space-y-0.5">
-                <p className="text-sm font-bold">{t.hindiMode}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Global Reach</p>
+                <p className="text-sm font-black uppercase italic tracking-tight">{t.hindiMode}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-40">Global Reach</p>
               </div>
             </div>
             <Switch 
               checked={lang === 'hi'} 
               onCheckedChange={toggleLanguage}
+              className="data-[state=checked]:bg-primary"
             />
           </div>
 
           <Button 
             variant="outline" 
-            className="w-full h-14 rounded-2xl gap-2 border-primary/20 hover:bg-primary/5 font-bold" 
+            className="w-full h-16 rounded-[1.5rem] gap-3 border-2 border-primary/20 hover:bg-primary/5 font-black uppercase italic tracking-widest text-xs active:scale-95 transition-all shadow-md" 
             onClick={handleLogout}
             disabled={isLoggingOut}
           >
-            {isLoggingOut ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+            {isLoggingOut ? <RefreshCcw className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
             {t.signOut}
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+      <Card className="border-none shadow-xl rounded-[2.5rem] bg-card overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic">
             <History className="h-5 w-5 text-primary" />
             {t.workoutPreferences}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold">{t.pplCycleReset}</h4>
+          <div className="space-y-3">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 px-1">{t.pplCycleReset}</h4>
             <Button 
               variant="outline" 
-              className="w-full h-14 rounded-2xl gap-2 font-bold" 
+              className="w-full h-16 rounded-[1.5rem] gap-3 font-black uppercase italic tracking-widest text-xs border-2 active:scale-95 transition-all shadow-md" 
               onClick={handleResetCycle}
               disabled={isCycling}
             >
-              {isCycling ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+              {isCycling ? <RefreshCcw className="h-5 w-5 animate-spin" /> : <Calendar className="h-5 w-5" />}
               {t.setTodayDay1}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/20 bg-destructive/5">
-        <CardHeader>
+      <Card className="border-none shadow-2xl rounded-[2.5rem] bg-destructive/5 border-2 border-destructive/10 overflow-hidden">
+        <CardHeader className="pb-4">
           <div className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            <CardTitle className="text-lg">{t.dangerZone}</CardTitle>
+            <CardTitle className="text-lg font-black uppercase tracking-tight italic">{t.dangerZone}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold">{t.fullSystemReset}</h4>
+          <div className="space-y-3">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-destructive/60 px-1">{t.fullSystemReset}</h4>
             <Button 
               variant="destructive" 
-              className="w-full h-14 rounded-2xl gap-2 font-bold" 
+              className="w-full h-20 rounded-[1.5rem] gap-4 font-black uppercase italic tracking-tighter text-lg shadow-xl active:scale-95 transition-all" 
               onClick={handleFullReset}
               disabled={isResetting}
             >
-              {isResetting ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {isResetting ? <RefreshCcw className="h-6 w-6 animate-spin" /> : <Trash2 className="h-6 w-6" />}
               {t.clearAllData}
             </Button>
           </div>
