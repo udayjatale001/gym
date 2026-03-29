@@ -190,7 +190,7 @@ function ChecklistSheet({ meal, onUpdate, onClear, onClose }: { meal: LocalMeal,
           <SheetHeader className="flex flex-row items-center gap-4 md:gap-6">
             <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 md:h-14 md:w-14 rounded-[1.25rem] md:rounded-[1.5rem] border-4 active:scale-90 shadow-xl bg-card shrink-0"><ArrowLeft className="h-6 w-6 md:h-8 md:w-8" /></Button>
             <div className="space-y-1 min-w-0">
-              <SheetTitle className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">{meal.mealName}</SheetTitle>
+              <SheetTitle className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">📈 {meal.mealName}</SheetTitle>
               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] opacity-50 truncate">{meal.mealType} • 30-DAY BLOCK</p>
             </div>
           </SheetHeader>
