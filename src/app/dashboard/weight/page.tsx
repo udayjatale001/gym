@@ -24,6 +24,7 @@ export default function WeightPage() {
   const [newWeight, setNewWeight] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isProgressOpen, setIsProgressOpen] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
@@ -75,19 +76,25 @@ export default function WeightPage() {
     });
   };
 
+  const handleSaveTarget = () => {
+    localStorage.setItem('fitstride_weight_target', targetWeight);
+    toast({
+      title: "Goal Saved",
+      description: "Your target weight has been updated locally.",
+    });
+    setIsProgressOpen(false);
+  };
+
   const currentWeight = logs.length > 0 ? logs[0].weight : 0;
   const goalWeight = parseFloat(targetWeight) || 0;
   
-  // Progress Calculation Logic (Weight Loss or Gain)
   const calculateProgress = () => {
     if (logs.length === 0 || goalWeight === 0) return 0;
     const startWeight = logs[logs.length - 1].weight;
     
     if (startWeight === goalWeight) return 100;
     
-    // Total distance needed
     const totalDistance = Math.abs(startWeight - goalWeight);
-    // Distance already covered
     const distanceCovered = Math.abs(startWeight - currentWeight);
     
     const percentage = (distanceCovered / totalDistance) * 100;
@@ -107,7 +114,6 @@ export default function WeightPage() {
 
   return (
     <div className="p-4 space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* High-Impact Header Section */}
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
           <div className="h-16 w-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-2xl shadow-primary/30 -rotate-2 border-b-4 border-primary-foreground/20">
@@ -119,8 +125,7 @@ export default function WeightPage() {
                 Weight Log
               </h2>
               
-              {/* Progress Tracking Trigger */}
-              <Sheet>
+              <Sheet open={isProgressOpen} onOpenChange={setIsProgressOpen}>
                 <SheetTrigger asChild>
                   <button className="text-3xl hover:scale-125 transition-transform active:scale-90" title="View Progress">
                     📈
@@ -135,7 +140,6 @@ export default function WeightPage() {
                     </SheetHeader>
 
                     <div className="space-y-8">
-                      {/* Current Status Cards */}
                       <div className="grid grid-cols-2 gap-4">
                         <Card className="bg-primary/5 border-2 border-primary/20 rounded-[2rem] p-6 text-center shadow-lg">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Current</p>
@@ -149,12 +153,11 @@ export default function WeightPage() {
                             placeholder="SET GOAL"
                             value={targetWeight}
                             onChange={(e) => setTargetWeight(e.target.value.replace(/[^0-9.]/g, ''))}
-                            className="text-center font-black text-2xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent placeholder:text-accent/20"
+                            className="text-center font-black text-2xl h-10 border-none bg-transparent focus-visible:ring-0 p-0 text-accent placeholder:text-accent/20 shadow-none"
                           />
                         </Card>
                       </div>
 
-                      {/* Progress Bar Container */}
                       <Card className="p-8 rounded-[2.5rem] border-none shadow-xl bg-white space-y-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
                         <div className="space-y-2 relative z-10">
@@ -182,7 +185,10 @@ export default function WeightPage() {
                         )}
                       </Card>
 
-                      <Button className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest italic text-lg shadow-xl shadow-primary/20" onClick={() => toast({ title: "Goal Saved", description: "Your target weight has been updated locally." })}>
+                      <Button 
+                        className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest italic text-lg shadow-xl shadow-primary/20" 
+                        onClick={handleSaveTarget}
+                      >
                         Save Target
                       </Button>
                     </div>
@@ -197,7 +203,6 @@ export default function WeightPage() {
         </div>
       </div>
 
-      {/* Massive Input Card */}
       <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[3rem] overflow-hidden bg-white relative">
         <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
         <CardContent className="p-10 space-y-8 relative z-10">
@@ -234,7 +239,6 @@ export default function WeightPage() {
         </CardContent>
       </Card>
 
-      {/* History List - Professional Badges */}
       <section className="space-y-5">
         <div className="flex items-center justify-between px-2">
           <h3 className="text-[13px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2.5">
