@@ -1,11 +1,10 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'FitStride | Your Fitness Companion',
+  title: 'GymBuddy! | Discipline Mode',
   description: 'AI-powered gym and diet tracker for progressive growth.',
 };
 
