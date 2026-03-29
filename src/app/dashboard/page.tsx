@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Utensils, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote } from "lucide-react";
-import { format, addDays, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Language, translations } from '@/lib/translations';
 
 interface LocalWeightLog {
   id: string;
@@ -18,19 +20,6 @@ interface LocalMeal {
   date: string;
 }
 
-const DISCIPLINE_QUOTES = [
-  "DISCIPLINE IS THE BRIDGE BETWEEN GOALS AND ACCOMPLISHMENT.",
-  "CONSISTENCY BEATS INTENSITY EVERY SINGLE TIME.",
-  "STRENGTH IS EARNED, NEVER GIVEN.",
-  "THE PAIN OF DISCIPLINE IS FAR LESS THAN THE PAIN OF REGRET.",
-  "CHAMPIONS ARE MADE IN THE REPETITIONS NO ONE SEES.",
-  "SURE, IT’S HARD. BUT IT’S HARDER TO LIVE WITH REGRET.",
-  "YOU DON'T HAVE TO BE GREAT TO START, BUT YOU HAVE TO START TO BE GREAT.",
-  "YOUR ONLY LIMIT IS YOU.",
-  "DON'T STOP WHEN YOU'RE TIRED. STOP WHEN YOU'RE DONE.",
-  "THE ONLY BAD WORKOUT IS THE ONE THAT DIDN'T HAPPEN."
-];
-
 export default function DashboardPage() {
   const [weightLogs, setWeightLogs] = useState<LocalWeightLog[]>([]);
   const [targetWeight, setTargetWeight] = useState<number>(0);
@@ -40,8 +29,15 @@ export default function DashboardPage() {
   const [suggestion, setSuggestion] = useState<{ today: string }>({
     today: "Rest"
   });
+  const [lang, setLang] = useState<Language>('en');
 
   useEffect(() => {
+    // Load Language
+    const savedLang = localStorage.getItem('language') as Language;
+    const currentLang = savedLang || 'en';
+    setLang(currentLang);
+    const t = translations[currentLang];
+
     // Load Weight Data
     const savedWeightLogs = localStorage.getItem('fitstride_weight_logs_v2');
     const savedTarget = localStorage.getItem('fitstride_weight_target');
@@ -59,7 +55,15 @@ export default function DashboardPage() {
     // Set Training Schedule (Today Only)
     const getWorkout = (date: Date) => {
       const day = date.getDay();
-      const map: Record<number, string> = { 0: "Rest", 1: "Push", 2: "Pull", 3: "Legs", 4: "Push", 5: "Pull", 6: "Legs" };
+      const map: Record<number, string> = { 
+        0: t.rest, 
+        1: t.push, 
+        2: t.pull, 
+        3: t.legs, 
+        4: t.push, 
+        5: t.pull, 
+        6: t.legs 
+      };
       return map[day];
     };
     const now = new Date();
@@ -69,18 +73,19 @@ export default function DashboardPage() {
 
     // Daily Quote rotation at Midnight
     const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-    const quoteIndex = dateSeed % DISCIPLINE_QUOTES.length;
-    setQuote(DISCIPLINE_QUOTES[quoteIndex]);
+    const quoteIndex = dateSeed % t.quotes.length;
+    setQuote(t.quotes[quoteIndex]);
 
     setIsLoaded(true);
   }, []);
+
+  const t = translations[lang];
 
   const weightLogsSorted = [...weightLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   const currentWeight = weightLogsSorted.length > 0 ? weightLogsSorted[0].weight : 0;
   
   const progress = (() => {
     if (weightLogsSorted.length === 0 || targetWeight === 0) return 0;
-    // Find initial weight for progress calculation (oldest log)
     const startWeight = weightLogsSorted[weightLogsSorted.length - 1].weight;
     if (startWeight === targetWeight) return 100;
     const totalDist = Math.abs(startWeight - targetWeight);
@@ -106,19 +111,19 @@ export default function DashboardPage() {
         <CardHeader className="pb-1 pt-6">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 opacity-80">
             <Calendar className="h-4 w-4" />
-            TRAINING SCHEDULE
+            {t.trainingSchedule}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pb-8">
           <div className="flex flex-col items-center text-center py-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">Today's Discipline</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">{t.todaysDiscipline}</p>
             <h3 className="text-5xl font-black tracking-tighter uppercase italic leading-none">
               {suggestion.today}
             </h3>
             {quote && (
               <div className="mt-6 px-6 py-4 bg-black/10 rounded-2xl border border-white/5 relative group transition-all hover:bg-black/20 w-full">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1 flex items-center justify-center gap-2">
-                  <Quote className="h-2.5 w-2.5" /> DISCIPLINE DIRECTIVE
+                  <Quote className="h-2.5 w-2.5" /> {t.disciplineDirective}
                 </p>
                 <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
                   "{quote}"
@@ -133,16 +138,16 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-2">
            <Scale className="h-5 w-5 text-primary" />
-           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60 italic">BODY MASS PROGRESS</h3>
+           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60 italic">{t.bodyMassProgress}</h3>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg group hover:border-primary/30 transition-all">
-            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">CURRENT</p>
+          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg">
+            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">{t.current}</p>
             <p className="text-4xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
-          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg group hover:border-accent/30 transition-all">
-            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">TARGET</p>
+          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg">
+            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">{t.target}</p>
             <p className="text-4xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
         </div>
@@ -152,7 +157,7 @@ export default function DashboardPage() {
           <div className="flex justify-between items-end">
             <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" /> 
-              TRANSFORMATION
+              {t.transformation}
             </h3>
             <span className="text-4xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
           </div>
@@ -167,7 +172,7 @@ export default function DashboardPage() {
             
             {targetWeight > 0 && weightLogs.length > 0 && (
               <div className="text-center py-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-border/50">
-                <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">REMAINING GAP</p>
+                <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">{t.remainingGap}</p>
                 <p className="text-5xl font-black italic tracking-tighter">
                   {remainingGap} <span className="text-sm opacity-30 not-italic tracking-normal">KG</span>
                 </p>
@@ -191,9 +196,9 @@ export default function DashboardPage() {
               <Utensils className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">Dietary Loop</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">{t.dietaryLoop}</p>
               <p className="text-lg font-black italic uppercase tracking-tight">
-                {hasLoggedMealToday ? "FUEL LOGGED" : "AWAITING LOG"}
+                {hasLoggedMealToday ? t.fuelLogged : t.awaitingLog}
               </p>
             </div>
           </div>

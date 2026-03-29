@@ -1,19 +1,30 @@
+
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Dumbbell, Scale, Utensils } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { label: 'Home', icon: Home, href: '/dashboard' },
-  { label: 'Workout', icon: Dumbbell, href: '/dashboard/workout' },
-  { label: 'Diet', icon: Utensils, href: '/dashboard/diet' },
-  { label: 'Weight', icon: Scale, href: '/dashboard/weight' },
-];
+import { Language, translations } from '@/lib/translations';
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [lang, setLang] = useState<Language>('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('language') as Language;
+    if (savedLang) setLang(savedLang);
+  }, []);
+
+  const t = translations[lang];
+
+  const navItems = [
+    { label: t.home, icon: Home, href: '/dashboard' },
+    { label: t.workout, icon: Dumbbell, href: '/dashboard/workout' },
+    { label: t.diet, icon: Utensils, href: '/dashboard/diet' },
+    { label: t.weight, icon: Scale, href: '/dashboard/weight' },
+  ];
 
   return (
     <nav className="sticky bottom-0 left-0 right-0 w-full bg-card/80 backdrop-blur-xl border-t border-border/40 flex items-center justify-around py-4 px-2 z-50 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">

@@ -1,8 +1,11 @@
+
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/firebase";
+import { Language, translations } from '@/lib/translations';
 
 const DisciplineLogo = () => (
   <div className="h-10 w-10 flex items-center justify-center bg-primary rounded-xl shadow-lg rotate-3 border-b-4 border-black/20">
@@ -24,6 +27,14 @@ const DisciplineLogo = () => (
 
 export function Header() {
   const { user } = useUser();
+  const [lang, setLang] = useState<Language>('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('language') as Language;
+    if (savedLang) setLang(savedLang);
+  }, []);
+
+  const t = translations[lang];
   
   return (
     <header className="p-4 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-40 border-b border-border/30">
@@ -32,7 +43,7 @@ export function Header() {
         <div>
           <h1 className="text-2xl font-black text-primary tracking-tighter italic leading-none uppercase">GYMBUDDY!</h1>
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5 opacity-60">
-            DISCIPLINE MODE
+            {t.disciplineMode}
           </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trash2, AlertTriangle, RefreshCcw, Calendar, History, LogOut, User, Moon, Sun } from "lucide-react";
+import { Trash2, AlertTriangle, RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages } from "lucide-react";
 import { useFirestore, useUser, useAuth } from '@/firebase';
 import { doc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Language, translations } from '@/lib/translations';
 
 export default function SettingsPage() {
   const db = useFirestore();
@@ -24,13 +26,19 @@ export default function SettingsPage() {
   const [isCycling, setIsCycling] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [lang, setLang] = useState<Language>('en');
 
   useEffect(() => {
     // Check initial theme
     if (document.documentElement.classList.contains('dark')) {
       setIsDarkMode(true);
     }
+    // Check initial language
+    const savedLang = localStorage.getItem('language') as Language;
+    if (savedLang) setLang(savedLang);
   }, []);
+
+  const t = translations[lang];
 
   const toggleTheme = (checked: boolean) => {
     setIsDarkMode(checked);
@@ -43,15 +51,18 @@ export default function SettingsPage() {
     }
   };
 
+  const toggleLanguage = (checked: boolean) => {
+    const newLang = checked ? 'hi' : 'en';
+    setLang(newLang);
+    localStorage.setItem('language', newLang);
+    window.location.reload(); // Reload to apply changes globally
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
       await signOut(auth);
       router.push('/login');
-      toast({
-        title: "Signed Out",
-        description: "You have been successfully logged out.",
-      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -74,8 +85,8 @@ export default function SettingsPage() {
       }, { merge: true });
       
       toast({
-        title: "Workout Cycle Reset",
-        description: "Your PPL cycle has been restarted from today (Day 1: Push).",
+        title: lang === 'hi' ? "वर्कआउट चक्र रीसेट" : "Workout Cycle Reset",
+        description: lang === 'hi' ? "आपका PPL चक्र आज से फिर से शुरू हो गया है।" : "Your PPL cycle has been restarted from today.",
       });
     } catch (e) {
       toast({
@@ -115,8 +126,8 @@ export default function SettingsPage() {
       await batch.commit();
       
       toast({
-        title: "System Reset Complete",
-        description: "All your fitness and diet data has been permanently cleared.",
+        title: lang === 'hi' ? "सिस्टम रीसेट पूरा हुआ" : "System Reset Complete",
+        description: lang === 'hi' ? "आपका सारा डेटा साफ़ कर दिया गया है।" : "All your fitness and diet data has been permanently cleared.",
       });
     } catch (error) {
       toast({
@@ -132,24 +143,24 @@ export default function SettingsPage() {
   return (
     <div className="p-4 space-y-6 pb-24">
       <div className="space-y-1">
-        <h2 className="text-xl font-bold">Settings</h2>
-        <p className="text-xs text-muted-foreground">Manage your account and app preferences.</p>
+        <h2 className="text-xl font-bold">{t.settings}</h2>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
-            Account
+            {t.account}
           </CardTitle>
-          <CardDescription>Logged in as {user?.email}</CardDescription>
+          <CardDescription>{user?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Dark Mode Toggle */}
           <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-muted">
             <div className="flex items-center gap-3">
               {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
               <div className="space-y-0.5">
-                <p className="text-sm font-bold">Dark Mode</p>
+                <p className="text-sm font-bold">{t.darkMode}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Elite Interface</p>
               </div>
             </div>
@@ -158,6 +169,22 @@ export default function SettingsPage() {
               onCheckedChange={toggleTheme}
             />
           </div>
+
+          {/* Hindi Mode Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-muted">
+            <div className="flex items-center gap-3">
+              <Languages className="h-5 w-5 text-primary" />
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold">{t.hindiMode}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Global Reach</p>
+              </div>
+            </div>
+            <Switch 
+              checked={lang === 'hi'} 
+              onCheckedChange={toggleLanguage}
+            />
+          </div>
+
           <Button 
             variant="outline" 
             className="w-full h-14 rounded-2xl gap-2 border-primary/20 hover:bg-primary/5 font-bold" 
@@ -165,7 +192,7 @@ export default function SettingsPage() {
             disabled={isLoggingOut}
           >
             {isLoggingOut ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-            Sign Out
+            {t.signOut}
           </Button>
         </CardContent>
       </Card>
@@ -174,16 +201,12 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <History className="h-5 w-5 text-primary" />
-            Workout Preferences
+            {t.workoutPreferences}
           </CardTitle>
-          <CardDescription>Adjust your workout cycle timing.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <h4 className="text-sm font-bold">PPL Cycle Reset</h4>
-            <p className="text-xs text-muted-foreground">
-              Restarts your Push-Pull-Legs split from Today (makes today Day 1).
-            </p>
+            <h4 className="text-sm font-bold">{t.pplCycleReset}</h4>
             <Button 
               variant="outline" 
               className="w-full h-14 rounded-2xl gap-2 font-bold" 
@@ -191,7 +214,7 @@ export default function SettingsPage() {
               disabled={isCycling}
             >
               {isCycling ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-              Set Today as Day 1
+              {t.setTodayDay1}
             </Button>
           </div>
         </CardContent>
@@ -201,18 +224,12 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            <CardTitle className="text-lg">Danger Zone</CardTitle>
+            <CardTitle className="text-lg">{t.dangerZone}</CardTitle>
           </div>
-          <CardDescription>
-            These actions are permanent and cannot be undone.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <h4 className="text-sm font-bold">Full System Reset</h4>
-            <p className="text-xs text-muted-foreground">
-              Deletes all weight logs, diet logs, and workout history.
-            </p>
+            <h4 className="text-sm font-bold">{t.fullSystemReset}</h4>
             <Button 
               variant="destructive" 
               className="w-full h-14 rounded-2xl gap-2 font-bold" 
@@ -220,7 +237,7 @@ export default function SettingsPage() {
               disabled={isResetting}
             >
               {isResetting ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              Clear All My Data
+              {t.clearAllData}
             </Button>
           </div>
         </CardContent>
