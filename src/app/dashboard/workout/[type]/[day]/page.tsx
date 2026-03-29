@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2, ListPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -15,11 +15,14 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors";
 import { cn } from "@/lib/utils";
 
-interface Exercise {
-  name: string;
-  sets: string;
+interface WorkoutSet {
   reps: string;
   weight: string;
+}
+
+interface Exercise {
+  name: string;
+  sets: WorkoutSet[];
 }
 
 export default function WorkoutLogPage({ params }: { params: Promise<{ type: string, day: string }> }) {
@@ -47,7 +50,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       setExercises(savedLog.exercises);
       setIsEditing(false);
     } else {
-      setExercises([{ name: "", sets: "", reps: "", weight: "" }]);
+      setExercises([{ name: "", sets: [{ reps: "", weight: "" }] }]);
       setIsEditing(true);
     }
   }, [savedLog]);
@@ -65,28 +68,49 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   }, [type]);
 
   const handleAddExercise = () => {
-    setExercises([...exercises, { name: "", sets: "", reps: "", weight: "" }]);
+    setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }]);
   };
 
   const handleRemoveExercise = (index: number) => {
     setExercises(exercises.filter((_, i) => i !== index));
   };
 
-  const handleUpdateExercise = (index: number, field: keyof Exercise, value: string) => {
+  const handleUpdateExerciseName = (index: number, name: string) => {
     const newExercises = [...exercises];
-    newExercises[index][field] = value;
+    newExercises[index].name = name;
+    setExercises(newExercises);
+  };
+
+  const handleAddSet = (exerciseIndex: number) => {
+    const newExercises = [...exercises];
+    newExercises[exerciseIndex].sets.push({ reps: "", weight: "" });
+    setExercises(newExercises);
+  };
+
+  const handleRemoveSet = (exerciseIndex: number, setIndex: number) => {
+    const newExercises = [...exercises];
+    newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex);
+    if (newExercises[exerciseIndex].sets.length === 0) {
+      newExercises[exerciseIndex].sets = [{ reps: "", weight: "" }];
+    }
+    setExercises(newExercises);
+  };
+
+  const handleUpdateSet = (exerciseIndex: number, setIndex: number, field: keyof WorkoutSet, value: string) => {
+    const newExercises = [...exercises];
+    newExercises[exerciseIndex].sets[setIndex][field] = value;
     setExercises(newExercises);
   };
 
   const handleSave = () => {
     if (!user || !logRef) return;
     
-    const validExercises = exercises.filter(ex => ex.name.trim() !== "");
+    const validExercises = exercises.filter(ex => ex.name.trim() !== "" && ex.sets.some(s => s.reps.trim() !== ""));
     if (validExercises.length === 0) {
       toast({
         variant: "destructive",
-        title: "Empty Log",
-        description: "Please add at least one exercise name.",
+        title: "Incomplete Log",
+        description: "Please add at least one exercise and its reps.",
       });
       return;
     }
@@ -121,6 +145,14 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         setIsSaving(false);
       });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-svh">
+        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-svh bg-background pb-24">
@@ -169,17 +201,23 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
               <p className="text-xs font-bold uppercase tracking-wide">Session Completed</p>
             </div>
             {savedLog.exercises.map((ex: Exercise, i: number) => (
-              <Card key={i} className="border-2 border-muted overflow-hidden">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-black text-sm uppercase tracking-tight">{ex.name}</h4>
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase">
-                      <span>Sets: <span className="text-foreground">{ex.sets}</span></span>
-                      <span>Reps: <span className="text-foreground">{ex.reps}</span></span>
-                      <span>Weight: <span className="text-foreground">{ex.weight} kg</span></span>
+              <Card key={i} className="border-2 border-muted overflow-hidden bg-white shadow-sm">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="font-black text-base uppercase tracking-tight flex items-center justify-between">
+                    {ex.name}
+                    <Dumbbell className="h-4 w-4 text-primary opacity-40" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-2">
+                  {ex.sets.map((set, setIdx) => (
+                    <div key={setIdx} className="flex items-center justify-between py-1.5 border-b border-muted last:border-0">
+                      <span className="text-[10px] font-black uppercase text-muted-foreground">Set {setIdx + 1}</span>
+                      <div className="flex items-center gap-4 text-xs font-bold uppercase">
+                        <span className="text-muted-foreground">Reps: <span className="text-foreground">{set.reps}</span></span>
+                        <span className="text-muted-foreground">Weight: <span className="text-foreground">{set.weight} kg</span></span>
+                      </div>
                     </div>
-                  </div>
-                  <Dumbbell className="h-5 w-5 text-muted/30" />
+                  ))}
                 </CardContent>
               </Card>
             ))}
@@ -187,20 +225,20 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         ) : (
           /* Edit Mode: Structured Form */
           <>
-            <div className="space-y-4">
-              {exercises.map((exercise, index) => (
-                <Card key={index} className="border-2 border-muted overflow-hidden shadow-sm">
+            <div className="space-y-6">
+              {exercises.map((exercise, exerciseIndex) => (
+                <Card key={exerciseIndex} className="border-2 border-muted overflow-hidden shadow-sm">
                   <CardHeader className="p-3 bg-muted/30 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
                       <LayoutGrid className="h-3.5 w-3.5 text-primary" />
-                      Exercise {index + 1}
+                      Exercise {exerciseIndex + 1}
                     </CardTitle>
                     {exercises.length > 1 && (
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveExercise(index)}
+                        onClick={() => handleRemoveExercise(exerciseIndex)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -212,47 +250,63 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                       <Input 
                         placeholder="e.g. Bench Press" 
                         value={exercise.name}
-                        onChange={(e) => handleUpdateExercise(index, 'name', e.target.value)}
+                        onChange={(e) => handleUpdateExerciseName(exerciseIndex, e.target.value)}
                         className="font-bold border-2 focus-visible:ring-primary"
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase opacity-60 tracking-wider text-center block">Sets</Label>
-                        <Input 
-                          placeholder="0" 
-                          value={exercise.sets}
-                          onChange={(e) => handleUpdateExercise(index, 'sets', e.target.value)}
-                          className="font-bold border-2 text-center"
-                          type="text"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase opacity-60 tracking-wider text-center block">Reps</Label>
-                        <Input 
-                          placeholder="0" 
-                          value={exercise.reps}
-                          onChange={(e) => handleUpdateExercise(index, 'reps', e.target.value)}
-                          className="font-bold border-2 text-center"
-                          type="text"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase opacity-60 tracking-wider text-center block">Weight</Label>
-                        <div className="relative">
-                          <Input 
-                            placeholder="0" 
-                            value={exercise.weight}
-                            onChange={(e) => handleUpdateExercise(index, 'weight', e.target.value)}
-                            className="font-bold border-2 text-center pr-6"
-                            type="text"
-                            inputMode="decimal"
-                          />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-black opacity-30">KG</span>
+                    
+                    <div className="space-y-3 pt-2">
+                      <p className="text-[10px] font-black uppercase opacity-60 tracking-wider">Sets & Progression</p>
+                      {exercise.sets.map((set, setIndex) => (
+                        <div key={setIndex} className="flex items-center gap-2 group animate-in slide-in-from-right-2 duration-200">
+                          <div className="h-10 w-10 flex items-center justify-center bg-muted/50 rounded-lg text-[10px] font-black shrink-0">
+                            #{setIndex + 1}
+                          </div>
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <div className="relative">
+                              <Input 
+                                placeholder="Reps" 
+                                value={set.reps}
+                                onChange={(e) => handleUpdateSet(exerciseIndex, setIndex, 'reps', e.target.value)}
+                                className="h-10 font-bold border-2 text-center"
+                                type="text"
+                                inputMode="numeric"
+                              />
+                            </div>
+                            <div className="relative">
+                              <Input 
+                                placeholder="Weight" 
+                                value={set.weight}
+                                onChange={(e) => handleUpdateSet(exerciseIndex, setIndex, 'weight', e.target.value)}
+                                className="h-10 font-bold border-2 text-center pr-6"
+                                type="text"
+                                inputMode="decimal"
+                              />
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-black opacity-30">KG</span>
+                            </div>
+                          </div>
+                          {exercise.sets.length > 1 && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                              onClick={() => handleRemoveSet(exerciseIndex, setIndex)}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
-                      </div>
+                      ))}
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full h-9 border-dashed text-[10px] font-black uppercase gap-2 hover:bg-primary/5 hover:border-primary/40"
+                        onClick={() => handleAddSet(exerciseIndex)}
+                      >
+                        <ListPlus className="h-3.5 w-3.5" />
+                        Add Set
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -261,13 +315,13 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
             <Button 
               variant="outline" 
-              className="w-full border-dashed border-2 py-10 flex flex-col gap-2 rounded-2xl hover:bg-primary/5 hover:border-primary/40 group transition-all"
+              className="w-full border-dashed border-2 py-8 flex flex-col gap-2 rounded-2xl hover:bg-primary/5 hover:border-primary/40 group transition-all mt-4"
               onClick={handleAddExercise}
             >
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                <Plus className="h-6 w-6" />
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <Plus className="h-5 w-5" />
               </div>
-              <span className="font-black text-xs uppercase tracking-widest">Add Next Exercise</span>
+              <span className="font-black text-[10px] uppercase tracking-widest">Add New Exercise</span>
             </Button>
           </>
         )}

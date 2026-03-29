@@ -42,11 +42,18 @@
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "sets": { "type": "string" },
-              "reps": { "type": "string" },
-              "weight": { "type": "string" }
+              "sets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "reps": { "type": "string" },
+                    "weight": { "type": "string" }
+                  }
+                }
+              }
             },
-            "required": ["name"]
+            "required": ["name", "sets"]
           }
         },
         "timestamp": { "type": "string", "format": "date-time" },
