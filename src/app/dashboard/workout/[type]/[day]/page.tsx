@@ -1,4 +1,3 @@
-
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
@@ -6,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { ArrowLeft, Save, Plus, Trash2, Loader2, Dumbbell, LayoutGrid, CheckCircle2, ListPlus, X, Edit2, TrendingUp, Ban, History } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const [lang, setLang] = useState<Language>('en');
   const [previousSession, setPreviousSession] = useState<any>(null);
   const [allExerciseNames, setAllExerciseNames] = useState<string[]>([]);
+  const [isHeatCheckOpen, setIsHeatCheckOpen] = useState(false);
 
   const t = translations[lang];
   const storageKey = `fitstride_workout_${type}_day_${day}`;
@@ -68,6 +69,22 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     setAllExerciseNames(Array.from(names));
     setIsLoaded(true);
   }, [type, day, storageKey]);
+
+  const heatCheckStats = useMemo(() => {
+    let totalVolume = 0;
+    exercises.forEach(ex => {
+      ex.sets.forEach((s: any) => {
+        const w = parseFloat(s.weight) || 0;
+        const r = parseInt(s.reps) || 0;
+        totalVolume += w * r;
+      });
+    });
+    const calories = (totalVolume / 100) * 1.5;
+    return {
+      recapCalories: Math.round(calories),
+      recapVolume: totalVolume.toLocaleString('en-US'),
+    };
+  }, [exercises]);
 
   const handleSave = () => {
     const valid = exercises.filter(ex => ex.name.trim() !== "" && ex.sets.some(s => s.reps.trim() !== ""));
@@ -127,7 +144,12 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             <h2 className="text-xl font-black uppercase tracking-tighter italic leading-none">{displayName}</h2>
             <div className="flex items-center gap-2">
               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">DAY {day} LOG</p>
-              <span className="text-xs animate-pulse">🥵</span>
+              <span 
+                className="text-3xl animate-pulse cursor-pointer select-none active:scale-125 transition-transform"
+                onClick={() => setIsHeatCheckOpen(true)}
+              >
+                🥵
+              </span>
             </div>
           </div>
         </div>
@@ -244,6 +266,63 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
           </div>
         )}
       </div>
+
+      <Dialog open={isHeatCheckOpen} onOpenChange={setIsHeatCheckOpen}>
+        <DialogContent className="bg-black border-none rounded-[3rem] p-0 overflow-hidden max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
+          <div className="p-6 pb-0 flex justify-between items-center">
+            <h2 className="text-[#39FF14] font-black italic uppercase tracking-tighter text-xl">SESSION HEAT CHECK 🥵</h2>
+            <DialogClose className="text-white opacity-50 hover:opacity-100 transition-opacity">
+              <X className="h-6 w-6" />
+            </DialogClose>
+          </div>
+
+          <div className="p-8 space-y-10 flex flex-col items-center">
+            <div className="relative h-56 w-56 flex items-center justify-center">
+              <svg className="h-full w-full -rotate-90">
+                <circle
+                  cx="112"
+                  cy="112"
+                  r="100"
+                  fill="transparent"
+                  stroke="rgba(57, 255, 20, 0.05)"
+                  strokeWidth="12"
+                />
+                <circle
+                  cx="112"
+                  cy="112"
+                  r="100"
+                  fill="transparent"
+                  stroke="#39FF14"
+                  strokeWidth="12"
+                  strokeDasharray="628"
+                  strokeDashoffset={628 - (628 * Math.min(heatCheckStats.recapCalories, 500)) / 500}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(57,255,20,0.5)]"
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center text-center">
+                <span className="text-6xl font-black text-white italic tracking-tighter">{heatCheckStats.recapCalories}</span>
+                <span className="text-[#39FF14] text-[10px] font-black uppercase tracking-[0.2em] mt-1">KCAL BURNED</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="bg-white/5 border border-white/10 p-5 rounded-[2rem] text-center shadow-inner">
+                <p className="text-white text-xl font-black italic tracking-tighter">{heatCheckStats.recapVolume} kg</p>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">💪 Total Volume</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 p-5 rounded-[2rem] text-center shadow-inner">
+                <p className="text-white text-xl font-black italic tracking-tighter">1.5x Factor</p>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">⚡ Intensity</p>
+              </div>
+            </div>
+
+            <p className="text-white/20 text-[8px] font-medium text-center px-4 leading-relaxed uppercase tracking-widest">
+              Note: Estimate based on volume (70-80% accurate). Actual burn varies with personal metabolism and heart rate.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
