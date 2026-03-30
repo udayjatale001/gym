@@ -269,12 +269,14 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
 
       <Dialog open={isHeatCheckOpen} onOpenChange={setIsHeatCheckOpen}>
         <DialogContent className="bg-black border-none rounded-[3rem] p-0 overflow-hidden max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
-          <div className="p-6 pb-0 flex justify-between items-center">
-            <h2 className="text-[#39FF14] font-black italic uppercase tracking-tighter text-xl">SESSION HEAT CHECK 🥵</h2>
+          <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-[#39FF14] font-black italic uppercase tracking-tighter text-xl">
+              SESSION HEAT CHECK 🥵
+            </DialogTitle>
             <DialogClose className="text-white opacity-50 hover:opacity-100 transition-opacity">
               <X className="h-6 w-6" />
             </DialogClose>
-          </div>
+          </DialogHeader>
 
           <div className="p-8 space-y-10 flex flex-col items-center">
             <div className="relative h-56 w-56 flex items-center justify-center">
