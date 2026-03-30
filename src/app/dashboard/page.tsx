@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame } from "lucide-react";
-import { format, isSameDay } from 'date-fns';
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw } from "lucide-react";
+import { format, isSameDay, differenceInMinutes, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
 
@@ -20,6 +21,8 @@ interface DailyTrackerData {
   water: number;
   sleep: number;
   steps: number;
+  bedtime?: string;
+  wakeTime?: string;
 }
 
 export default function DashboardPage() {
@@ -29,12 +32,15 @@ export default function DashboardPage() {
     date: format(new Date(), 'yyyy-MM-dd'),
     water: 0,
     sleep: 0,
-    steps: 0
+    steps: 0,
+    bedtime: '',
+    wakeTime: ''
   });
   const [isLoaded, setIsLoaded] = useState(false);
   const [quote, setQuote] = useState("");
   const [suggestion, setSuggestion] = useState<{ today: string }>({ today: "Rest" });
   const [lang, setLang] = useState<Language>('en');
+  const [isEditingSleep, setIsEditingSleep] = useState(false);
 
   const WATER_GOAL = 4000;
   const STEP_GOAL = 1000;
@@ -62,25 +68,27 @@ export default function DashboardPage() {
     // Check if we need to reset/archive
     const lastEntry = trackerHistory[trackerHistory.length - 1];
     if (lastEntry && !isSameDay(new Date(lastEntry.date), new Date())) {
-      // It's a new day - Archive current and create new
       const newData: DailyTrackerData = {
         date: todayStr,
         water: 0,
         sleep: 0,
-        steps: 0
+        steps: 0,
+        bedtime: '',
+        wakeTime: ''
       };
       trackerHistory.push(newData);
       localStorage.setItem('fitstride_daily_trackers', JSON.stringify(trackerHistory));
       setCurrentData(newData);
+      setIsEditingSleep(true);
     } else if (lastEntry) {
-      // Same day, load current
       setCurrentData(lastEntry);
+      setIsEditingSleep(!lastEntry.bedtime && lastEntry.sleep === 0);
     } else {
-      // First time ever
-      const firstData = { date: todayStr, water: 0, sleep: 0, steps: 0 };
+      const firstData = { date: todayStr, water: 0, sleep: 0, steps: 0, bedtime: '', wakeTime: '' };
       trackerHistory.push(firstData);
       localStorage.setItem('fitstride_daily_trackers', JSON.stringify(trackerHistory));
       setCurrentData(firstData);
+      setIsEditingSleep(true);
     }
 
     // Suggestions & Quotes
@@ -99,9 +107,9 @@ export default function DashboardPage() {
     setIsLoaded(true);
   }, []);
 
-  const updateDailyTracker = (key: keyof Omit<DailyTrackerData, 'date'>, value: number) => {
+  const updateDailyTracker = (updates: Partial<DailyTrackerData>) => {
     setCurrentData(prev => {
-      const updated = { ...prev, [key]: value };
+      const updated = { ...prev, ...updates };
       const savedDailyData = localStorage.getItem('fitstride_daily_trackers');
       let trackerHistory: DailyTrackerData[] = savedDailyData ? JSON.parse(savedDailyData) : [];
       const todayIndex = trackerHistory.findIndex(l => l.date === prev.date);
@@ -111,10 +119,28 @@ export default function DashboardPage() {
     });
   };
 
-  const handleAddWater = () => updateDailyTracker('water', Math.min(WATER_GOAL, currentData.water + 250));
-  const handleResetWater = () => updateDailyTracker('water', 0);
-  const handleAddSleep = (min: number) => updateDailyTracker('sleep', currentData.sleep + min);
-  const handleAddSteps = (s: number) => updateDailyTracker('steps', currentData.steps + s);
+  const handleCalculateSleep = () => {
+    if (!currentData.bedtime || !currentData.wakeTime) return;
+    
+    const bed = parse(currentData.bedtime, 'HH:mm', new Date());
+    let wake = parse(currentData.wakeTime, 'HH:mm', new Date());
+    
+    if (wake < bed) {
+      // Wake up time is on the next day
+      wake = new Date(wake.getTime() + 24 * 60 * 60 * 1000);
+    }
+    
+    const minutes = differenceInMinutes(wake, bed);
+    updateDailyTracker({ sleep: minutes });
+    setIsEditingSleep(false);
+  };
+
+  const handleAddNap = () => updateDailyTracker({ sleep: currentData.sleep + 60 });
+  const handleResetSleep = () => setIsEditingSleep(true);
+
+  const handleAddWater = () => updateDailyTracker({ water: Math.min(WATER_GOAL, currentData.water + 250) });
+  const handleResetWater = () => updateDailyTracker({ water: 0 });
+  const handleAddSteps = (s: number) => updateDailyTracker({ steps: currentData.steps + s });
 
   const t = translations[lang];
   const weightLogsSorted = [...weightLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -130,8 +156,9 @@ export default function DashboardPage() {
   })();
 
   const formatSleep = (min: number) => {
-    const h = (min / 60).toFixed(1);
-    return `${h}h`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${h}h ${m}m`;
   };
 
   const sleepProgress = Math.min(100, (currentData.sleep / SLEEP_GOAL) * 100);
@@ -171,56 +198,96 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* STRIDE PROGRESS TRACKERS (Finance Dashboard Style) */}
+      {/* STRIDE PROGRESS TRACKERS */}
       <div className="grid grid-cols-1 gap-6">
         {/* Sleep Stride (🌙) */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl">
-          <div className="flex justify-between items-end mb-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 mb-1">
+          {isEditingSleep ? (
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-2 mb-2">
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Moon className="h-4 w-4 text-primary" />
                 </div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
               </div>
-              <h4 className="text-5xl font-black italic tracking-tighter text-primary">{formatSleep(currentData.sleep)}</h4>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">RESTED</p>
-            </div>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="icon" className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-90 transition-all">
-                  <Plus className="h-6 w-6 text-black" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-black border-white/10 rounded-[2.5rem] w-[90%] max-w-xs p-8">
-                <DialogHeader><DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-center">LOG RECOVERY</DialogTitle></DialogHeader>
-                <div className="grid grid-cols-1 gap-3 py-6">
-                  <Button variant="outline" className="h-14 rounded-2xl border-white/10 text-white font-black uppercase text-xs" onClick={() => handleAddSleep(60)}>+ 1.0H NAP</Button>
-                  <Button variant="outline" className="h-14 rounded-2xl border-white/10 text-white font-black uppercase text-xs" onClick={() => handleAddSleep(480)}>+ 8.0H SLEEP</Button>
-                  <Button variant="ghost" className="h-10 text-destructive/40 font-black uppercase text-[10px] mt-4" onClick={() => updateDailyTracker('sleep', 0)}>RESET RECOVERY</Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-white/20 px-1">BEDTIME</label>
+                  <Input 
+                    type="time" 
+                    value={currentData.bedtime} 
+                    onChange={(e) => updateDailyTracker({ bedtime: e.target.value })}
+                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary" 
+                  />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          
-          <div className="relative pt-2">
-            <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
-              <div 
-                className={cn(
-                  "h-full transition-all duration-1000 ease-out rounded-full",
-                  currentData.sleep >= SLEEP_GOAL ? "bg-primary shadow-[0_0_15px_#39FF14]" : "bg-primary/40"
-                )}
-                style={{ width: `${sleepProgress}%` }}
-              />
+                <div className="space-y-2">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-white/20 px-1">WAKE UP</label>
+                  <Input 
+                    type="time" 
+                    value={currentData.wakeTime} 
+                    onChange={(e) => updateDailyTracker({ wakeTime: e.target.value })}
+                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary" 
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={handleCalculateSleep} 
+                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest italic text-xs rounded-2xl shadow-[0_0_20px_rgba(57,255,20,0.2)]"
+                disabled={!currentData.bedtime || !currentData.wakeTime}
+              >
+                CONFIRM RECOVERY
+              </Button>
             </div>
-            {/* Target Marker at 8h */}
-            <div className="absolute top-0 left-[100%] h-6 w-0.5 bg-white/20 -translate-x-full" />
-            <div className="flex justify-between items-center mt-2 px-1">
-              <p className="text-[8px] font-black uppercase tracking-widest text-white/20">RECOVERY PROGRESS</p>
-              <p className="text-[8px] font-black uppercase tracking-widest text-primary italic">{Math.round(sleepProgress)}%</p>
+          ) : (
+            <div className="animate-in slide-in-from-right-4 duration-500">
+              <div className="flex justify-between items-start mb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Moon className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
+                  </div>
+                  <h4 className="text-5xl font-black italic tracking-tighter text-primary">{formatSleep(currentData.sleep)}</h4>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic">RECOVERY STATUS: <span className="text-primary">OPTIMAL</span></p>
+                </div>
+                
+                <div className="flex gap-2">
+                   <Button 
+                    onClick={handleResetSleep} 
+                    size="icon" 
+                    className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white active:scale-90 transition-all"
+                  >
+                    <RefreshCw className="h-5 w-5" />
+                  </Button>
+                  <Button 
+                    onClick={handleAddNap} 
+                    size="icon" 
+                    className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 shadow-[0_0_15px_rgba(57,255,20,0.3)] active:scale-90 transition-all"
+                  >
+                    <Plus className="h-5 w-5 text-black" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="relative pt-4">
+                <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                  <div 
+                    className={cn(
+                      "h-full transition-all duration-1000 ease-out rounded-full",
+                      currentData.sleep >= SLEEP_GOAL ? "bg-primary shadow-[0_0_15px_#39FF14]" : "bg-primary/40"
+                    )}
+                    style={{ width: `${sleepProgress}%` }}
+                  />
+                </div>
+                <div className="absolute top-0 left-[100%] h-6 w-0.5 bg-white/20 -translate-x-full" />
+                <div className="flex justify-between items-center mt-2 px-1">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-white/20">RECOVERY PROGRESS</p>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-primary italic">{Math.round(sleepProgress)}%</p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </Card>
 
         {/* Step Stride (👟) */}
