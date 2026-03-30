@@ -54,10 +54,16 @@
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
   }
+  
+  html, body {
+    height: 100%;
+    overflow: hidden; /* Prevent body scroll to stop pull-to-refresh */
+  }
+
   body {
     @apply bg-background text-foreground font-body;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: none; /* Disable browser-level pull-to-refresh */
     -webkit-overflow-scrolling: touch;
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -76,5 +82,9 @@
   }
   .h-svh {
     height: 100svh;
+  }
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
   }
 }
