@@ -125,7 +125,10 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
           </Link>
           <div className="space-y-0.5">
             <h2 className="text-xl font-black uppercase tracking-tighter italic leading-none">{displayName}</h2>
-            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">DAY {day} LOG</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">DAY {day} LOG</p>
+              <span className="text-xs animate-pulse">🥵</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
