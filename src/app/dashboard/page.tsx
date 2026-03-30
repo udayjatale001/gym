@@ -1,10 +1,12 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, PlusCircle } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
@@ -20,10 +22,22 @@ interface WaterLog {
   amount: number;
 }
 
+interface SleepLog {
+  date: string;
+  minutes: number;
+}
+
+interface StepLog {
+  date: string;
+  steps: number;
+}
+
 export default function DashboardPage() {
   const [weightLogs, setWeightLogs] = useState<LocalWeightLog[]>([]);
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [waterAmount, setWaterAmount] = useState<number>(0);
+  const [sleepMinutes, setSleepMinutes] = useState<number>(0);
+  const [steps, setSteps] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [quote, setQuote] = useState("");
   const [suggestion, setSuggestion] = useState<{ today: string }>({
@@ -31,14 +45,18 @@ export default function DashboardPage() {
   });
   const [lang, setLang] = useState<Language>('en');
 
-  const WATER_GOAL = 4000; // 4 Liters in mL
+  const WATER_GOAL = 4000;
+  const STEP_GOAL = 1000;
+  const NEON_GREEN = "#39FF14";
 
   useEffect(() => {
-    // Load Language
     const savedLang = localStorage.getItem('language') as Language;
     const currentLang = savedLang || 'en';
     setLang(currentLang);
     const t = translations[currentLang];
+
+    // Daily checks for auto-reset logic
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
 
     // Load Weight Data
     const savedWeightLogs = localStorage.getItem('fitstride_weight_logs_v2');
@@ -47,7 +65,6 @@ export default function DashboardPage() {
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
 
     // Load Water Data
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
     const savedWater = localStorage.getItem('fitstride_water_logs');
     if (savedWater) {
       const logs: WaterLog[] = JSON.parse(savedWater);
@@ -55,26 +72,31 @@ export default function DashboardPage() {
       if (todayLog) setWaterAmount(todayLog.amount);
     }
 
-    // Set Training Schedule (Today Only)
+    // Load Sleep Data
+    const savedSleep = localStorage.getItem('fitstride_sleep_logs');
+    if (savedSleep) {
+      const logs: SleepLog[] = JSON.parse(savedSleep);
+      const todayLog = logs.find(l => l.date === todayStr);
+      if (todayLog) setSleepMinutes(todayLog.minutes);
+    }
+
+    // Load Step Data
+    const savedSteps = localStorage.getItem('fitstride_step_logs');
+    if (savedSteps) {
+      const logs: StepLog[] = JSON.parse(savedSteps);
+      const todayLog = logs.find(l => l.date === todayStr);
+      if (todayLog) setSteps(todayLog.steps);
+    }
+
+    // Set Training Schedule
     const getWorkout = (date: Date) => {
       const day = date.getDay();
-      const map: Record<number, string> = { 
-        0: t.rest, 
-        1: t.push, 
-        2: t.pull, 
-        3: t.legs, 
-        4: t.push, 
-        5: t.pull, 
-        6: t.legs 
-      };
+      const map: Record<number, string> = { 0: t.rest, 1: t.push, 2: t.pull, 3: t.legs, 4: t.push, 5: t.pull, 6: t.legs };
       return map[day];
     };
     const now = new Date();
-    setSuggestion({
-      today: getWorkout(now)
-    });
+    setSuggestion({ today: getWorkout(now) });
 
-    // Daily Quote rotation at Midnight
     const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
     const quoteIndex = dateSeed % t.quotes.length;
     setQuote(t.quotes[quoteIndex]);
@@ -85,19 +107,37 @@ export default function DashboardPage() {
   const handleAddWater = () => {
     const newAmount = Math.min(WATER_GOAL, waterAmount + 250);
     setWaterAmount(newAmount);
-    
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const savedWater = localStorage.getItem('fitstride_water_logs');
     let logs: WaterLog[] = savedWater ? JSON.parse(savedWater) : [];
-    
     const todayIndex = logs.findIndex(l => l.date === todayStr);
-    if (todayIndex > -1) {
-      logs[todayIndex].amount = newAmount;
-    } else {
-      logs.push({ date: todayStr, amount: newAmount });
-    }
-    
+    if (todayIndex > -1) logs[todayIndex].amount = newAmount;
+    else logs.push({ date: todayStr, amount: newAmount });
     localStorage.setItem('fitstride_water_logs', JSON.stringify(logs));
+  };
+
+  const handleAddSleep = (min: number) => {
+    const newMinutes = sleepMinutes + min;
+    setSleepMinutes(newMinutes);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const savedSleep = localStorage.getItem('fitstride_sleep_logs');
+    let logs: SleepLog[] = savedSleep ? JSON.parse(savedSleep) : [];
+    const todayIndex = logs.findIndex(l => l.date === todayStr);
+    if (todayIndex > -1) logs[todayIndex].minutes = newMinutes;
+    else logs.push({ date: todayStr, minutes: newMinutes });
+    localStorage.setItem('fitstride_sleep_logs', JSON.stringify(logs));
+  };
+
+  const handleAddSteps = (s: number) => {
+    const newSteps = steps + s;
+    setSteps(newSteps);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const savedSteps = localStorage.getItem('fitstride_step_logs');
+    let logs: StepLog[] = savedSteps ? JSON.parse(savedSteps) : [];
+    const todayIndex = logs.findIndex(l => l.date === todayStr);
+    if (todayIndex > -1) logs[todayIndex].steps = newSteps;
+    else logs.push({ date: todayStr, steps: newSteps });
+    localStorage.setItem('fitstride_step_logs', JSON.stringify(logs));
   };
 
   const handleResetWater = () => {
@@ -105,7 +145,6 @@ export default function DashboardPage() {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const savedWater = localStorage.getItem('fitstride_water_logs');
     let logs: WaterLog[] = savedWater ? JSON.parse(savedWater) : [];
-    
     const todayIndex = logs.findIndex(l => l.date === todayStr);
     if (todayIndex > -1) {
       logs[todayIndex].amount = 0;
@@ -129,17 +168,19 @@ export default function DashboardPage() {
 
   const remainingGap = Math.abs(currentWeight - targetWeight).toFixed(1);
   const waterProgress = (waterAmount / WATER_GOAL) * 100;
+  const stepProgress = Math.min(100, (steps / STEP_GOAL) * 100);
+  const caloriesFromSteps = Math.round(steps * 0.04);
 
-  if (!isLoaded) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" />
-      </div>
-    );
-  }
+  const formatSleep = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${h}h ${m}m`;
+  };
+
+  if (!isLoaded) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
-    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar">
+    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000]">
       {/* Training Card */}
       <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
         <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
@@ -168,6 +209,89 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recovery & Stride Trackers (Sleep & Steps) */}
+      <div className="grid grid-cols-1 gap-4">
+        {/* Sleep Tracker */}
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2rem] p-6 relative overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#39FF14]/10 flex items-center justify-center">
+                <Moon className="h-5 w-5 text-[#39FF14]" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{t.deepRest}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black italic tracking-tighter text-[#39FF14]">{formatSleep(sleepMinutes)}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{t.rested}</span>
+                </div>
+              </div>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="icon" className="h-10 w-10 rounded-full bg-[#39FF14] hover:bg-[#39FF14]/90 shadow-lg shadow-[#39FF14]/20 active:scale-90 transition-all">
+                  <Plus className="h-5 w-5 text-black" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-black border-white/10 rounded-[2.5rem] w-[90%] max-w-xs">
+                <DialogHeader><DialogTitle className="text-[#39FF14] font-black italic uppercase tracking-tighter text-center">{t.deepRest}</DialogTitle></DialogHeader>
+                <div className="grid grid-cols-2 gap-3 py-6">
+                  <Button variant="outline" className="h-14 rounded-2xl border-white/10 text-white font-black uppercase text-[10px]" onClick={() => handleAddSleep(60)}>+ 1H NAP</Button>
+                  <Button variant="outline" className="h-14 rounded-2xl border-white/10 text-white font-black uppercase text-[10px]" onClick={() => handleAddSleep(480)}>+ 8H SLEEP</Button>
+                  <Button variant="ghost" className="col-span-2 h-10 text-white/40 font-black uppercase text-[9px]" onClick={() => setSleepMinutes(0)}>RESET RECOVERY</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <p className={cn(
+            "text-[9px] font-black uppercase tracking-[0.2em] transition-all",
+            sleepMinutes >= 420 ? "text-[#39FF14] glow-neon" : "text-white/30"
+          )}>
+            {sleepMinutes >= 420 ? t.optimalRest : t.recoveryActive}
+          </p>
+        </Card>
+
+        {/* Stride Tracker */}
+        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2rem] p-6 relative overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.5)]" onClick={() => handleAddSteps(100)}>
+          <div className="flex justify-between items-center mb-5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#39FF14]/10 flex items-center justify-center">
+                <Footprints className="h-5 w-5 text-[#39FF14]" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{t.stride}</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-black italic tracking-tighter text-white">{steps}</span>
+                  <span className="text-xs font-black text-white/20 italic">/ {STEP_GOAL}</span>
+                  {steps >= STEP_GOAL && <CheckCircle2 className="h-4 w-4 text-[#39FF14] ml-2 animate-in zoom-in" />}
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-1.5 justify-end">
+                <Flame className="h-3.5 w-3.5 text-[#39FF14]" />
+                <span className="text-lg font-black italic text-[#39FF14]">{caloriesFromSteps}</span>
+              </div>
+              <p className="text-[8px] font-black uppercase tracking-widest text-white/30">{t.kcalBurned}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/5">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-1000 ease-out rounded-full",
+                  steps >= STEP_GOAL ? "bg-[#39FF14] shadow-[0_0_15px_#39FF14]" : "bg-[#39FF14]/50"
+                )}
+                style={{ width: `${stepProgress}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center px-0.5">
+              <p className="text-[8px] font-black uppercase tracking-widest text-white/20">{t.stepGoal}</p>
+              <p className="text-[8px] font-black uppercase tracking-widest text-[#39FF14] italic">{Math.round(stepProgress)}%</p>
+            </div>
+          </div>
+        </Card>
+      </div>
 
       {/* Goal Metrics (Body Mass Progress) */}
       <div className="space-y-6">

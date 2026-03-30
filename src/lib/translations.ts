@@ -30,6 +30,15 @@ export const translations = {
     pull: "PULL",
     legs: "LEGS",
 
+    // Trackers
+    deepRest: "DEEP REST",
+    rested: "RESTED",
+    recoveryActive: "RECOVERY MODE: ACTIVE",
+    optimalRest: "OPTIMAL REST ACHIEVED",
+    stride: "STRIDE",
+    stepGoal: "DAILY GOAL",
+    kcalBurned: "KCAL BURNED",
+
     // Water Intake
     waterIntake: "WATER INTAKE",
     dailyGoal: "DAILY GOAL",
@@ -128,6 +137,15 @@ export const translations = {
     push: "पुश",
     pull: "पुल",
     legs: "लेग्स",
+
+    // Trackers
+    deepRest: "गहरी नींद",
+    rested: "विश्राम",
+    recoveryActive: "रिकवरी मोड: सक्रिय",
+    optimalRest: "इष्टतम विश्राम प्राप्त",
+    stride: "कदम",
+    stepGoal: "दैनिक लक्ष्य",
+    kcalBurned: "कैलोरी बर्न",
 
     // Water Intake
     waterIntake: "पानी का सेवन",
