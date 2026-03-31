@@ -172,6 +172,7 @@ export default function ProgressPage() {
           
           <div className="flex flex-col items-center text-center space-y-1 relative">
             <div className="flex items-center gap-2">
+              <span className="text-[10px] opacity-40">🗓️</span>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">CALORIE STRIDE</p>
               <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
                 <DialogTrigger asChild>
