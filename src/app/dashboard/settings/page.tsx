@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages } from "lucide-react";
+import { RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages, Info, ChevronRight } from "lucide-react";
 import { useFirestore, useUser, useAuth } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Language, translations } from '@/lib/translations';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const db = useFirestore();
@@ -109,6 +110,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Account Section */}
       <Card className="border-none shadow-xl rounded-[2.5rem] bg-card overflow-hidden">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic">
@@ -118,7 +120,6 @@ export default function SettingsPage() {
           <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">{user?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Dark Mode Toggle */}
           <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-muted/30 border-2 border-muted/50 transition-all active:scale-[0.98]">
             <div className="flex items-center gap-3">
               {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
@@ -134,7 +135,6 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* Hindi Mode Toggle */}
           <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-muted/30 border-2 border-muted/50 transition-all active:scale-[0.98]">
             <div className="flex items-center gap-3">
               <Languages className="h-5 w-5 text-primary" />
@@ -162,6 +162,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Workout Preferences */}
       <Card className="border-none shadow-xl rounded-[2.5rem] bg-card overflow-hidden">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic">
@@ -184,6 +185,37 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* App Info Section */}
+      <Card className="border-none shadow-xl rounded-[2.5rem] bg-card overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic">
+            <Info className="h-5 w-5 text-primary" />
+            APP INFO
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Link href="/dashboard/settings/about">
+            <Button 
+              variant="outline" 
+              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border-2 border-muted hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all shadow-md group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                  <Dumbbell className="h-5 w-5" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-black uppercase italic tracking-tight">ABOUT MY GYM BUDDY</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-40">Version 1.0.0</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-40" />
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+import { Dumbbell } from 'lucide-react';
