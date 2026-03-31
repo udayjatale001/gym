@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Loader2, TrendingUp, Brain, ArrowUpRight, Flame, Plus, CheckCircle2, X, Edit2, Target, Calendar, ArrowLeft } from "lucide-react";
-import { format, isSameDay } from 'date-fns';
+import { Loader2, TrendingUp, Brain, Flame, Plus, Target, Calendar, ArrowLeft, Edit2 } from "lucide-react";
+import { format, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 import { Language, translations } from '@/lib/translations';
@@ -30,6 +30,7 @@ export default function ProgressPage() {
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [calorieHistory, setCalorieHistory] = useState<Record<number, number>>({});
+  const [currentCycleDay, setCurrentCycleDay] = useState<number>(1);
 
   // Local Data State
   const [weightLogs, setWeightLogs] = useState<any[]>([]);
@@ -49,8 +50,19 @@ export default function ProgressPage() {
     const savedGoal = localStorage.getItem('fitstride_calorie_goal');
     const savedHistory = localStorage.getItem('fitstride_calorie_history');
     
-    // 2. MIDNIGHT RESET LOGIC for Calories
+    // 2. Cycle Logic
     const todayStr = format(new Date(), 'yyyy-MM-dd');
+    let cycleStart = localStorage.getItem('fitstride_cycle_start');
+    if (!cycleStart) {
+      cycleStart = todayStr;
+      localStorage.setItem('fitstride_cycle_start', todayStr);
+    }
+    
+    const daysDiff = Math.abs(differenceInDays(startOfDay(new Date()), startOfDay(new Date(cycleStart))));
+    const dayIndex = (daysDiff % 30) + 1;
+    setCurrentCycleDay(dayIndex);
+
+    // 3. MIDNIGHT RESET LOGIC
     const savedCalorieDate = localStorage.getItem('fitstride_calorie_date');
     const savedCalories = localStorage.getItem('fitstride_daily_calories');
 
@@ -66,7 +78,9 @@ export default function ProgressPage() {
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
     if (savedTrackers) setDailyTrackers(JSON.parse(savedTrackers));
     if (savedGoal) setCalorieGoal(parseInt(savedGoal) || 2500);
-    if (savedHistory) setCalorieHistory(JSON.parse(savedHistory));
+    
+    const history = savedHistory ? JSON.parse(savedHistory) : {};
+    setCalorieHistory(history);
 
     setIsLoaded(true);
   }, []);
@@ -93,9 +107,14 @@ export default function ProgressPage() {
     localStorage.setItem('fitstride_daily_calories', val.toString());
     localStorage.setItem('fitstride_calorie_date', todayStr);
     
+    // Sync with History
+    const updatedHistory = { ...calorieHistory, [currentCycleDay]: val };
+    setCalorieHistory(updatedHistory);
+    localStorage.setItem('fitstride_calorie_history', JSON.stringify(updatedHistory));
+    
     setIsCalorieDialogOpen(false);
     setTempCalorieInput("");
-    toast({ title: "Fuel Logged", description: `${val} kcal added to daily total.` });
+    toast({ title: "Fuel Logged", description: `${val} kcal saved for Day ${currentCycleDay}.` });
   };
 
   const handleSaveGoal = () => {
@@ -111,6 +130,13 @@ export default function ProgressPage() {
     const updated = { ...calorieHistory, [day]: calories };
     setCalorieHistory(updated);
     localStorage.setItem('fitstride_calorie_history', JSON.stringify(updated));
+    
+    // If updating current cycle day, sync back to main ring
+    if (day === currentCycleDay) {
+      setDailyCalories(calories);
+      localStorage.setItem('fitstride_daily_calories', calories.toString());
+    }
+    
     toast({ title: "Protocol Updated", description: `Day ${day} fuel logged at ${calories} kcal.` });
   };
 
@@ -184,45 +210,49 @@ export default function ProgressPage() {
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setIsHistoryOpen(true)}
-                className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg border border-primary/20 active:scale-75 transition-all hover:bg-primary/20"
+                className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-[0_0_20px_rgba(57,255,20,0.2)] border-2 border-primary/20 active:scale-75 transition-all hover:bg-primary/20 group"
               >
-                <Calendar className="h-6 w-6" />
+                <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(57,255,20,0.5)] transition-transform group-hover:scale-110">🗓️</span>
               </button>
-              <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40">CALORIE STRIDE</p>
-              <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-                <DialogTrigger asChild>
-                  <button className="text-white/20 hover:text-primary transition-colors active:scale-75" onClick={() => setTempGoalInput(calorieGoal.toString())}>
-                    <Edit2 className="h-4 w-4" />
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.1)]">
-                  <DialogHeader>
-                    <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">SET GOAL</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-8 space-y-6">
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">TARGET KCAL</p>
-                      <div className="relative">
-                        <Input 
-                          placeholder="2500" 
-                          value={tempGoalInput} 
-                          onChange={(e) => setTempGoalInput(e.target.value.replace(/[^0-9]/g, ''))}
-                          className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5" 
-                        />
-                        <Target className="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/20" />
+              <div className="text-left">
+                <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 leading-none">CALORIE STRIDE</p>
+                <div className="flex items-center gap-2 mt-1">
+                   <p className="text-[8px] font-black uppercase tracking-[0.2em] text-primary italic">DAY {currentCycleDay} PROTOCOL</p>
+                   <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
+                    <DialogTrigger asChild>
+                      <button className="text-white/20 hover:text-primary transition-colors active:scale-75" onClick={() => setTempGoalInput(calorieGoal.toString())}>
+                        <Edit2 className="h-3 w-3" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.1)]">
+                      <DialogHeader>
+                        <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">SET GOAL</DialogTitle>
+                      </DialogHeader>
+                      <div className="py-8 space-y-6">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">TARGET KCAL</p>
+                          <div className="relative">
+                            <Input 
+                              placeholder="2500" 
+                              value={tempGoalInput} 
+                              onChange={(e) => setTempGoalInput(e.target.value.replace(/[^0-9]/g, ''))}
+                              className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5" 
+                            />
+                            <Target className="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/20" />
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={handleSaveGoal}
+                          className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-[0_0_20px_rgba(57,255,20,0.2)]"
+                        >
+                          CALIBRATE
+                        </Button>
                       </div>
-                    </div>
-                    <Button 
-                      onClick={handleSaveGoal}
-                      className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-[0_0_20px_rgba(57,255,20,0.2)]"
-                    >
-                      CALIBRATE
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
             </div>
-            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-primary italic">FUEL CONSUMPTION</p>
           </div>
 
           <div className="relative h-56 w-56 flex items-center justify-center">
@@ -343,7 +373,13 @@ export default function ProgressPage() {
             
             <div className="grid grid-cols-5 gap-3">
               {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
-                <DayCalorieDialog key={day} day={day} calories={calorieHistory[day] || 0} onSave={(val) => handleUpdateHistory(day, val)} />
+                <DayCalorieDialog 
+                  key={day} 
+                  day={day} 
+                  isCurrent={day === currentCycleDay}
+                  calories={calorieHistory[day] || 0} 
+                  onSave={(val) => handleUpdateHistory(day, val)} 
+                />
               ))}
             </div>
           </div>
@@ -353,7 +389,7 @@ export default function ProgressPage() {
   );
 }
 
-function DayCalorieDialog({ day, calories, onSave }: { day: number, calories: number, onSave: (val: number) => void }) {
+function DayCalorieDialog({ day, calories, onSave, isCurrent }: { day: number, calories: number, onSave: (val: number) => void, isCurrent: boolean }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState(calories ? calories.toString() : "");
 
@@ -362,7 +398,8 @@ function DayCalorieDialog({ day, calories, onSave }: { day: number, calories: nu
       <DialogTrigger asChild>
         <Button variant="outline" className={cn(
           "h-18 w-full flex flex-col items-center justify-center p-0 rounded-2xl border-2 transition-all active:scale-90 relative overflow-hidden",
-          calories > 0 ? "bg-primary/10 border-primary text-primary shadow-[inset_0_0_10px_rgba(57,255,20,0.1)]" : "bg-white/5 border-white/10 text-white/20"
+          calories > 0 ? "bg-primary/10 border-primary text-primary shadow-[inset_0_0_10px_rgba(57,255,20,0.1)]" : "bg-white/5 border-white/10 text-white/20",
+          isCurrent && "border-primary animate-pulse shadow-[0_0_15px_rgba(57,255,20,0.3)]"
         )}>
           <span className="text-[8px] font-black absolute top-1 left-1.5 opacity-40 italic">{day}</span>
           {calories > 0 ? (
@@ -373,6 +410,7 @@ function DayCalorieDialog({ day, calories, onSave }: { day: number, calories: nu
           ) : (
             <div className="h-1 w-1 rounded-full bg-current opacity-30 mt-2" />
           )}
+          {isCurrent && <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />}
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
