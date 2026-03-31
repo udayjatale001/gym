@@ -42,7 +42,17 @@ export default function SettingsPage() {
     setIsLoggingOut(true);
     // Simulate elite logout
     setTimeout(() => {
+      // Clear user session
       localStorage.removeItem('gymbuddy_user');
+      
+      // Reset Guide States for next login
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('fitstride_has_seen_guide_')) {
+          localStorage.removeItem(key);
+        }
+      });
+
       toast({
         title: "Session Terminated",
         description: "Your training discipline has been archived.",

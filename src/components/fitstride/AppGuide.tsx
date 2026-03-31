@@ -105,7 +105,7 @@ const ALL_STEPS: GuideStep[] = [
     description: 'Tap the emoji to view estimated calories burned based on your training volume.',
     targetId: 'heat-check-btn',
     position: 'bottom',
-    path: '/dashboard/workout' // Matches nested workout pages too
+    path: '/dashboard/workout'
   },
 
   // --- DIET PAGE ---
@@ -185,8 +185,11 @@ export function AppGuide() {
   }, [pageSteps]);
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem(`fitstride_has_seen_guide_${pathname}`);
-    // Auto-start only on Dashboard for new users
+    // Check if seen for this specific login session/path
+    const hasSeenKey = `fitstride_has_seen_guide_${pathname}`;
+    const hasSeen = localStorage.getItem(hasSeenKey);
+    
+    // Auto-start only if not seen yet in this login cycle
     if (!hasSeen && pathname === '/dashboard') {
       const timer = setTimeout(() => startGuide(), 1500);
       return () => clearTimeout(timer);
@@ -214,7 +217,6 @@ export function AppGuide() {
 
     updateRect();
     window.addEventListener('resize', updateRect);
-    // Intersection observer might be better but window scroll is usually enough
     const scrollContainer = document.querySelector('main');
     scrollContainer?.addEventListener('scroll', updateRect);
 
@@ -234,6 +236,7 @@ export function AppGuide() {
 
   const handleComplete = () => {
     setActive(false);
+    // Persist seen state for this path
     localStorage.setItem(`fitstride_has_seen_guide_${pathname}`, 'true');
   };
 
