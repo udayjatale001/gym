@@ -103,18 +103,23 @@ export default function ProgressPage() {
     if (isNaN(val)) return;
     
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    setDailyCalories(val);
-    localStorage.setItem('fitstride_daily_calories', val.toString());
+    const newTotal = (dailyCalories || 0) + val; // ADDITIVE LOGIC (100 + 500 = 600)
+    
+    setDailyCalories(newTotal);
+    localStorage.setItem('fitstride_daily_calories', newTotal.toString());
     localStorage.setItem('fitstride_calorie_date', todayStr);
     
-    // Sync with History
-    const updatedHistory = { ...calorieHistory, [currentCycleDay]: val };
+    // Sync with History for current day
+    const updatedHistory = { ...calorieHistory, [currentCycleDay]: newTotal };
     setCalorieHistory(updatedHistory);
     localStorage.setItem('fitstride_calorie_history', JSON.stringify(updatedHistory));
     
     setIsCalorieDialogOpen(false);
     setTempCalorieInput("");
-    toast({ title: "Fuel Logged", description: `${val} kcal saved for Day ${currentCycleDay}.` });
+    toast({ 
+      title: "Fuel Logged 🔥", 
+      description: `Added ${val} kcal. Today's total: ${newTotal} kcal.` 
+    });
   };
 
   const handleSaveGoal = () => {
@@ -208,20 +213,21 @@ export default function ProgressPage() {
           
           <div className="flex flex-col items-center text-center space-y-2 relative">
             <div className="flex items-center gap-4">
+              {/* LARGE & IMPRESSIVE CALENDAR ICON */}
               <button 
                 onClick={() => setIsHistoryOpen(true)}
-                className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-[0_0_20px_rgba(57,255,20,0.2)] border-2 border-primary/20 active:scale-75 transition-all hover:bg-primary/20 group"
+                className="h-16 w-16 rounded-[1.8rem] bg-primary/10 flex items-center justify-center text-primary shadow-[0_0_25px_rgba(57,255,20,0.3)] border-2 border-primary/30 active:scale-75 transition-all hover:bg-primary/20 group hover:shadow-[0_0_35px_rgba(57,255,20,0.5)]"
               >
-                <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(57,255,20,0.5)] transition-transform group-hover:scale-110">🗓️</span>
+                <span className="text-4xl filter drop-shadow-[0_0_12px_rgba(57,255,20,0.6)] transition-transform group-hover:scale-110">🗓️</span>
               </button>
               <div className="text-left">
                 <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 leading-none">CALORIE STRIDE</p>
                 <div className="flex items-center gap-2 mt-1">
-                   <p className="text-[8px] font-black uppercase tracking-[0.2em] text-primary italic">DAY {currentCycleDay} PROTOCOL</p>
+                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary italic">DAY {currentCycleDay} PROTOCOL</p>
                    <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
                     <DialogTrigger asChild>
                       <button className="text-white/20 hover:text-primary transition-colors active:scale-75" onClick={() => setTempGoalInput(calorieGoal.toString())}>
-                        <Edit2 className="h-3 w-3" />
+                        <Edit2 className="h-3.5 w-3.5" />
                       </button>
                     </DialogTrigger>
                     <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.1)]">
@@ -297,7 +303,8 @@ export default function ProgressPage() {
               </DialogHeader>
               <div className="py-8 space-y-6">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">KCAL INTAKE</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2 text-center italic opacity-60">Today's Total: {dailyCalories} kcal</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">ADD KCAL INTAKE</p>
                   <div className="relative">
                     <Input 
                       placeholder="0000" 
