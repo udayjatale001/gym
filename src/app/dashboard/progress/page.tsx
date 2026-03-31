@@ -6,20 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Loader2, TrendingUp, Brain, Flame, Plus, Target, Calendar, ArrowLeft, Edit2, AlertCircle } from "lucide-react";
+import { Loader2, TrendingUp, Flame, Plus, Target, ArrowLeft, Edit2, AlertCircle } from "lucide-react";
 import { format, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 import { Language, translations } from '@/lib/translations';
-import { predictFitnessProgressAndAdvice, type PredictFitnessProgressAndAdviceOutput } from '@/ai/flows/predict-fitness-progress-and-advice';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProgressPage() {
   const { toast } = useToast();
   const [lang, setLang] = useState<Language>('en');
   const [isLoaded, setIsLoaded] = useState(false);
-  const [aiData, setAiData] = useState<PredictFitnessProgressAndAdviceOutput | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   // Calorie State
   const [dailyCalories, setDailyCalories] = useState<number>(0);
@@ -32,11 +29,6 @@ export default function ProgressPage() {
   const [calorieHistory, setCalorieHistory] = useState<Record<number, number>>({});
   const [currentCycleDay, setCurrentCycleDay] = useState<number>(1);
 
-  // Local Data State
-  const [weightLogs, setWeightLogs] = useState<any[]>([]);
-  const [targetWeight, setTargetWeight] = useState(0);
-  const [dailyTrackers, setDailyTrackers] = useState<any[]>([]);
-
   const t = translations[lang];
 
   useEffect(() => {
@@ -44,9 +36,6 @@ export default function ProgressPage() {
     if (savedLang) setLang(savedLang);
 
     // 1. Load All Data
-    const savedWeight = localStorage.getItem('fitstride_weight_logs_v2');
-    const savedTarget = localStorage.getItem('fitstride_weight_target');
-    const savedTrackers = localStorage.getItem('fitstride_daily_trackers');
     const savedGoal = localStorage.getItem('fitstride_calorie_goal');
     const savedHistory = localStorage.getItem('fitstride_calorie_history');
     
@@ -74,9 +63,6 @@ export default function ProgressPage() {
       if (savedCalories) setDailyCalories(parseInt(savedCalories) || 0);
     }
 
-    if (savedWeight) setWeightLogs(JSON.parse(savedWeight));
-    if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
-    if (savedTrackers) setDailyTrackers(JSON.parse(savedTrackers));
     if (savedGoal) setCalorieGoal(parseInt(savedGoal) || 2500);
     
     const history = savedHistory ? JSON.parse(savedHistory) : {};
@@ -95,8 +81,6 @@ export default function ProgressPage() {
       };
     });
   }, [calorieHistory]);
-
-  const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : 0;
 
   const handleSaveCalories = () => {
     const val = parseInt(tempCalorieInput);
@@ -144,39 +128,6 @@ export default function ProgressPage() {
     toast({ title: "Protocol Updated", description: `Day ${day} fuel logged at ${calories} kcal.` });
   };
 
-  const runAnalysis = async () => {
-    if (isAnalyzing || weightLogs.length === 0) return;
-    setIsAnalyzing(true);
-    
-    try {
-      const input = {
-        currentWeight,
-        targetWeight,
-        height: 175,
-        age: 25,
-        gender: 'male' as const,
-        activityLevel: 'moderately active' as const,
-        weeklyWeightLogs: weightLogs.slice(0, 7).map(l => ({ date: l.timestamp.split('T')[0], weight: l.weight })),
-        dailyCalorieIntakeLogs: [],
-        workoutLogs: dailyTrackers.slice(0, 7).map(d => ({
-          date: d.date,
-          description: "General Session",
-          durationMinutes: 60,
-          intensity: 'medium' as const
-        })),
-        fitnessGoals: "Progressive Growth",
-      };
-
-      const result = await predictFitnessProgressAndAdvice(input);
-      setAiData(result);
-      toast({ title: "Analysis Complete", description: "Market data updated." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "AI Sync Failed", description: "Try again later." });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
   const caloriePercentage = Math.min(100, (dailyCalories / calorieGoal) * 100);
   const isOverGoal = dailyCalories > calorieGoal;
   const overagePercentage = isOverGoal ? Math.min(100, ((dailyCalories - calorieGoal) / calorieGoal) * 100) : 0;
@@ -185,26 +136,17 @@ export default function ProgressPage() {
 
   return (
     <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
-      {/* Header */}
+      {/* Header - Renamed Hub */}
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 rounded-[1.5rem] bg-primary flex items-center justify-center text-black shadow-2xl shadow-primary/30 border-b-4 border-black/20">
             <TrendingUp className="h-7 w-7" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">{t.performanceAI}</h2>
-            <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.3em] opacity-60">PRECISION MARKET ANALYSIS</p>
+            <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">ANALYTICS HUB</h2>
+            <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.3em] opacity-60">PRECISION DATA COMMAND</p>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn("h-12 w-12 rounded-2xl bg-white/5 border border-white/10 active:scale-90", isAnalyzing && "animate-pulse")}
-          onClick={runAnalysis}
-          disabled={isAnalyzing}
-        >
-          <Brain className={cn("h-6 w-6 text-primary", isAnalyzing && "animate-spin")} />
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -277,7 +219,6 @@ export default function ProgressPage() {
 
           <div className="relative h-56 w-56 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90">
-              {/* Background Track */}
               <circle
                 cx="112"
                 cy="112"
@@ -286,7 +227,6 @@ export default function ProgressPage() {
                 stroke="rgba(255, 255, 255, 0.05)"
                 strokeWidth="14"
               />
-              {/* Primary Green Ring (100% Goal) */}
               <circle
                 cx="112"
                 cy="112"
@@ -299,7 +239,6 @@ export default function ProgressPage() {
                 strokeLinecap="round"
                 className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(57,255,20,0.4)]"
               />
-              {/* Overage Red Ring (Visible when over goal) */}
               {isOverGoal && (
                 <circle
                   cx="112"
@@ -364,7 +303,7 @@ export default function ProgressPage() {
           </Dialog>
         </Card>
 
-        {/* Dynamic Trend Chart - Now showing 30-Day Calories */}
+        {/* Dynamic Trend Chart */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-center px-2">
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">ENERGY PROTOCOL TREND</p>
