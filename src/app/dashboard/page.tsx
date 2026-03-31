@@ -1,13 +1,16 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw, TrendingDown, Info, Activity } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw, TrendingDown, Info, Activity, Heart, Copy, Check, ExternalLink } from "lucide-react";
 import { format, isSameDay, differenceInMinutes, parse, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
+import { useToast } from '@/hooks/use-toast';
 
 interface LocalWeightLog {
   id: string;
@@ -31,6 +34,7 @@ interface WorkoutSplit {
 }
 
 export default function DashboardPage() {
+  const { toast } = useToast();
   const [weightLogs, setWeightLogs] = useState<LocalWeightLog[]>([]);
   const [targetWeight, setTargetWeight] = useState<number>(0);
   const [currentData, setCurrentData] = useState<DailyTrackerData>({
@@ -46,11 +50,14 @@ export default function DashboardPage() {
   const [currentWorkout, setCurrentWorkout] = useState<string>("REST");
   const [lang, setLang] = useState<Language>('en');
   const [isEditingSleep, setIsEditingSleep] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [hasCopied, setHasCopied] = useState(false);
 
   const WATER_GOAL = 4000;
   const STEP_GOAL = 1000;
   const SLEEP_GOAL = 480; // 8 hours in minutes
-  const NEON_GREEN = "#39FF14";
+  const UPI_ID = "7247089447@ybl";
+  const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&cu=INR`;
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language') as Language;
@@ -137,6 +144,16 @@ export default function DashboardPage() {
     const minutes = differenceInMinutes(wake, bed);
     updateDailyTracker({ sleep: minutes });
     setIsEditingSleep(false);
+  };
+
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText(UPI_ID);
+    setHasCopied(true);
+    toast({
+      title: t.idCopied,
+      description: UPI_ID,
+    });
+    setTimeout(() => setHasCopied(false), 2000);
   };
 
   const handleAddNap = () => updateDailyTracker({ sleep: currentData.sleep + 60 });
@@ -461,6 +478,90 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* SUPPORT DEVELOPER SECTION */}
+      <div className="pt-6">
+        <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
+          <SheetTrigger asChild>
+            <Button 
+              className="w-full h-20 rounded-[2.5rem] bg-white/5 border-2 border-primary/20 hover:border-primary/50 text-white font-black uppercase italic tracking-widest text-xs shadow-2xl transition-all active:scale-[0.98] relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 relative z-10">
+                <Heart className="h-5 w-5 text-primary animate-pulse fill-primary/20" />
+                {t.supportDeveloper}
+              </div>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[85svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
+            <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
+              <SheetHeader>
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_30px_rgba(57,255,20,0.1)]">
+                    <Heart className="h-10 w-10 text-primary fill-primary" />
+                  </div>
+                  <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">
+                    {t.supportTitle}
+                  </SheetTitle>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">FUEL THE EVOLUTION</p>
+                </div>
+              </SheetHeader>
+
+              <div className="space-y-8">
+                <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 shadow-inner">
+                  <p className="text-sm font-medium text-white/70 leading-relaxed italic text-center">
+                    "{t.supportMessage}"
+                  </p>
+                </Card>
+
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 text-center italic">
+                    {t.upiIdLabel}
+                  </p>
+                  
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-primary/5 blur-xl group-hover:bg-primary/10 transition-colors" />
+                    <div className="relative flex items-center justify-between bg-white/5 border-2 border-white/10 rounded-[2rem] p-6 backdrop-blur-md">
+                      <span className="text-xl font-black text-white italic tracking-tight">{UPI_ID}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={handleCopyUpi}
+                        className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-black transition-all active:scale-90"
+                      >
+                        {hasCopied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6 pt-2">
+                  <Button 
+                    className="w-full h-24 rounded-[2.5rem] bg-primary text-black font-black uppercase italic tracking-widest text-xl shadow-[0_0_30px_rgba(57,255,20,0.3)] active:scale-95 transition-all flex flex-col gap-1"
+                    onClick={() => window.open(PAYMENT_LINK, '_blank')}
+                  >
+                    <span className="flex items-center gap-3">
+                      <ExternalLink className="h-6 w-6" />
+                      {t.payNow}
+                    </span>
+                    <span className="text-[9px] opacity-40 font-bold tracking-[0.2em] italic">via UPI SECURE PROTOCOL</span>
+                  </Button>
+
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 text-center">
+                      {t.anyAmount} 🙏
+                    </p>
+                    <div className="h-px w-20 bg-white/10" />
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 text-center italic">
+                      {t.trustNote}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </div>
   );
 }

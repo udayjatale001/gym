@@ -31,6 +31,17 @@ export const translations = {
     pull: "PULL",
     legs: "LEGS",
 
+    // Support
+    supportDeveloper: "SUPPORT THE MISSION",
+    supportTitle: "SUPPORT THE DEVELOPER",
+    supportMessage: "Building Gym Buddy is a journey of discipline and dedication. If this command center helps you stay consistent, consider fueling its evolution. Your support directly powers new features, bug fixes, and performance updates to keep your training elite.",
+    upiIdLabel: "UPI PROTOCOL ID",
+    copyId: "COPY ID",
+    idCopied: "ID ARCHIVED TO CLIPBOARD",
+    payNow: "INITIALIZE CONTRIBUTION",
+    anyAmount: "ANY CONTRIBUTION IS APPRECIATED",
+    trustNote: "YOUR SUPPORT KEEPS THIS MISSION IMPROVING",
+
     // Trackers
     deepRest: "DEEP REST",
     rested: "RESTED",
@@ -152,6 +163,17 @@ export const translations = {
     push: "पुश",
     pull: "पुल",
     legs: "लेग्स",
+
+    // Support
+    supportDeveloper: "मिशन का समर्थन करें",
+    supportTitle: "डेवलपर का समर्थन करें",
+    supportMessage: "जिम बडी का निर्माण अनुशासन और समर्पण की यात्रा है। यदि यह कमांड सेंटर आपको सुसंगत रहने में मदद करता है, तो इसके विकास में सहयोग करने पर विचार करें। आपका समर्थन सीधे नई सुविधाओं, बग फिक्स और प्रदर्शन अपडेट को संचालित करता है।",
+    upiIdLabel: "UPI प्रोटोकॉल आईडी",
+    copyId: "आईडी कॉपी करें",
+    idCopied: "आईडी क्लिपबोर्ड पर सहेजी गई",
+    payNow: "भुगतान शुरू करें",
+    anyAmount: "किसी भी राशि की सराहना की जाती है",
+    trustNote: "आपका समर्थन इस मिशन को बेहतर बनाने में मदद करता है",
 
     // Trackers
     deepRest: "गहरी नींद",
