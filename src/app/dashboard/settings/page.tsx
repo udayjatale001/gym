@@ -177,7 +177,7 @@ export default function SettingsPage() {
             APP INFO
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-6">
           <Link href="/dashboard/settings/about">
             <Button 
               variant="outline" 
