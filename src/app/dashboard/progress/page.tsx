@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Loader2, TrendingUp, Brain, ArrowUpRight, Flame, Plus, CheckCircle2, X, Edit2, Target } from "lucide-react";
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 import { Language, translations } from '@/lib/translations';
@@ -39,17 +39,30 @@ export default function ProgressPage() {
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang) setLang(savedLang);
 
-    // Load All Data
+    // 1. Load All Data
     const savedWeight = localStorage.getItem('fitstride_weight_logs_v2');
     const savedTarget = localStorage.getItem('fitstride_weight_target');
     const savedTrackers = localStorage.getItem('fitstride_daily_trackers');
-    const savedCalories = localStorage.getItem('fitstride_daily_calories');
     const savedGoal = localStorage.getItem('fitstride_calorie_goal');
+    
+    // 2. MIDNIGHT RESET LOGIC for Calories
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const savedCalorieDate = localStorage.getItem('fitstride_calorie_date');
+    const savedCalories = localStorage.getItem('fitstride_daily_calories');
+
+    if (savedCalorieDate !== todayStr) {
+      // It's a new day! Reset to 0
+      setDailyCalories(0);
+      localStorage.setItem('fitstride_daily_calories', '0');
+      localStorage.setItem('fitstride_calorie_date', todayStr);
+    } else {
+      // Same day, load existing
+      if (savedCalories) setDailyCalories(parseInt(savedCalories) || 0);
+    }
 
     if (savedWeight) setWeightLogs(JSON.parse(savedWeight));
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
     if (savedTrackers) setDailyTrackers(JSON.parse(savedTrackers));
-    if (savedCalories) setDailyCalories(parseInt(savedCalories) || 0);
     if (savedGoal) setCalorieGoal(parseInt(savedGoal) || 2500);
 
     setIsLoaded(true);
@@ -71,9 +84,14 @@ export default function ProgressPage() {
   const handleSaveCalories = () => {
     const val = parseInt(tempCalorieInput);
     if (isNaN(val)) return;
+    
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     setDailyCalories(val);
     localStorage.setItem('fitstride_daily_calories', val.toString());
+    localStorage.setItem('fitstride_calorie_date', todayStr);
+    
     setIsCalorieDialogOpen(false);
+    setTempCalorieInput("");
     toast({ title: "Fuel Logged", description: `${val} kcal added to daily total.` });
   };
 
