@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages, Info, ChevronRight } from "lucide-react";
+import { RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages, Info, ChevronRight, ShieldCheck, HelpCircle, Dumbbell } from "lucide-react";
 import { useFirestore, useUser, useAuth } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -189,24 +189,60 @@ export default function SettingsPage() {
       {/* App Info Section */}
       <Card className="border-none shadow-xl rounded-[2.5rem] bg-card overflow-hidden">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic">
-            <Info className="h-5 w-5 text-primary" />
+          <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic text-primary">
+            <Info className="h-5 w-5" />
             APP INFO
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Link href="/dashboard/settings/about">
             <Button 
               variant="outline" 
-              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border-2 border-muted hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all shadow-md group"
+              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border-2 border-muted hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all shadow-md group text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                   <Dumbbell className="h-5 w-5" />
                 </div>
-                <div className="text-left">
+                <div>
                   <p className="text-sm font-black uppercase italic tracking-tight">ABOUT MY GYM BUDDY</p>
                   <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-40">Version 1.0.0</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-40" />
+            </Button>
+          </Link>
+
+          <Link href="/dashboard/settings/privacy">
+            <Button 
+              variant="outline" 
+              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border-2 border-muted hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all shadow-md group text-left"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-black uppercase italic tracking-tight">PRIVACY POLICY</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-40">YOUR DATA SAFETY</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-40" />
+            </Button>
+          </Link>
+
+          <Link href="/dashboard/settings/help">
+            <Button 
+              variant="outline" 
+              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border-2 border-muted hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all shadow-md group text-left"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                  <HelpCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-black uppercase italic tracking-tight">HELP & SUPPORT</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-black opacity-40">GET ASSISTANCE</p>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground opacity-40" />
@@ -217,5 +253,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-import { Dumbbell } from 'lucide-react';
