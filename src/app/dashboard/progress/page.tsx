@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, TrendingUp, Brain, ArrowUpRight, Flame, Plus, CheckCircle2, X, Edit2, Target } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Loader2, TrendingUp, Brain, ArrowUpRight, Flame, Plus, CheckCircle2, X, Edit2, Target, Calendar, ArrowLeft } from "lucide-react";
 import { format, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
@@ -27,6 +28,8 @@ export default function ProgressPage() {
   const [tempGoalInput, setTempGoalInput] = useState("");
   const [isCalorieDialogOpen, setIsCalorieDialogOpen] = useState(false);
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [calorieHistory, setCalorieHistory] = useState<Record<number, number>>({});
 
   // Local Data State
   const [weightLogs, setWeightLogs] = useState<any[]>([]);
@@ -44,6 +47,7 @@ export default function ProgressPage() {
     const savedTarget = localStorage.getItem('fitstride_weight_target');
     const savedTrackers = localStorage.getItem('fitstride_daily_trackers');
     const savedGoal = localStorage.getItem('fitstride_calorie_goal');
+    const savedHistory = localStorage.getItem('fitstride_calorie_history');
     
     // 2. MIDNIGHT RESET LOGIC for Calories
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -51,12 +55,10 @@ export default function ProgressPage() {
     const savedCalories = localStorage.getItem('fitstride_daily_calories');
 
     if (savedCalorieDate !== todayStr) {
-      // It's a new day! Reset to 0
       setDailyCalories(0);
       localStorage.setItem('fitstride_daily_calories', '0');
       localStorage.setItem('fitstride_calorie_date', todayStr);
     } else {
-      // Same day, load existing
       if (savedCalories) setDailyCalories(parseInt(savedCalories) || 0);
     }
 
@@ -64,6 +66,7 @@ export default function ProgressPage() {
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
     if (savedTrackers) setDailyTrackers(JSON.parse(savedTrackers));
     if (savedGoal) setCalorieGoal(parseInt(savedGoal) || 2500);
+    if (savedHistory) setCalorieHistory(JSON.parse(savedHistory));
 
     setIsLoaded(true);
   }, []);
@@ -102,6 +105,13 @@ export default function ProgressPage() {
     localStorage.setItem('fitstride_calorie_goal', val.toString());
     setIsGoalDialogOpen(false);
     toast({ title: "Target Calibrated", description: `Daily goal set to ${val} kcal.` });
+  };
+
+  const handleUpdateHistory = (day: number, calories: number) => {
+    const updated = { ...calorieHistory, [day]: calories };
+    setCalorieHistory(updated);
+    localStorage.setItem('fitstride_calorie_history', JSON.stringify(updated));
+    toast({ title: "Protocol Updated", description: `Day ${day} fuel logged at ${calories} kcal.` });
   };
 
   const runAnalysis = async () => {
@@ -166,18 +176,23 @@ export default function ProgressPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* Calorie Stride Ring (Fitness App Style) */}
+        {/* Calorie Stride Ring */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-8 flex flex-col items-center justify-center space-y-8 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl group-hover:bg-primary/10 transition-colors duration-500" />
           
-          <div className="flex flex-col items-center text-center space-y-1 relative">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] opacity-40">🗓️</span>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">CALORIE STRIDE</p>
+          <div className="flex flex-col items-center text-center space-y-2 relative">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsHistoryOpen(true)}
+                className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg border border-primary/20 active:scale-75 transition-all hover:bg-primary/20"
+              >
+                <Calendar className="h-6 w-6" />
+              </button>
+              <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40">CALORIE STRIDE</p>
               <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
                 <DialogTrigger asChild>
                   <button className="text-white/20 hover:text-primary transition-colors active:scale-75" onClick={() => setTempGoalInput(calorieGoal.toString())}>
-                    <Edit2 className="h-3 w-3" />
+                    <Edit2 className="h-4 w-4" />
                   </button>
                 </DialogTrigger>
                 <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.1)]">
@@ -276,12 +291,6 @@ export default function ProgressPage() {
 
         {/* Share Market Trend Chart */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
-          <div className="flex justify-between items-center mb-2">
-             <div className="space-y-1">
-             </div>
-             <ArrowUpRight className="h-6 w-6 text-primary opacity-40" />
-          </div>
-
           <div className="h-64 w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -319,6 +328,79 @@ export default function ProgressPage() {
           </div>
         </Card>
       </div>
+
+      {/* Calorie History Sheet */}
+      <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[92svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
+          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
+            <SheetHeader>
+              <div className="flex items-center gap-4 mb-4">
+                <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(false)} className="h-12 w-12 rounded-2xl border border-white/10 active:scale-90"><ArrowLeft className="h-6 w-6 text-primary" /></Button>
+                <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">ENERGY PROTOCOL</SheetTitle>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">30-DAY CALORIE STRIDE</p>
+            </SheetHeader>
+            
+            <div className="grid grid-cols-5 gap-3">
+              {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
+                <DayCalorieDialog key={day} day={day} calories={calorieHistory[day] || 0} onSave={(val) => handleUpdateHistory(day, val)} />
+              ))}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
+  );
+}
+
+function DayCalorieDialog({ day, calories, onSave }: { day: number, calories: number, onSave: (val: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState(calories ? calories.toString() : "");
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className={cn(
+          "h-18 w-full flex flex-col items-center justify-center p-0 rounded-2xl border-2 transition-all active:scale-90 relative overflow-hidden",
+          calories > 0 ? "bg-primary/10 border-primary text-primary shadow-[inset_0_0_10px_rgba(57,255,20,0.1)]" : "bg-white/5 border-white/10 text-white/20"
+        )}>
+          <span className="text-[8px] font-black absolute top-1 left-1.5 opacity-40 italic">{day}</span>
+          {calories > 0 ? (
+            <div className="flex flex-col items-center gap-0.5">
+              <Flame className="h-4 w-4 fill-primary" />
+              <span className="text-[10px] font-black">{calories}</span>
+            </div>
+          ) : (
+            <div className="h-1 w-1 rounded-full bg-current opacity-30 mt-2" />
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
+        <DialogHeader>
+          <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">DAY {day} FUEL</DialogTitle>
+        </DialogHeader>
+        <div className="py-8 space-y-6">
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2 text-center">TOTAL CALORIES (KCAL)</p>
+            <div className="relative">
+              <Input 
+                placeholder="0000" 
+                value={input} 
+                onChange={(e) => setInput(e.target.value.replace(/[^0-9]/g, ''))}
+                className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary" 
+              />
+              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20 italic">KCAL</span>
+            </div>
+          </div>
+          <Button 
+            onClick={() => { onSave(parseInt(input) || 0); setOpen(false); }}
+            className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-[0_0_20px_rgba(57,255,20,0.2)]"
+          >
+            CONFIRM PROTOCOL
+          </Button>
+          <Button variant="ghost" className="w-full h-10 text-[10px] font-black uppercase tracking-widest text-white/20" onClick={() => { onSave(0); setInput(""); setOpen(false); }}>RESET DATA</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
