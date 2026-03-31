@@ -1,5 +1,6 @@
 import { BottomNav } from '@/components/fitstride/BottomNav';
 import { Header } from '@/components/fitstride/Header';
+import { AppGuide } from '@/components/fitstride/AppGuide';
 
 export default function DashboardLayout({
   children,
@@ -13,6 +14,7 @@ export default function DashboardLayout({
         {children}
       </main>
       <BottomNav />
+      <AppGuide />
     </div>
   );
 }

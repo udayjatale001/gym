@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Settings } from "lucide-react";
+import { Settings, HelpCircle } from "lucide-react";
 import LinkNext from "next/link";
 import { Language, translations } from '@/lib/translations';
 
@@ -41,11 +41,15 @@ export function Header() {
     }
   }, []);
 
+  const handleStartGuide = () => {
+    window.dispatchEvent(new CustomEvent('start-app-guide'));
+  };
+
   const t = translations[lang];
   
   return (
     <header className="p-3 md:p-4 flex items-center justify-between sticky top-0 bg-[#000000]/80 backdrop-blur-xl z-40 border-b border-white/5">
-      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0" data-guide-id="brand-logo">
         <DisciplineLogo />
         <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-black text-primary tracking-tighter italic leading-none uppercase truncate">GYMBUDDY!</h1>
@@ -54,11 +58,19 @@ export function Header() {
           </p>
         </div>
       </div>
-      <LinkNext href="/dashboard/settings" className="shrink-0">
-        <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-white/10">
-          <Settings className="h-5 w-5 text-white/40" />
+      <div className="flex items-center gap-2 shrink-0">
+        <button 
+          onClick={handleStartGuide}
+          className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-white/10"
+        >
+          <HelpCircle className="h-5 w-5 text-white/40" />
         </button>
-      </LinkNext>
+        <LinkNext href="/dashboard/settings">
+          <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-white/10">
+            <Settings className="h-5 w-5 text-white/40" />
+          </button>
+        </LinkNext>
+      </div>
     </header>
   );
 }

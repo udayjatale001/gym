@@ -173,7 +173,10 @@ export default function DashboardPage() {
   return (
     <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
       {/* Training Schedule Section (Auto-Rotating) */}
-      <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
+      <Card 
+        data-guide-id="training-card"
+        className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative"
+      >
         <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
         <CardHeader className="pb-1 pt-6">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 opacity-80">
@@ -204,7 +207,10 @@ export default function DashboardPage() {
       {/* STRIDE PROGRESS TRACKERS (Finance-Style) */}
       <div className="grid grid-cols-1 gap-6">
         {/* Sleep Stride (🌙) */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl">
+        <Card 
+          data-guide-id="sleep-stride"
+          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl"
+        >
           {isEditingSleep ? (
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
               <div className="flex items-center justify-between mb-2">

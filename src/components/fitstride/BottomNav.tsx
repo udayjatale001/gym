@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -20,11 +19,11 @@ export function BottomNav() {
   const t = translations[lang];
 
   const navItems = [
-    { label: t.home, icon: Home, href: '/dashboard' },
-    { label: t.workout, icon: Dumbbell, href: '/dashboard/workout' },
-    { label: t.progress, icon: TrendingUp, href: '/dashboard/progress' },
-    { label: t.diet, icon: Utensils, href: '/dashboard/diet' },
-    { label: t.weight, icon: Scale, href: '/dashboard/weight' },
+    { label: t.home, icon: Home, href: '/dashboard', guideId: 'nav-home' },
+    { label: t.workout, icon: Dumbbell, href: '/dashboard/workout', guideId: 'nav-workout' },
+    { label: t.progress, icon: TrendingUp, href: '/dashboard/progress', guideId: 'nav-progress' },
+    { label: t.diet, icon: Utensils, href: '/dashboard/diet', guideId: 'nav-diet' },
+    { label: t.weight, icon: Scale, href: '/dashboard/weight', guideId: 'nav-weight' },
   ];
 
   return (
@@ -35,6 +34,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            data-guide-id={item.guideId}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300 active:scale-90 group",
               isActive ? "text-primary scale-105" : "text-muted-foreground hover:text-primary/70"
