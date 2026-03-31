@@ -119,7 +119,6 @@ export default function ProgressPage() {
           <div className="flex justify-between items-center mb-2">
              <div className="space-y-1">
                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{t.marketTrend}</p>
-               <h4 className="text-xl font-black italic tracking-tighter text-white uppercase">{t.weightAnalysis}</h4>
              </div>
              <ArrowUpRight className="h-6 w-6 text-primary opacity-40" />
           </div>
