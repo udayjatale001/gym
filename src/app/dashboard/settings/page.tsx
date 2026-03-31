@@ -45,7 +45,7 @@ export default function SettingsPage() {
       // Clear user session
       localStorage.removeItem('gymbuddy_user');
       
-      // Reset Guide States for next login
+      // Reset Guide States for next login session
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
         if (key.startsWith('fitstride_has_seen_guide_')) {
@@ -67,8 +67,6 @@ export default function SettingsPage() {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     
     try {
-      // Still using firestore for cycle reset if user wants cloud sync, 
-      // but session is handled by UI mock.
       toast({
         title: lang === 'hi' ? "वर्कआउट चक्र रीसेट" : "Workout Cycle Reset",
         description: lang === 'hi' ? "आपका PPL चक्र आज से फिर से शुरू हो गया है।" : "Your PPL cycle has been restarted from today.",
@@ -96,7 +94,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Account Section */}
       <Card className="border-none shadow-xl rounded-[2.5rem] bg-white/5 border border-white/5 overflow-hidden">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic text-white">
@@ -116,11 +113,7 @@ export default function SettingsPage() {
                 <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">LOCKED FOR PERFORMANCE</p>
               </div>
             </div>
-            <Switch 
-              checked={true} 
-              disabled
-              className="data-[state=checked]:bg-primary"
-            />
+            <Switch checked={true} disabled className="data-[state=checked]:bg-primary" />
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-white/5 border border-white/10 transition-all">
@@ -155,7 +148,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Workout Preferences */}
       <Card className="border-none shadow-xl rounded-[2.5rem] bg-white/5 border border-white/5 overflow-hidden">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic text-white">
@@ -179,7 +171,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* App Info Section */}
       <Card className="border-none shadow-xl rounded-[2.5rem] bg-white/5 border border-white/5 overflow-hidden">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2 italic text-primary">
@@ -189,14 +180,9 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <Link href="/dashboard/settings/about">
-            <Button 
-              variant="outline" 
-              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-left"
-            >
+            <Button variant="outline" className="w-full h-20 rounded-[1.5rem] justify-between px-8 border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-left gap-6">
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <Dumbbell className="h-5 w-5" />
-                </div>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><Dumbbell className="h-5 w-5" /></div>
                 <div>
                   <p className="text-sm font-black uppercase italic tracking-tight text-white">ABOUT MY GYM BUDDY</p>
                   <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">Version 1.0.0</p>
@@ -207,14 +193,9 @@ export default function SettingsPage() {
           </Link>
 
           <Link href="/dashboard/settings/privacy">
-            <Button 
-              variant="outline" 
-              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-left"
-            >
+            <Button variant="outline" className="w-full h-20 rounded-[1.5rem] justify-between px-8 border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-left gap-6">
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><ShieldCheck className="h-5 w-5" /></div>
                 <div>
                   <p className="text-sm font-black uppercase italic tracking-tight text-white">PRIVACY POLICY</p>
                   <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">YOUR DATA SAFETY</p>
@@ -225,14 +206,9 @@ export default function SettingsPage() {
           </Link>
 
           <Link href="/dashboard/settings/help">
-            <Button 
-              variant="outline" 
-              className="w-full h-20 rounded-[1.5rem] justify-between px-6 border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-left"
-            >
+            <Button variant="outline" className="w-full h-20 rounded-[1.5rem] justify-between px-8 border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 transition-all text-left gap-6">
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <HelpCircle className="h-5 w-5" />
-                </div>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><HelpCircle className="h-5 w-5" /></div>
                 <div>
                   <p className="text-sm font-black uppercase italic tracking-tight text-white">HELP & SUPPORT</p>
                   <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">GET ASSISTANCE</p>
