@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Loader2, TrendingUp, Brain, Flame, Plus, Target, Calendar, ArrowLeft, Edit2 } from "lucide-react";
+import { Loader2, TrendingUp, Brain, Flame, Plus, Target, Calendar, ArrowLeft, Edit2, AlertCircle } from "lucide-react";
 import { format, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
@@ -103,13 +103,12 @@ export default function ProgressPage() {
     if (isNaN(val)) return;
     
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const newTotal = (dailyCalories || 0) + val; // ADDITIVE LOGIC (100 + 500 = 600)
+    const newTotal = (dailyCalories || 0) + val;
     
     setDailyCalories(newTotal);
     localStorage.setItem('fitstride_daily_calories', newTotal.toString());
     localStorage.setItem('fitstride_calorie_date', todayStr);
     
-    // Sync with History for current day
     const updatedHistory = { ...calorieHistory, [currentCycleDay]: newTotal };
     setCalorieHistory(updatedHistory);
     localStorage.setItem('fitstride_calorie_history', JSON.stringify(updatedHistory));
@@ -117,8 +116,9 @@ export default function ProgressPage() {
     setIsCalorieDialogOpen(false);
     setTempCalorieInput("");
     toast({ 
-      title: "Fuel Logged 🔥", 
-      description: `Added ${val} kcal. Today's total: ${newTotal} kcal.` 
+      title: newTotal > calorieGoal ? "Overload Alert ⚠️" : "Fuel Logged 🔥", 
+      description: `Added ${val} kcal. Today's total: ${newTotal} kcal.`,
+      variant: newTotal > calorieGoal ? "destructive" : "default"
     });
   };
 
@@ -136,7 +136,6 @@ export default function ProgressPage() {
     setCalorieHistory(updated);
     localStorage.setItem('fitstride_calorie_history', JSON.stringify(updated));
     
-    // If updating current cycle day, sync back to main ring
     if (day === currentCycleDay) {
       setDailyCalories(calories);
       localStorage.setItem('fitstride_daily_calories', calories.toString());
@@ -179,6 +178,8 @@ export default function ProgressPage() {
   };
 
   const caloriePercentage = Math.min(100, (dailyCalories / calorieGoal) * 100);
+  const isOverGoal = dailyCalories > calorieGoal;
+  const overagePercentage = isOverGoal ? Math.min(100, ((dailyCalories - calorieGoal) / calorieGoal) * 100) : 0;
 
   if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
@@ -209,21 +210,34 @@ export default function ProgressPage() {
       <div className="grid grid-cols-1 gap-6">
         {/* Calorie Stride Ring */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-8 flex flex-col items-center justify-center space-y-8 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl group-hover:bg-primary/10 transition-colors duration-500" />
+          <div className={cn(
+            "absolute top-0 right-0 h-32 w-32 rounded-full -translate-y-16 translate-x-16 blur-3xl transition-colors duration-500",
+            isOverGoal ? "bg-destructive/10" : "bg-primary/5 group-hover:bg-primary/10"
+          )} />
           
           <div className="flex flex-col items-center text-center space-y-2 relative">
             <div className="flex items-center gap-4">
-              {/* LARGE & IMPRESSIVE CALENDAR ICON */}
               <button 
                 onClick={() => setIsHistoryOpen(true)}
-                className="h-16 w-16 rounded-[1.8rem] bg-primary/10 flex items-center justify-center text-primary shadow-[0_0_25px_rgba(57,255,20,0.3)] border-2 border-primary/30 active:scale-75 transition-all hover:bg-primary/20 group hover:shadow-[0_0_35px_rgba(57,255,20,0.5)]"
+                className={cn(
+                  "h-16 w-16 rounded-[1.8rem] flex items-center justify-center shadow-[0_0_25px_rgba(57,255,20,0.3)] border-2 active:scale-75 transition-all group",
+                  isOverGoal 
+                    ? "bg-destructive/10 border-destructive/30 text-destructive shadow-[0_0_25px_rgba(239,68,68,0.3)]" 
+                    : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:shadow-[0_0_35px_rgba(57,255,20,0.5)]"
+                )}
               >
-                <span className="text-4xl filter drop-shadow-[0_0_12px_rgba(57,255,20,0.6)] transition-transform group-hover:scale-110">🗓️</span>
+                <span className={cn(
+                  "text-4xl filter transition-transform group-hover:scale-110",
+                  isOverGoal ? "drop-shadow-[0_0_12px_rgba(239,68,68,0.6)]" : "drop-shadow-[0_0_12px_rgba(57,255,20,0.6)]"
+                )}>🗓️</span>
               </button>
               <div className="text-left">
                 <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 leading-none">CALORIE STRIDE</p>
                 <div className="flex items-center gap-2 mt-1">
-                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary italic">DAY {currentCycleDay} PROTOCOL</p>
+                   <p className={cn(
+                     "text-[9px] font-black uppercase tracking-[0.2em] italic",
+                     isOverGoal ? "text-destructive" : "text-primary"
+                   )}>DAY {currentCycleDay} {isOverGoal ? "OVERLOAD DETECTED" : "PROTOCOL"}</p>
                    <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
                     <DialogTrigger asChild>
                       <button className="text-white/20 hover:text-primary transition-colors active:scale-75" onClick={() => setTempGoalInput(calorieGoal.toString())}>
@@ -263,14 +277,16 @@ export default function ProgressPage() {
 
           <div className="relative h-56 w-56 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90">
+              {/* Background Track */}
               <circle
                 cx="112"
                 cy="112"
                 r="100"
                 fill="transparent"
-                stroke="rgba(57, 255, 20, 0.05)"
+                stroke="rgba(255, 255, 255, 0.05)"
                 strokeWidth="14"
               />
+              {/* Primary Green Ring (100% Goal) */}
               <circle
                 cx="112"
                 cy="112"
@@ -283,10 +299,32 @@ export default function ProgressPage() {
                 strokeLinecap="round"
                 className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(57,255,20,0.4)]"
               />
+              {/* Overage Red Ring (Visible when over goal) */}
+              {isOverGoal && (
+                <circle
+                  cx="112"
+                  cy="112"
+                  r="100"
+                  fill="transparent"
+                  stroke="#FF3131"
+                  strokeWidth="14"
+                  strokeDasharray="628"
+                  strokeDashoffset={628 - (628 * overagePercentage) / 100}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(255,49,49,0.5)]"
+                />
+              )}
             </svg>
             <div className="absolute flex flex-col items-center text-center">
-              <Flame className={cn("h-8 w-8 mb-2 transition-all duration-500", dailyCalories > 0 ? "text-primary fill-primary/20 scale-110" : "text-white/10")} />
-              <span className="text-5xl font-black text-white italic tracking-tighter leading-none">{dailyCalories}</span>
+              {isOverGoal ? (
+                <AlertCircle className="h-8 w-8 mb-2 text-destructive animate-pulse" />
+              ) : (
+                <Flame className={cn("h-8 w-8 mb-2 transition-all duration-500", dailyCalories > 0 ? "text-primary fill-primary/20 scale-110" : "text-white/10")} />
+              )}
+              <span className={cn(
+                "text-5xl font-black italic tracking-tighter leading-none",
+                isOverGoal ? "text-destructive" : "text-white"
+              )}>{dailyCalories}</span>
               <span className="text-white/20 text-[10px] font-black uppercase tracking-widest mt-1">/ {calorieGoal} KCAL</span>
             </div>
           </div>
@@ -297,13 +335,13 @@ export default function ProgressPage() {
                 <Plus className="h-4 w-4 mr-2" /> LOG DAILY FUEL
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.1)]">
+            <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
               <DialogHeader>
                 <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">LOG CALORIES</DialogTitle>
               </DialogHeader>
               <div className="py-8 space-y-6">
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2 text-center italic opacity-60">Today's Total: {dailyCalories} kcal</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2 text-center italic opacity-60">Current Intake: {dailyCalories} kcal</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">ADD KCAL INTAKE</p>
                   <div className="relative">
                     <Input 
@@ -326,7 +364,7 @@ export default function ProgressPage() {
           </Dialog>
         </Card>
 
-        {/* Share Market Trend Chart */}
+        {/* Dynamic Trend Chart */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="h-64 w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
