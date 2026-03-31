@@ -85,16 +85,16 @@ export default function ProgressPage() {
     setIsLoaded(true);
   }, []);
 
-  const chartData = useMemo(() => {
-    return [...weightLogs]
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .slice(-30)
-      .map(log => ({
-        date: format(new Date(log.timestamp), 'MMM dd'),
-        weight: log.weight,
-        rawDate: log.timestamp
-      }));
-  }, [weightLogs]);
+  const calorieChartData = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => {
+      const day = i + 1;
+      return {
+        day: `DAY ${day}`,
+        calories: calorieHistory[day] || 0,
+        dayNum: day
+      };
+    });
+  }, [calorieHistory]);
 
   const currentWeight = weightLogs.length > 0 ? weightLogs[0].weight : 0;
 
@@ -364,26 +364,30 @@ export default function ProgressPage() {
           </Dialog>
         </Card>
 
-        {/* Dynamic Trend Chart */}
+        {/* Dynamic Trend Chart - Now showing 30-Day Calories */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
+          <div className="flex justify-between items-center px-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">ENERGY PROTOCOL TREND</p>
+            <Flame className="h-4 w-4 text-primary opacity-40" />
+          </div>
           <div className="h-64 w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={calorieChartData}>
                 <defs>
-                  <linearGradient id="marketTrend" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="calorieTrend" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#39FF14" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#39FF14" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" hide />
-                <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
+                <XAxis dataKey="dayNum" hide />
+                <YAxis hide domain={[0, 'dataMax + 500']} />
                 <Tooltip 
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
                         <div className="bg-black/90 backdrop-blur-xl border border-primary/20 p-4 rounded-2xl shadow-2xl">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-primary/60 mb-1">{payload[0].payload.date}</p>
-                          <p className="text-2xl font-black italic text-white">{payload[0].value} KG</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-primary/60 mb-1">{payload[0].payload.day}</p>
+                          <p className="text-2xl font-black italic text-white">{payload[0].value} KCAL</p>
                         </div>
                       );
                     }
@@ -392,10 +396,10 @@ export default function ProgressPage() {
                 />
                 <Area 
                   type="monotone" 
-                  dataKey="weight" 
+                  dataKey="calories" 
                   stroke="#39FF14" 
                   strokeWidth={5} 
-                  fill="url(#marketTrend)" 
+                  fill="url(#calorieTrend)" 
                   animationDuration={2000}
                 />
               </AreaChart>
