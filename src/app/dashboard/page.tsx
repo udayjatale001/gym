@@ -12,12 +12,6 @@ import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
 import { useToast } from '@/hooks/use-toast';
 
-interface LocalWeightLog {
-  id: string;
-  weight: number;
-  timestamp: string;
-}
-
 interface DailyTrackerData {
   date: string;
   water: number;
@@ -25,6 +19,12 @@ interface DailyTrackerData {
   steps: number;
   bedtime?: string;
   wakeTime?: string;
+}
+
+interface LocalWeightLog {
+  id: string;
+  weight: number;
+  timestamp: string;
 }
 
 interface WorkoutSplit {
@@ -57,6 +57,7 @@ export default function DashboardPage() {
   const STEP_GOAL = 1000;
   const SLEEP_GOAL = 480; // 8 hours in minutes
   const UPI_ID = "7247089447@ybl";
+  const MASKED_UPI = "7247••••@ybl";
   const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&cu=INR`;
 
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function DashboardPage() {
     setHasCopied(true);
     toast({
       title: t.idCopied,
-      description: UPI_ID,
+      description: "Protocol ID Archived.",
     });
     setTimeout(() => setHasCopied(false), 2000);
   };
@@ -522,7 +523,7 @@ export default function DashboardPage() {
                   <div className="relative group">
                     <div className="absolute inset-0 bg-primary/5 blur-xl group-hover:bg-primary/10 transition-colors" />
                     <div className="relative flex items-center justify-between bg-white/5 border-2 border-white/10 rounded-[2rem] p-6 backdrop-blur-md">
-                      <span className="text-xl font-black text-white italic tracking-tight">{UPI_ID}</span>
+                      <span className="text-xl font-black text-white italic tracking-tight">{MASKED_UPI}</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
