@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw } from "lucide-react";
-import { format, isSameDay, differenceInMinutes, parse } from 'date-fns';
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw, TrendingDown, Info, Activity } from "lucide-react";
+import { format, isSameDay, differenceInMinutes, parse, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
 
@@ -25,6 +24,12 @@ interface DailyTrackerData {
   wakeTime?: string;
 }
 
+interface WorkoutSplit {
+  id: string;
+  name: string;
+  focus: string;
+}
+
 export default function DashboardPage() {
   const [weightLogs, setWeightLogs] = useState<LocalWeightLog[]>([]);
   const [targetWeight, setTargetWeight] = useState<number>(0);
@@ -38,7 +43,7 @@ export default function DashboardPage() {
   });
   const [isLoaded, setIsLoaded] = useState(false);
   const [quote, setQuote] = useState("");
-  const [suggestion, setSuggestion] = useState<{ today: string }>({ today: "Rest" });
+  const [currentWorkout, setCurrentWorkout] = useState<string>("REST");
   const [lang, setLang] = useState<Language>('en');
   const [isEditingSleep, setIsEditingSleep] = useState(false);
 
@@ -55,26 +60,20 @@ export default function DashboardPage() {
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-    // Weight Data
+    // 1. Weight Data
     const savedWeightLogs = localStorage.getItem('fitstride_weight_logs_v2');
     const savedTarget = localStorage.getItem('fitstride_weight_target');
     if (savedWeightLogs) setWeightLogs(JSON.parse(savedWeightLogs));
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
 
-    // DAILY TRACKER LOGIC with History & Reset
+    // 2. DAILY TRACKER LOGIC with History & Reset
     const savedDailyData = localStorage.getItem('fitstride_daily_trackers');
     let trackerHistory: DailyTrackerData[] = savedDailyData ? JSON.parse(savedDailyData) : [];
     
-    // Check if we need to reset/archive
     const lastEntry = trackerHistory[trackerHistory.length - 1];
     if (lastEntry && !isSameDay(new Date(lastEntry.date), new Date())) {
       const newData: DailyTrackerData = {
-        date: todayStr,
-        water: 0,
-        sleep: 0,
-        steps: 0,
-        bedtime: '',
-        wakeTime: ''
+        date: todayStr, water: 0, sleep: 0, steps: 0, bedtime: '', wakeTime: ''
       };
       trackerHistory.push(newData);
       localStorage.setItem('fitstride_daily_trackers', JSON.stringify(trackerHistory));
@@ -91,16 +90,27 @@ export default function DashboardPage() {
       setIsEditingSleep(true);
     }
 
-    // Suggestions & Quotes
-    const now = new Date();
-    const getWorkout = (date: Date) => {
-      const day = date.getDay();
-      const map: Record<number, string> = { 0: t.rest, 1: t.push, 2: t.pull, 3: t.legs, 4: t.push, 5: t.pull, 6: t.legs };
-      return map[day];
-    };
-    setSuggestion({ today: getWorkout(now) });
+    // 3. DYNAMIC WORKOUT ROTATION LOGIC
+    const savedSplits = localStorage.getItem('fitstride_splits');
+    const splits: WorkoutSplit[] = savedSplits ? JSON.parse(savedSplits) : [
+      { id: 'push', name: "PUSH", focus: "Chest, Shoulders" },
+      { id: 'pull', name: "PULL", focus: "Back, Biceps" },
+      { id: 'legs', name: "LEGS", focus: "Quads, Hams" }
+    ];
 
-    const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+    let cycleStart = localStorage.getItem('fitstride_cycle_start');
+    if (!cycleStart) {
+      cycleStart = todayStr;
+      localStorage.setItem('fitstride_cycle_start', todayStr);
+    }
+
+    const daysSinceStart = Math.abs(differenceInDays(startOfDay(new Date()), startOfDay(new Date(cycleStart))));
+    const splitIndex = daysSinceStart % (splits.length || 1);
+    const todayWorkout = splits[splitIndex]?.name || t.rest;
+    setCurrentWorkout(todayWorkout);
+
+    // 4. DAILY QUOTE ROTATION
+    const dateSeed = new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate();
     const quoteIndex = dateSeed % t.quotes.length;
     setQuote(t.quotes[quoteIndex]);
 
@@ -121,15 +131,9 @@ export default function DashboardPage() {
 
   const handleCalculateSleep = () => {
     if (!currentData.bedtime || !currentData.wakeTime) return;
-    
     const bed = parse(currentData.bedtime, 'HH:mm', new Date());
     let wake = parse(currentData.wakeTime, 'HH:mm', new Date());
-    
-    if (wake < bed) {
-      // Wake up time is on the next day
-      wake = new Date(wake.getTime() + 24 * 60 * 60 * 1000);
-    }
-    
+    if (wake < bed) wake = new Date(wake.getTime() + 24 * 60 * 60 * 1000);
     const minutes = differenceInMinutes(wake, bed);
     updateDailyTracker({ sleep: minutes });
     setIsEditingSleep(false);
@@ -137,7 +141,6 @@ export default function DashboardPage() {
 
   const handleAddNap = () => updateDailyTracker({ sleep: currentData.sleep + 60 });
   const handleResetSleep = () => setIsEditingSleep(true);
-
   const handleAddWater = () => updateDailyTracker({ water: Math.min(WATER_GOAL, currentData.water + 250) });
   const handleResetWater = () => updateDailyTracker({ water: 0 });
   const handleAddSteps = (s: number) => updateDailyTracker({ steps: currentData.steps + s });
@@ -165,31 +168,31 @@ export default function DashboardPage() {
   const stepProgress = Math.min(100, (currentData.steps / STEP_GOAL) * 100);
   const caloriesFromSteps = Math.round(currentData.steps * 0.04);
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
-    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000]">
-      {/* Training Card */}
+    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
+      {/* Training Schedule Section (Auto-Rotating) */}
       <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative">
         <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
         <CardHeader className="pb-1 pt-6">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 opacity-80">
-            <Calendar className="h-4 w-4" />
+            <Activity className="h-4 w-4" />
             {t.trainingSchedule}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pb-8">
           <div className="flex flex-col items-center text-center py-2">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">{t.todaysDiscipline}</p>
-            <h3 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic leading-none">
-              {suggestion.today}
+            <h3 className="text-5xl md:text-6xl font-black tracking-tighter uppercase italic leading-none drop-shadow-2xl">
+              {currentWorkout}
             </h3>
             {quote && (
-              <div className="mt-6 px-4 md:px-6 py-4 bg-black/10 rounded-2xl border border-white/5 w-full">
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1 flex items-center justify-center gap-2">
+              <div className="mt-6 px-4 md:px-6 py-4 bg-black/15 rounded-[2rem] border border-white/5 w-full backdrop-blur-md">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-2 flex items-center justify-center gap-2">
                   <Quote className="h-2.5 w-2.5" /> {t.disciplineDirective}
                 </p>
-                <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/80">
+                <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/90">
                   "{quote}"
                 </p>
               </div>
@@ -198,17 +201,19 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* STRIDE PROGRESS TRACKERS */}
+      {/* STRIDE PROGRESS TRACKERS (Finance-Style) */}
       <div className="grid grid-cols-1 gap-6">
         {/* Sleep Stride (🌙) */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl">
           {isEditingSleep ? (
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Moon className="h-4 w-4 text-primary" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Moon className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -249,7 +254,7 @@ export default function DashboardPage() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
                   </div>
                   <h4 className="text-5xl font-black italic tracking-tighter text-primary">{formatSleep(currentData.sleep)}</h4>
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic">RECOVERY STATUS: <span className="text-primary">OPTIMAL</span></p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic">RECOVERY STATUS: <span className="text-primary">{currentData.sleep >= SLEEP_GOAL ? 'OPTIMAL' : 'ACTIVE'}</span></p>
                 </div>
                 
                 <div className="flex gap-2">
@@ -338,24 +343,24 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-2">
            <Scale className="h-5 w-5 text-primary" />
-           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60 italic">{t.bodyMassProgress}</h3>
+           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/40 italic">{t.bodyMassProgress}</h3>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg">
-            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">{t.current}</p>
+          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg">
+            <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 opacity-60">{t.current}</p>
             <p className="text-3xl md:text-4xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
-          <Card className="bg-card border-2 border-border/50 rounded-[2.5rem] p-6 text-center shadow-lg">
-            <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2 opacity-60">{t.target}</p>
+          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg">
+            <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 opacity-60">{t.target}</p>
             <p className="text-3xl md:text-4xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
         </div>
 
-        <Card className="p-8 md:p-10 rounded-[3rem] shadow-2xl border-none bg-card space-y-8 relative overflow-hidden">
+        <Card className="p-8 md:p-10 rounded-[3rem] shadow-2xl bg-white/5 border border-white/10 space-y-8 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-30" />
           <div className="flex justify-between items-end">
-            <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" /> 
               {t.transformation}
             </h3>
@@ -363,17 +368,17 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-6">
-            <div className="h-8 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/30 relative">
+            <div className="h-8 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/10 relative">
                <div 
-                 className="h-full bg-primary transition-all duration-1000 ease-out rounded-full shadow-[0_0_15px_rgba(var(--primary),0.3)]"
+                 className="h-full bg-primary transition-all duration-1000 ease-out rounded-full shadow-[0_0_15px_rgba(57,255,20,0.3)]"
                  style={{ width: `${progress}%` }}
                />
             </div>
             
             {targetWeight > 0 && weightLogs.length > 0 && (
-              <div className="text-center py-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-border/50">
+              <div className="text-center py-6 bg-white/5 rounded-[2rem] border border-white/10">
                 <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">{t.remainingGap}</p>
-                <p className="text-4xl md:text-5xl font-black italic tracking-tighter">
+                <p className="text-4xl md:text-5xl font-black italic tracking-tighter text-white">
                   {Math.abs(currentWeight - targetWeight).toFixed(1)} <span className="text-sm opacity-30 not-italic tracking-normal">KG</span>
                 </p>
               </div>
@@ -385,7 +390,7 @@ export default function DashboardPage() {
       {/* Water Intake Card */}
       <Card className={cn(
         "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative active:scale-[0.98]",
-        currentData.water >= WATER_GOAL ? "bg-primary/10" : "bg-card border border-border/50"
+        currentData.water >= WATER_GOAL ? "bg-primary/10" : "bg-white/5 border border-white/10"
       )}>
         <CardContent className="p-6 md:p-8 space-y-6">
           <div className="flex flex-col gap-4">
@@ -393,12 +398,12 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3 min-w-0">
                 <div className={cn(
                   "h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0",
-                  currentData.water >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-muted text-muted-foreground"
+                  currentData.water >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-white/10 text-white/40"
                 )}>
                   <Droplet className="h-6 w-6" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60 truncate">{t.waterIntake}</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 opacity-60 truncate">{t.waterIntake}</p>
                   <p className="text-lg md:text-xl font-black italic uppercase tracking-tight text-primary truncate">
                     {(currentData.water / 1000).toFixed(1)} <span className="text-[10px] not-italic opacity-40">/ 4.0 {t.liters}</span>
                   </p>
@@ -411,7 +416,7 @@ export default function DashboardPage() {
                     onClick={handleResetWater} 
                     variant="ghost" 
                     size="icon" 
-                    className="h-10 w-10 rounded-xl border-2 border-muted/50 text-muted-foreground/40 hover:text-destructive active:scale-90 transition-all"
+                    className="h-10 w-10 rounded-xl border border-white/10 text-white/40 hover:text-destructive active:scale-90 transition-all"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -424,7 +429,7 @@ export default function DashboardPage() {
                   <Button 
                     onClick={handleAddWater} 
                     size="sm" 
-                    className="h-10 px-3 md:px-4 rounded-xl font-black uppercase tracking-tighter text-[9px] italic shadow-lg active:scale-90 whitespace-nowrap bg-primary"
+                    className="h-10 px-3 md:px-4 rounded-xl font-black uppercase tracking-tighter text-[9px] italic shadow-lg active:scale-90 whitespace-nowrap bg-primary text-black"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" /> {t.addWater}
                   </Button>
@@ -433,7 +438,7 @@ export default function DashboardPage() {
             </div>
             
             <div className="space-y-2">
-              <div className="h-3 w-full bg-muted/50 rounded-full overflow-hidden shadow-inner border border-border/10">
+              <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/10">
                 <div 
                   className={cn(
                     "h-full transition-all duration-700 ease-out rounded-full",
@@ -443,8 +448,8 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="flex justify-between items-center px-1">
-                <p className="text-[8px] font-black uppercase tracking-widest opacity-40">{t.dailyGoal}</p>
-                <p className="text-[8px] font-black uppercase tracking-widest opacity-40 italic">{Math.round((currentData.water / WATER_GOAL) * 100)}%</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-white/20">{t.dailyGoal}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-white/40 italic">{Math.round((currentData.water / WATER_GOAL) * 100)}%</p>
               </div>
             </div>
           </div>
