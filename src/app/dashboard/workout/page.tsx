@@ -108,7 +108,7 @@ export default function WorkoutPage() {
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
-            <Button size="icon" className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-[1.25rem] shadow-xl bg-primary active:scale-90">
+            <Button data-guide-id="add-split-btn" size="icon" className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-[1.25rem] shadow-xl bg-primary active:scale-90">
               <Plus className="h-7 w-7 md:h-8 md:w-8" />
             </Button>
           </DialogTrigger>
@@ -133,7 +133,7 @@ export default function WorkoutPage() {
         </Dialog>
       </div>
 
-      <div className="flex flex-col gap-5 md:gap-6">
+      <div className="flex flex-col gap-5 md:gap-6" data-guide-id="split-list">
         {splits.map((split: any) => {
           const Icon = getIcon(split.name);
           return (

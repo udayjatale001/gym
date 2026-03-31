@@ -306,7 +306,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* Step Stride (👟) */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl" onClick={() => handleAddSteps(50)}>
+        <Card 
+          data-guide-id="step-stride"
+          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl" 
+          onClick={() => handleAddSteps(50)}
+        >
           <div className="flex justify-between items-start mb-6">
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-1">
@@ -350,7 +354,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Goal Metrics (Body Mass Progress) */}
-      <div className="space-y-6">
+      <div className="space-y-6" data-guide-id="weight-progress">
         <div className="flex items-center gap-3 px-2">
            <Scale className="h-5 w-5 text-primary" />
            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/40 italic">{t.bodyMassProgress}</h3>
@@ -398,10 +402,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Water Intake Card */}
-      <Card className={cn(
-        "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative active:scale-[0.98]",
-        currentData.water >= WATER_GOAL ? "bg-primary/10" : "bg-white/5 border border-white/10"
-      )}>
+      <Card 
+        data-guide-id="water-card"
+        className={cn(
+          "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative active:scale-[0.98]",
+          currentData.water >= WATER_GOAL ? "bg-primary/10" : "bg-white/5 border border-white/10"
+        )}
+      >
         <CardContent className="p-6 md:p-8 space-y-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
@@ -467,7 +474,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* FUEL THE EVOLUTION SECTION */}
-      <div className="pt-6">
+      <div className="pt-6" data-guide-id="support-button">
         <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
           <SheetTrigger asChild>
             <Button 

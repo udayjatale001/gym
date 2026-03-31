@@ -270,7 +270,7 @@ export default function ProgressPage() {
 
           <Dialog open={isCalorieDialogOpen} onOpenChange={setIsCalorieDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full h-16 bg-white/5 border border-white/10 rounded-[1.5rem] font-black uppercase italic tracking-widest text-xs text-white hover:bg-primary hover:text-black transition-all group-active:scale-95">
+              <Button data-guide-id="calorie-input" className="w-full h-16 bg-white/5 border border-white/10 rounded-[1.5rem] font-black uppercase italic tracking-widest text-xs text-white hover:bg-primary hover:text-black transition-all group-active:scale-95">
                 <Plus className="h-4 w-4 mr-2" /> LOG DAILY FUEL
               </Button>
             </DialogTrigger>
@@ -304,7 +304,7 @@ export default function ProgressPage() {
         </Card>
 
         {/* Dynamic Trend Chart */}
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
+        <Card data-guide-id="calorie-chart" className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-center px-2">
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">ENERGY PROTOCOL TREND</p>
             <Flame className="h-4 w-4 text-primary opacity-40" />

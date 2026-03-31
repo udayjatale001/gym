@@ -93,7 +93,7 @@ export default function DietPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl md:text-3xl font-black text-primary uppercase tracking-tighter italic leading-none">DIET LOG</h2>
-              <button className="text-2xl active:scale-75 transition-transform" onClick={() => setIsOverallProgressOpen(true)}>📈</button>
+              <button data-guide-id="diet-stats-btn" className="text-2xl active:scale-75 transition-transform" onClick={() => setIsOverallProgressOpen(true)}>📈</button>
             </div>
             <p className="text-[9px] md:text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-60">PRECISION TRACKING</p>
           </div>
@@ -215,7 +215,7 @@ function ChecklistSheet({ meal, onUpdate, onClear, onClose, onShowAnalysis }: { 
               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] opacity-50 truncate">{meal.mealType} • 30-DAY BLOCK</p>
             </div>
           </SheetHeader>
-          <div className="grid grid-cols-5 gap-2.5 md:gap-4">
+          <div className="grid grid-cols-5 gap-2.5 md:gap-4" data-guide-id="diet-grid">
             {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
               <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} calories={meal.calories?.[day] || ""} onMark={(s: string, a: string, c: string) => onUpdate(day, s, a, c)} onClear={() => onClear(day)} />
             ))}

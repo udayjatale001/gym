@@ -145,6 +145,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
             <div className="flex items-center gap-2">
               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">DAY {day} LOG</p>
               <span 
+                data-guide-id="heat-check-btn"
                 className="text-3xl animate-pulse cursor-pointer select-none active:scale-125 transition-transform"
                 onClick={() => setIsHeatCheckOpen(true)}
               >

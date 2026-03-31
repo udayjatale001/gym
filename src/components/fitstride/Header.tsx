@@ -65,7 +65,7 @@ export function Header() {
         >
           <HelpCircle className="h-5 w-5 text-white/40" />
         </button>
-        <LinkNext href="/dashboard/settings">
+        <LinkNext href="/dashboard/settings" data-guide-id="settings-icon">
           <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-white/10">
             <Settings className="h-5 w-5 text-white/40" />
           </button>

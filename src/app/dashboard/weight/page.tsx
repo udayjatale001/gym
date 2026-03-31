@@ -91,7 +91,7 @@ export default function WeightPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-card relative active:scale-[0.99] transition-all">
+      <Card data-guide-id="weight-input" className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-card relative active:scale-[0.99] transition-all">
         <div className="absolute top-0 left-0 w-full h-2 bg-primary/20" />
         <CardContent className="p-8 md:p-10 space-y-10">
           <div className="space-y-4">
@@ -114,7 +114,7 @@ export default function WeightPage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-6">
+      <div className="space-y-6" data-guide-id="weight-metrics">
         <h3 className="text-[11px] md:text-[12px] font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-3 opacity-60 px-3 italic"><History className="h-5 w-5" /> LOG HISTORY</h3>
         <div className="flex flex-col gap-4">
           {logs.map((log) => (
