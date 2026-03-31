@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,35 +32,57 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const user = localStorage.getItem('gymbuddy_user');
+    if (user) router.push('/dashboard');
+  }, [router]);
+
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Access",
+        description: "Please use a valid @gmail.com address.",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // Direct bypass for prototype speed
     setTimeout(() => {
-      router.push('/dashboard');
+      const mockUser = {
+        name: name.trim().toUpperCase(),
+        email: email.toLowerCase(),
+        joined: new Date().toISOString()
+      };
+      
+      localStorage.setItem('gymbuddy_user', JSON.stringify(mockUser));
+      
       toast({
         title: "Discipline Initiated!",
-        description: "Welcome to GymBuddy! Squad.",
+        description: `Welcome to the squad, ${mockUser.name}`,
       });
+      
+      router.push('/dashboard');
       setIsLoading(false);
-    }, 500);
+    }, 1000);
   };
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-8">
+    <div className="flex min-h-svh flex-col items-center justify-center p-4 bg-[#000000]">
+      <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in-95 duration-500">
         <div className="flex justify-between items-center px-1">
-          <Link href="/login" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary gap-1 transition-colors">
+          <Link href="/login" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-primary gap-1 transition-all">
             <ArrowLeft className="h-4 w-4" />
             BACK TO LOGIN
           </Link>
-          <Link href="/dashboard" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary gap-1 transition-colors">
+          <Link href="/dashboard" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-primary gap-1 transition-all">
             <Home className="h-3.5 w-3.5" />
             HOME
           </Link>
@@ -72,10 +94,10 @@ export default function SignupPage() {
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.4em] opacity-60">GYMBUDDY! REGISTRY</p>
         </div>
 
-        <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+        <Card className="border-none shadow-2xl rounded-[2.5rem] bg-card/10 backdrop-blur-xl border border-white/5 overflow-hidden">
           <CardHeader className="pt-8 px-8">
-            <CardTitle className="text-2xl font-black italic uppercase tracking-tighter">Register</CardTitle>
-            <CardDescription className="text-xs uppercase font-bold tracking-widest opacity-60">Enroll for Discipline</CardDescription>
+            <CardTitle className="text-2xl font-black italic uppercase tracking-tighter text-white">Register</CardTitle>
+            <CardDescription className="text-xs uppercase font-bold tracking-widest opacity-40">Enroll for Discipline</CardDescription>
           </CardHeader>
           <form onSubmit={handleSignup}>
             <CardContent className="space-y-6 px-8">
@@ -83,8 +105,9 @@ export default function SignupPage() {
                 <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest opacity-40">Full Name</Label>
                 <Input
                   id="name"
-                  placeholder="John Doe"
-                  className="h-14 font-bold border-2 rounded-2xl"
+                  placeholder="JOHN DOE"
+                  required
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all uppercase"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -94,8 +117,9 @@ export default function SignupPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
-                  className="h-14 font-bold border-2 rounded-2xl"
+                  placeholder="NAME@GMAIL.COM"
+                  required
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all uppercase"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -106,14 +130,19 @@ export default function SignupPage() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="h-14 font-bold border-2 rounded-2xl"
+                  required
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </CardContent>
             <CardFooter className="p-8">
-              <Button type="submit" className="w-full h-16 font-black text-xl uppercase italic rounded-2xl shadow-xl active:scale-95 transition-all" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full h-16 font-black text-xl uppercase italic rounded-2xl shadow-[0_0_20px_rgba(57,255,20,0.2)] bg-primary text-black hover:bg-primary/90 active:scale-95 transition-all" 
+                disabled={isLoading}
+              >
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : 'INITIALIZE'}
               </Button>
             </CardFooter>

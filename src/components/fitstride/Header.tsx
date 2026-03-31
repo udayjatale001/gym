@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Settings } from "lucide-react";
 import LinkNext from "next/link";
-import { useUser } from "@/firebase";
 import { Language, translations } from '@/lib/translations';
 
 const DisciplineLogo = () => (
@@ -25,30 +24,39 @@ const DisciplineLogo = () => (
 );
 
 export function Header() {
-  const { user } = useUser();
   const [lang, setLang] = useState<Language>('en');
+  const [userName, setUserName] = useState<string>('');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang) setLang(savedLang);
+
+    // Load mock user name
+    const user = localStorage.getItem('gymbuddy_user');
+    if (user) {
+      const parsed = JSON.parse(user);
+      setUserName(parsed.name || 'WARRIOR');
+    } else {
+      setUserName('GUEST');
+    }
   }, []);
 
   const t = translations[lang];
   
   return (
-    <header className="p-3 md:p-4 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-40 border-b border-border/30">
+    <header className="p-3 md:p-4 flex items-center justify-between sticky top-0 bg-[#000000]/80 backdrop-blur-xl z-40 border-b border-white/5">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <DisciplineLogo />
         <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-black text-primary tracking-tighter italic leading-none uppercase truncate">GYMBUDDY!</h1>
-          <p className="text-[9px] md:text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5 opacity-60 truncate">
-            {t.disciplineMode}
+          <p className="text-[9px] md:text-[10px] text-white/40 font-black uppercase tracking-widest mt-0.5 truncate">
+            {t.disciplineMode} • <span className="text-primary">{userName}</span>
           </p>
         </div>
       </div>
       <LinkNext href="/dashboard/settings" className="shrink-0">
-        <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-background border-2 border-muted/50 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-muted/30">
-          <Settings className="h-5 w-5 text-muted-foreground" />
+        <button className="h-10 w-10 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 shadow-sm flex items-center justify-center active:scale-90 transition-all hover:bg-white/10">
+          <Settings className="h-5 w-5 text-white/40" />
         </button>
       </LinkNext>
     </header>
