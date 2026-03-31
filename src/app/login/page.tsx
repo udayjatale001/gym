@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
 const DisciplineLogoLarge = () => (
-  <div className="mx-auto h-16 w-16 flex items-center justify-center bg-primary rounded-[1.5rem] shadow-2xl rotate-3 border-b-8 border-black/20 mb-4">
+  <div className="mx-auto h-16 w-16 flex items-center justify-center bg-primary rounded-[1.5rem] shadow-2xl rotate-3 border-b-8 border-black/20 mb-4 shrink-0">
     <svg 
       viewBox="0 0 24 24" 
       fill="none" 
@@ -36,14 +36,12 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Auto-login check
     const user = localStorage.getItem('gymbuddy_user');
     if (user) router.push('/dashboard');
   }, [router]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email.toLowerCase().endsWith('@gmail.com')) {
       toast({
         variant: "destructive",
@@ -52,42 +50,33 @@ export default function LoginPage() {
       });
       return;
     }
-
     setIsLoading(true);
-    
-    // Simulate professional delay
     setTimeout(() => {
       const mockUser = {
         name: email.split('@')[0].toUpperCase(),
         email: email.toLowerCase(),
         joined: new Date().toISOString()
       };
-      
       localStorage.setItem('gymbuddy_user', JSON.stringify(mockUser));
-      
-      toast({
-        title: "Discipline Engaged!",
-        description: `Welcome back, ${mockUser.name}`,
-      });
-      
+      toast({ title: "Discipline Engaged!", description: `Welcome back, ${mockUser.name}` });
       router.push('/dashboard');
       setIsLoading(false);
     }, 800);
   };
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center p-4 bg-[#000000]">
-      <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in-95 duration-500">
+    <div className="flex h-svh w-full flex-col items-center justify-center p-4 bg-[#000000] overflow-hidden">
+      <div className="w-full max-w-sm space-y-6 animate-in fade-in zoom-in-95 duration-500 flex flex-col">
         <div className="text-center space-y-2">
           <DisciplineLogoLarge />
-          <h1 className="text-4xl font-black tracking-tighter text-primary italic uppercase">GYMBUDDY!</h1>
+          <h1 className="text-4xl font-black tracking-tighter text-primary italic uppercase leading-none">GYMBUDDY!</h1>
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.4em] opacity-60">DISCIPLINE MODE</p>
         </div>
 
         <Card className="border-none shadow-2xl rounded-[2.5rem] bg-card/10 backdrop-blur-xl border border-white/5 overflow-hidden">
-          <CardHeader className="pt-8 px-8">
-            <CardTitle className="text-2xl font-black italic uppercase tracking-tighter text-white">Login</CardTitle>
-            <CardDescription className="text-xs uppercase font-bold tracking-widest opacity-40">Identity Verification</CardDescription>
+          <CardHeader className="pt-8 px-8 pb-4">
+            <CardTitle className="text-2xl font-black italic uppercase tracking-tighter text-white leading-none">Login</CardTitle>
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest opacity-40 mt-2">Identity Verification</CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-6 px-8">
@@ -98,7 +87,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="name@gmail.com"
                   required
-                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all"
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all text-base"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -110,7 +99,7 @@ export default function LoginPage() {
                   type="password"
                   placeholder="••••••••"
                   required
-                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all"
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />

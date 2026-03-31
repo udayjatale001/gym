@@ -18,7 +18,6 @@ export default function ProgressPage() {
   const [lang, setLang] = useState<Language>('en');
   const [isLoaded, setIsLoaded] = useState(false);
   
-  // Calorie State
   const [dailyCalories, setDailyCalories] = useState<number>(0);
   const [calorieGoal, setCalorieGoal] = useState<number>(2500);
   const [tempCalorieInput, setTempCalorieInput] = useState("");
@@ -35,11 +34,9 @@ export default function ProgressPage() {
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang) setLang(savedLang);
 
-    // 1. Load All Data
     const savedGoal = localStorage.getItem('fitstride_calorie_goal');
     const savedHistory = localStorage.getItem('fitstride_calorie_history');
     
-    // 2. Cycle Logic
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     let cycleStart = localStorage.getItem('fitstride_cycle_start');
     if (!cycleStart) {
@@ -51,7 +48,6 @@ export default function ProgressPage() {
     const dayIndex = (daysDiff % 30) + 1;
     setCurrentCycleDay(dayIndex);
 
-    // 3. MIDNIGHT RESET LOGIC
     const savedCalorieDate = localStorage.getItem('fitstride_calorie_date');
     const savedCalories = localStorage.getItem('fitstride_daily_calories');
 
@@ -132,11 +128,10 @@ export default function ProgressPage() {
   const isOverGoal = dailyCalories > calorieGoal;
   const overagePercentage = isOverGoal ? Math.min(100, ((dailyCalories - calorieGoal) / calorieGoal) * 100) : 0;
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
     <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
-      {/* Header - Renamed Hub */}
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 rounded-[1.5rem] bg-primary flex items-center justify-center text-black shadow-2xl shadow-primary/30 border-b-4 border-black/20">
@@ -150,7 +145,6 @@ export default function ProgressPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* Calorie Stride Ring */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-8 flex flex-col items-center justify-center space-y-8 shadow-2xl relative overflow-hidden group">
           <div className={cn(
             "absolute top-0 right-0 h-32 w-32 rounded-full -translate-y-16 translate-x-16 blur-3xl transition-colors duration-500",
@@ -173,16 +167,16 @@ export default function ProgressPage() {
                   isOverGoal ? "drop-shadow-[0_0_12px_rgba(239,68,68,0.6)]" : "drop-shadow-[0_0_12px_rgba(57,255,20,0.6)]"
                 )}>🗓️</span>
               </button>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 leading-none">CALORIE STRIDE</p>
                 <div className="flex items-center gap-2 mt-1">
                    <p className={cn(
-                     "text-[9px] font-black uppercase tracking-[0.2em] italic",
+                     "text-[9px] font-black uppercase tracking-[0.2em] italic truncate",
                      isOverGoal ? "text-destructive" : "text-primary"
-                   )}>DAY {currentCycleDay} {isOverGoal ? "OVERLOAD DETECTED" : "PROTOCOL"}</p>
+                   )}>DAY {currentCycleDay} {isOverGoal ? "OVERLOAD" : "PROTOCOL"}</p>
                    <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
                     <DialogTrigger asChild>
-                      <button className="text-white/20 hover:text-primary transition-colors active:scale-75" onClick={() => setTempGoalInput(calorieGoal.toString())}>
+                      <button className="text-white/20 hover:text-primary transition-colors active:scale-75 shrink-0" onClick={() => setTempGoalInput(calorieGoal.toString())}>
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                     </DialogTrigger>
@@ -197,8 +191,9 @@ export default function ProgressPage() {
                             <Input 
                               placeholder="2500" 
                               value={tempGoalInput} 
+                              inputMode="numeric"
                               onChange={(e) => setTempGoalInput(e.target.value.replace(/[^0-9]/g, ''))}
-                              className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5" 
+                              className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5 text-base" 
                             />
                             <Target className="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/20" />
                           </div>
@@ -217,40 +212,19 @@ export default function ProgressPage() {
             </div>
           </div>
 
-          <div className="relative h-56 w-56 flex items-center justify-center">
+          <div className="relative h-52 w-52 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90">
+              <circle cx="104" cy="104" r="92" fill="transparent" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="14" />
               <circle
-                cx="112"
-                cy="112"
-                r="100"
-                fill="transparent"
-                stroke="rgba(255, 255, 255, 0.05)"
-                strokeWidth="14"
-              />
-              <circle
-                cx="112"
-                cy="112"
-                r="100"
-                fill="transparent"
-                stroke="#39FF14"
-                strokeWidth="14"
-                strokeDasharray="628"
-                strokeDashoffset={628 - (628 * caloriePercentage) / 100}
-                strokeLinecap="round"
-                className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(57,255,20,0.4)]"
+                cx="104" cy="104" r="92" fill="transparent" stroke="#39FF14" strokeWidth="14"
+                strokeDasharray="578" strokeDashoffset={578 - (578 * caloriePercentage) / 100}
+                strokeLinecap="round" className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(57,255,20,0.4)]"
               />
               {isOverGoal && (
                 <circle
-                  cx="112"
-                  cy="112"
-                  r="100"
-                  fill="transparent"
-                  stroke="#FF3131"
-                  strokeWidth="14"
-                  strokeDasharray="628"
-                  strokeDashoffset={628 - (628 * overagePercentage) / 100}
-                  strokeLinecap="round"
-                  className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(255,49,49,0.5)]"
+                  cx="104" cy="104" r="92" fill="transparent" stroke="#FF3131" strokeWidth="14"
+                  strokeDasharray="578" strokeDashoffset={578 - (578 * overagePercentage) / 100}
+                  strokeLinecap="round" className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(255,49,49,0.5)]"
                 />
               )}
             </svg>
@@ -286,8 +260,9 @@ export default function ProgressPage() {
                     <Input 
                       placeholder="0000" 
                       value={tempCalorieInput} 
+                      inputMode="numeric"
                       onChange={(e) => setTempCalorieInput(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5" 
+                      className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5 text-base" 
                     />
                     <Flame className="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/20" />
                   </div>
@@ -303,7 +278,6 @@ export default function ProgressPage() {
           </Dialog>
         </Card>
 
-        {/* Dynamic Trend Chart */}
         <Card data-guide-id="calorie-chart" className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-center px-2">
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">ENERGY PROTOCOL TREND</p>
@@ -347,14 +321,13 @@ export default function ProgressPage() {
         </Card>
       </div>
 
-      {/* Calorie History Sheet */}
       <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[92svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
           <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
             <SheetHeader>
               <div className="flex items-center gap-4 mb-4">
-                <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(false)} className="h-12 w-12 rounded-2xl border border-white/10 active:scale-90"><ArrowLeft className="h-6 w-6 text-primary" /></Button>
-                <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">ENERGY PROTOCOL</SheetTitle>
+                <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(false)} className="h-12 w-12 rounded-2xl border border-white/10 active:scale-90 shrink-0"><ArrowLeft className="h-6 w-6 text-primary" /></Button>
+                <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">ENERGY PROTOCOL</SheetTitle>
               </div>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">30-DAY CALORIE STRIDE</p>
             </SheetHeader>
@@ -412,8 +385,9 @@ function DayCalorieDialog({ day, calories, onSave, isCurrent }: { day: number, c
               <Input 
                 placeholder="0000" 
                 value={input} 
+                inputMode="numeric"
                 onChange={(e) => setInput(e.target.value.replace(/[^0-9]/g, ''))}
-                className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary" 
+                className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary text-base" 
               />
               <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20 italic">KCAL</span>
             </div>

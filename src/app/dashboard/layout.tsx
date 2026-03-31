@@ -10,7 +10,7 @@ export default function DashboardLayout({
   return (
     <div className="flex flex-col h-svh max-w-md mx-auto bg-background relative shadow-2xl overflow-hidden border-x border-border/10 overscroll-none">
       <Header />
-      <main className="flex-1 overflow-y-auto no-scrollbar relative bg-background momentum-scroll">
+      <main className="flex-1 overflow-y-auto no-scrollbar relative bg-background momentum-scroll overscroll-none">
         {children}
       </main>
       <BottomNav />

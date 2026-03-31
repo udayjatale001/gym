@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
 const DisciplineLogoSignup = () => (
-  <div className="mx-auto h-16 w-16 flex items-center justify-center bg-primary rounded-[1.5rem] shadow-2xl rotate-3 border-b-8 border-black/20 mb-4">
+  <div className="mx-auto h-16 w-16 flex items-center justify-center bg-primary rounded-[1.5rem] shadow-2xl rotate-3 border-b-8 border-black/20 mb-4 shrink-0">
     <svg 
       viewBox="0 0 24 24" 
       fill="none" 
@@ -43,7 +43,6 @@ export default function SignupPage() {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email.toLowerCase().endsWith('@gmail.com')) {
       toast({
         variant: "destructive",
@@ -52,35 +51,27 @@ export default function SignupPage() {
       });
       return;
     }
-
     setIsLoading(true);
-
     setTimeout(() => {
       const mockUser = {
         name: name.trim().toUpperCase(),
         email: email.toLowerCase(),
         joined: new Date().toISOString()
       };
-      
       localStorage.setItem('gymbuddy_user', JSON.stringify(mockUser));
-      
-      toast({
-        title: "Discipline Initiated!",
-        description: `Welcome to the squad, ${mockUser.name}`,
-      });
-      
+      toast({ title: "Discipline Initiated!", description: `Welcome to the squad, ${mockUser.name}` });
       router.push('/dashboard');
       setIsLoading(false);
     }, 1000);
   };
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center p-4 bg-[#000000]">
-      <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in-95 duration-500">
+    <div className="flex h-svh w-full flex-col items-center justify-center p-4 bg-[#000000] overflow-hidden">
+      <div className="w-full max-w-sm space-y-6 animate-in fade-in zoom-in-95 duration-500 flex flex-col">
         <div className="flex justify-between items-center px-1">
           <Link href="/login" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-primary gap-1 transition-all">
             <ArrowLeft className="h-4 w-4" />
-            BACK TO LOGIN
+            BACK
           </Link>
           <Link href="/dashboard" className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-primary gap-1 transition-all">
             <Home className="h-3.5 w-3.5" />
@@ -90,14 +81,14 @@ export default function SignupPage() {
 
         <div className="text-center space-y-2">
           <DisciplineLogoSignup />
-          <h1 className="text-3xl font-black text-primary uppercase italic tracking-tighter">JOIN THE SQUAD</h1>
+          <h1 className="text-3xl font-black text-primary uppercase italic tracking-tighter leading-none">JOIN THE SQUAD</h1>
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.4em] opacity-60">GYMBUDDY! REGISTRY</p>
         </div>
 
         <Card className="border-none shadow-2xl rounded-[2.5rem] bg-card/10 backdrop-blur-xl border border-white/5 overflow-hidden">
-          <CardHeader className="pt-8 px-8">
-            <CardTitle className="text-2xl font-black italic uppercase tracking-tighter text-white">Register</CardTitle>
-            <CardDescription className="text-xs uppercase font-bold tracking-widest opacity-40">Enroll for Discipline</CardDescription>
+          <CardHeader className="pt-8 px-8 pb-4">
+            <CardTitle className="text-2xl font-black italic uppercase tracking-tighter text-white leading-none">Register</CardTitle>
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest opacity-40 mt-2">Enroll for Discipline</CardDescription>
           </CardHeader>
           <form onSubmit={handleSignup}>
             <CardContent className="space-y-6 px-8">
@@ -107,7 +98,7 @@ export default function SignupPage() {
                   id="name"
                   placeholder="JOHN DOE"
                   required
-                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all uppercase"
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all uppercase text-base"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -119,7 +110,7 @@ export default function SignupPage() {
                   type="email"
                   placeholder="NAME@GMAIL.COM"
                   required
-                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all uppercase"
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all uppercase text-base"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -131,7 +122,7 @@ export default function SignupPage() {
                   type="password"
                   placeholder="••••••••"
                   required
-                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all"
+                  className="h-14 font-bold border-2 border-white/5 bg-white/5 text-white rounded-2xl focus:ring-primary focus:border-primary transition-all text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />

@@ -56,14 +56,15 @@
   }
   
   html, body {
-    height: 100%;
-    overflow: hidden; /* Prevent body scroll to stop pull-to-refresh */
+    height: 100svh;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   body {
     @apply bg-background text-foreground font-body;
-    overflow-x: hidden;
-    overscroll-behavior-y: none; /* Disable browser-level pull-to-refresh */
+    overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }

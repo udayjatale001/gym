@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   const WATER_GOAL = 4000;
   const STEP_GOAL = 1000;
-  const SLEEP_GOAL = 480; // 8 hours in minutes
+  const SLEEP_GOAL = 480; 
   const UPI_ID = "7247089447@ybl";
   const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&cu=INR`;
 
@@ -65,13 +65,11 @@ export default function DashboardPage() {
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-    // 1. Weight Data
     const savedWeightLogs = localStorage.getItem('fitstride_weight_logs_v2');
     const savedTarget = localStorage.getItem('fitstride_weight_target');
     if (savedWeightLogs) setWeightLogs(JSON.parse(savedWeightLogs));
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
 
-    // 2. DAILY TRACKER LOGIC with History & Reset
     const savedDailyData = localStorage.getItem('fitstride_daily_trackers');
     let trackerHistory: DailyTrackerData[] = savedDailyData ? JSON.parse(savedDailyData) : [];
     
@@ -95,7 +93,6 @@ export default function DashboardPage() {
       setIsEditingSleep(true);
     }
 
-    // 3. DYNAMIC WORKOUT ROTATION LOGIC
     const savedSplits = localStorage.getItem('fitstride_splits');
     const splits: WorkoutSplit[] = savedSplits ? JSON.parse(savedSplits) : [
       { id: 'push', name: "PUSH", focus: "Chest, Shoulders" },
@@ -114,7 +111,6 @@ export default function DashboardPage() {
     const todayWorkout = splits[splitIndex]?.name || t.rest;
     setCurrentWorkout(todayWorkout);
 
-    // 4. DAILY QUOTE ROTATION
     const dateSeed = new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate();
     const quoteIndex = dateSeed % t.quotes.length;
     setQuote(t.quotes[quoteIndex]);
@@ -173,14 +169,13 @@ export default function DashboardPage() {
   const stepProgress = Math.min(100, (currentData.steps / STEP_GOAL) * 100);
   const caloriesFromSteps = Math.round(currentData.steps * 0.04);
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
     <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
-      {/* Training Schedule Section (Auto-Rotating) */}
       <Card 
         data-guide-id="training-card"
-        className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative"
+        className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative active:scale-[0.98] transition-transform"
       >
         <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
         <CardHeader className="pb-1 pt-6">
@@ -196,7 +191,7 @@ export default function DashboardPage() {
               {currentWorkout}
             </h3>
             {quote && (
-              <div className="mt-6 px-4 md:px-6 py-4 bg-black/15 rounded-[2rem] border border-white/5 w-full backdrop-blur-md">
+              <div className="mt-6 px-4 py-4 bg-black/15 rounded-[2rem] border border-white/5 w-full backdrop-blur-md">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-2 flex items-center justify-center gap-2">
                   <Quote className="h-2.5 w-2.5" /> {t.disciplineDirective}
                 </p>
@@ -209,12 +204,10 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* STRIDE PROGRESS TRACKERS */}
       <div className="grid grid-cols-1 gap-6">
-        {/* Sleep Stride (🌙) */}
         <Card 
           data-guide-id="sleep-stride"
-          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl"
+          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl active:scale-[0.98] transition-transform"
         >
           {isEditingSleep ? (
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
@@ -233,7 +226,7 @@ export default function DashboardPage() {
                     type="time" 
                     value={currentData.bedtime} 
                     onChange={(e) => updateDailyTracker({ bedtime: e.target.value })}
-                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary" 
+                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary text-base" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -242,7 +235,7 @@ export default function DashboardPage() {
                     type="time" 
                     value={currentData.wakeTime} 
                     onChange={(e) => updateDailyTracker({ wakeTime: e.target.value })}
-                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary" 
+                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary text-base" 
                   />
                 </div>
               </div>
@@ -264,8 +257,8 @@ export default function DashboardPage() {
                     </div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
                   </div>
-                  <h4 className="text-5xl font-black italic tracking-tighter text-primary">{formatSleep(currentData.sleep)}</h4>
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic">RECOVERY STATUS: <span className="text-primary">{currentData.sleep >= SLEEP_GOAL ? 'OPTIMAL' : 'ACTIVE'}</span></p>
+                  <h4 className="text-5xl font-black italic tracking-tighter text-primary leading-none">{formatSleep(currentData.sleep)}</h4>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic mt-2">RECOVERY STATUS: <span className="text-primary">{currentData.sleep >= SLEEP_GOAL ? 'OPTIMAL' : 'ACTIVE'}</span></p>
                 </div>
                 
                 <div className="flex gap-2">
@@ -305,10 +298,9 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {/* Step Stride (👟) */}
         <Card 
           data-guide-id="step-stride"
-          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl" 
+          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl active:scale-[0.98] transition-transform" 
           onClick={() => handleAddSteps(50)}
         >
           <div className="flex justify-between items-start mb-6">
@@ -320,11 +312,11 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/40">STEP STRIDE</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <h4 className="text-5xl font-black italic tracking-tighter text-white">{currentData.steps}</h4>
+                <h4 className="text-5xl font-black italic tracking-tighter text-white leading-none">{currentData.steps}</h4>
                 <span className="text-lg font-black text-white/10 italic">/ {STEP_GOAL}</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-2">
-                <Flame className="h-3.5 w-3.5 text-primary" />
+              <div className="flex items-center gap-1.5 mt-3">
+                <Flame className="h-4 w-4 text-primary" />
                 <span className="text-sm font-black italic text-primary">{caloriesFromSteps} KCAL</span>
               </div>
             </div>
@@ -353,7 +345,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Goal Metrics (Body Mass Progress) */}
       <div className="space-y-6" data-guide-id="weight-progress">
         <div className="flex items-center gap-3 px-2">
            <Scale className="h-5 w-5 text-primary" />
@@ -361,28 +352,28 @@ export default function DashboardPage() {
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg">
+          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg active:scale-95 transition-transform">
             <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 opacity-60">{t.current}</p>
-            <p className="text-3xl md:text-4xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
+            <p className="text-3xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
-          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg">
+          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg active:scale-95 transition-transform">
             <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 opacity-60">{t.target}</p>
-            <p className="text-3xl md:text-4xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
+            <p className="text-3xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
           </Card>
         </div>
 
-        <Card className="p-8 md:p-10 rounded-[3rem] shadow-2xl bg-white/5 border border-white/10 space-y-8 relative overflow-hidden">
+        <Card className="p-8 rounded-[3rem] shadow-2xl bg-white/5 border border-white/10 space-y-8 relative overflow-hidden active:scale-[0.98] transition-transform">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-30" />
           <div className="flex justify-between items-end">
             <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" /> 
               {t.transformation}
             </h3>
-            <span className="text-3xl md:text-4xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
+            <span className="text-3xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
           </div>
           
           <div className="space-y-6">
-            <div className="h-8 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/10 relative">
+            <div className="h-6 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/10 relative">
                <div 
                  className="h-full bg-primary transition-all duration-1000 ease-out rounded-full shadow-[0_0_15px_rgba(57,255,20,0.3)]"
                  style={{ width: `${progress}%` }}
@@ -392,7 +383,7 @@ export default function DashboardPage() {
             {targetWeight > 0 && weightLogs.length > 0 && (
               <div className="text-center py-6 bg-white/5 rounded-[2rem] border border-white/10">
                 <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">{t.remainingGap}</p>
-                <p className="text-4xl md:text-5xl font-black italic tracking-tighter text-white">
+                <p className="text-4xl font-black italic tracking-tighter text-white leading-none">
                   {Math.abs(currentWeight - targetWeight).toFixed(1)} <span className="text-sm opacity-30 not-italic tracking-normal">KG</span>
                 </p>
               </div>
@@ -401,7 +392,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Water Intake Card */}
       <Card 
         data-guide-id="water-card"
         className={cn(
@@ -409,7 +399,7 @@ export default function DashboardPage() {
           currentData.water >= WATER_GOAL ? "bg-primary/10" : "bg-white/5 border border-white/10"
         )}
       >
-        <CardContent className="p-6 md:p-8 space-y-6">
+        <CardContent className="p-6 space-y-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -421,7 +411,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 opacity-60 truncate">{t.waterIntake}</p>
-                  <p className="text-lg md:text-xl font-black italic uppercase tracking-tight text-primary truncate">
+                  <p className="text-lg font-black italic uppercase tracking-tight text-primary truncate leading-none mt-1">
                     {(currentData.water / 1000).toFixed(1)} <span className="text-[10px] not-italic opacity-40">/ 4.0 {t.liters}</span>
                   </p>
                 </div>
@@ -446,7 +436,7 @@ export default function DashboardPage() {
                   <Button 
                     onClick={handleAddWater} 
                     size="sm" 
-                    className="h-10 px-3 md:px-4 rounded-xl font-black uppercase tracking-tighter text-[9px] italic shadow-lg active:scale-90 whitespace-nowrap bg-primary text-black"
+                    className="h-10 px-3 rounded-xl font-black uppercase tracking-tighter text-[9px] italic shadow-lg active:scale-90 whitespace-nowrap bg-primary text-black"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" /> {t.addWater}
                   </Button>
@@ -473,7 +463,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* FUEL THE EVOLUTION SECTION */}
       <div className="pt-6" data-guide-id="support-button">
         <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
           <SheetTrigger asChild>
@@ -491,8 +480,8 @@ export default function DashboardPage() {
             <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-12 pb-32">
               <SheetHeader>
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="h-20 w-20 rounded-[2.5rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_40px_rgba(57,255,20,0.1)]">
-                    <Sparkles className="h-10 w-10 text-primary animate-spin-slow" />
+                  <div className="h-16 w-16 rounded-[2rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_40px_rgba(57,255,20,0.1)]">
+                    <Sparkles className="h-8 w-8 text-primary animate-spin-slow" />
                   </div>
                   <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">
                     {t.supportTitle}
@@ -511,11 +500,11 @@ export default function DashboardPage() {
 
                 <div className="space-y-8">
                   <Button 
-                    className="w-full h-28 rounded-[2.5rem] bg-primary text-black font-black uppercase italic tracking-widest text-2xl shadow-[0_0_40px_rgba(57,255,20,0.4)] active:scale-95 transition-all flex flex-col gap-1 hover:bg-primary/90"
+                    className="w-full h-24 rounded-[2.5rem] bg-primary text-black font-black uppercase italic tracking-widest text-xl shadow-[0_0_40px_rgba(57,255,20,0.4)] active:scale-95 transition-all flex flex-col gap-1 hover:bg-primary/90"
                     onClick={() => window.open(PAYMENT_LINK, '_blank')}
                   >
                     <span className="flex items-center gap-4">
-                      <ExternalLink className="h-8 w-8" />
+                      <ExternalLink className="h-7 w-7" />
                       {t.payNow}
                     </span>
                     <span className="text-[10px] opacity-40 font-bold tracking-[0.2em] italic">SECURE DISCIPLINE GATEWAY</span>
