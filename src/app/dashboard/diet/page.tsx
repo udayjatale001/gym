@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp, TrendingDown, Info, Flame } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,7 @@ interface LocalMeal {
   date: string;
   checklist: Record<number, 'taken' | 'skipped'>; 
   amounts: Record<number, string>;
+  calories: Record<number, string>;
 }
 
 export default function DietPage() {
@@ -39,13 +40,13 @@ export default function DietPage() {
   const [analysisMealId, setAnalysisMealId] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('fitstride_diet_logs_v2');
+    const saved = localStorage.getItem('fitstride_diet_logs_v3');
     if (saved) setMeals(JSON.parse(saved));
     setIsLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (isLoaded) localStorage.setItem('fitstride_diet_logs_v2', JSON.stringify(meals));
+    if (isLoaded) localStorage.setItem('fitstride_diet_logs_v3', JSON.stringify(meals));
   }, [meals, isLoaded]);
 
   const handleLogMeal = () => {
@@ -56,7 +57,7 @@ export default function DietPage() {
         id: Math.random().toString(36).substr(2, 9),
         mealType: selectedType, mealName: mealName.trim().toUpperCase(),
         timestamp: new Date().toISOString(), date: format(new Date(), 'yyyy-MM-dd'),
-        checklist: {}, amounts: {}
+        checklist: {}, amounts: {}, calories: {}
       };
       setMeals(prev => [newMeal, ...prev]);
       toast({ title: "Meal Tracked!", description: `${newMeal.mealType}: ${newMeal.mealName}` });
@@ -173,11 +174,11 @@ export default function DietPage() {
       {currentViewingMeal && (
         <ChecklistSheet 
           meal={currentViewingMeal} 
-          onUpdate={(day: number, status: 'taken' | 'skipped', amount: string) => {
-            setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: { ...m.checklist, [day]: status }, amounts: { ...m.amounts, [day]: amount } } : m));
+          onUpdate={(day: number, status: 'taken' | 'skipped', amount: string, calories: string) => {
+            setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: { ...m.checklist, [day]: status }, amounts: { ...m.amounts, [day]: amount }, calories: { ...m.calories, [day]: calories } } : m));
           }}
           onClear={(day: number) => {
-            setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) as any, amounts: Object.fromEntries(Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)) as any } : m));
+            setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) as any, amounts: Object.fromEntries(Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)) as any, calories: Object.fromEntries(Object.entries(m.calories || {}).filter(([d]) => parseInt(d) !== day)) as any } : m));
           }}
           onClose={() => setViewingMealId(null)}
           onShowAnalysis={(id: string) => setAnalysisMealId(id)}
@@ -216,7 +217,7 @@ function ChecklistSheet({ meal, onUpdate, onClear, onClose, onShowAnalysis }: { 
           </SheetHeader>
           <div className="grid grid-cols-5 gap-2.5 md:gap-4">
             {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
-              <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} onMark={(s: string, a: string) => onUpdate(day, s, a)} onClear={() => onClear(day)} />
+              <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} calories={meal.calories?.[day] || ""} onMark={(s: string, a: string, c: string) => onUpdate(day, s, a, c)} onClear={() => onClear(day)} />
             ))}
           </div>
         </div>
@@ -230,7 +231,6 @@ function MealAnalysisSheet({ meal, onClose }: { meal: LocalMeal, onClose: any })
     return Array.from({ length: 30 }, (_, i) => {
       const day = i + 1;
       const raw = meal.amounts[day] || "0";
-      // Extract numbers only (e.g., "50G" -> 50)
       const value = parseFloat(raw.replace(/[^0-9.]/g, '')) || 0;
       return { day, value };
     }).filter(d => meal.checklist[d.day] === 'taken');
@@ -336,23 +336,36 @@ function MealAnalysisSheet({ meal, onClose }: { meal: LocalMeal, onClose: any })
   );
 }
 
-function DayDialog({ day, status, amount, onMark, onClear }: { day: number, status?: any, amount: string, onMark: any, onClear: any }) {
+function DayDialog({ day, status, amount, calories, onMark, onClear }: { day: number, status?: any, amount: string, calories: string, onMark: any, onClear: any }) {
   const [open, setOpen] = useState(false);
   const [tempAmount, setTempAmount] = useState(amount);
-  useEffect(() => setTempAmount(amount), [amount]);
+  const [tempCalories, setTempCalories] = useState(calories);
+
+  useEffect(() => {
+    setTempAmount(amount);
+    setTempCalories(calories);
+  }, [amount, calories]);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className={cn("h-16 md:h-20 w-full p-0 flex flex-col items-center justify-center rounded-[1rem] md:rounded-[1.5rem] border-4 active:scale-90 transition-all relative", status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner", status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner", !status && "bg-muted/30 border-muted/50 opacity-40")}>
+        <Button variant="outline" className={cn("h-20 md:h-24 w-full p-0 flex flex-col items-center justify-center rounded-[1rem] md:rounded-[1.5rem] border-4 active:scale-90 transition-all relative overflow-hidden", status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner", status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner", !status && "bg-muted/30 border-muted/50 opacity-40")}>
           <span className="text-[8px] md:text-[10px] font-black absolute top-1 md:top-1.5 left-1.5 md:left-2 opacity-40 italic">{day}</span>
           {status === 'taken' ? (
-            <div className="flex flex-col items-center justify-center w-full px-1 overflow-hidden">
-              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 mb-0.5 text-primary shrink-0" />
-              {amount && (
-                <span className="text-[10px] font-black uppercase leading-none text-center line-clamp-1 w-full scale-90">
-                  {amount}
-                </span>
-              )}
+            <div className="flex flex-col items-center justify-center w-full px-1 gap-1">
+              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
+              <div className="flex flex-col items-center w-full">
+                {amount && (
+                  <span className="text-[8px] md:text-[10px] font-black uppercase leading-none text-center truncate w-full">
+                    {amount}
+                  </span>
+                )}
+                {calories && (
+                  <span className="text-[8px] md:text-[10px] font-black text-primary uppercase leading-none text-center truncate w-full flex items-center justify-center gap-0.5 mt-0.5">
+                    <Flame className="h-2 w-2" /> {calories}
+                  </span>
+                )}
+              </div>
             </div>
           ) : status === 'skipped' ? (
             <XCircle className="h-5 w-5 md:h-7 md:w-7" />
@@ -361,16 +374,36 @@ function DayDialog({ day, status, amount, onMark, onClear }: { day: number, stat
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[88%] max-w-xs rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-10 shadow-2xl border-none bg-card">
+      <DialogContent className="w-[92%] max-w-sm rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-10 shadow-2xl border-none bg-card">
         <DialogHeader><DialogTitle className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-center">DAY {day}</DialogTitle></DialogHeader>
-        <div className="py-6 md:py-8 space-y-6 md:space-y-8">
-          <div className="space-y-2">
-            <p className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] px-2 opacity-60">PORTION SIZE</p>
-            <Input placeholder="E.G. 200G" value={tempAmount} inputMode="decimal" onChange={e => setTempAmount(e.target.value.toUpperCase())} className="h-14 md:h-16 font-black border-4 border-muted rounded-[1.25rem] md:rounded-[1.5rem] text-center text-xl md:text-xl uppercase focus-visible:ring-primary shadow-inner text-base md:text-xl" />
+        <div className="py-6 md:py-8 space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] px-2 opacity-60">PORTION SIZE</p>
+              <Input placeholder="E.G. 200G" value={tempAmount} inputMode="decimal" onChange={e => setTempAmount(e.target.value.toUpperCase())} className="h-14 md:h-16 font-black border-4 border-muted rounded-[1.25rem] md:rounded-[1.5rem] text-center text-xl md:text-xl uppercase focus-visible:ring-primary shadow-inner text-base md:text-xl" />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-2">
+                <p className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-60">CALORIES (KCAL)</p>
+                {tempCalories && <Flame className="h-3 w-3 text-primary animate-pulse" />}
+              </div>
+              <div className="relative">
+                <Input 
+                  placeholder="000" 
+                  value={tempCalories} 
+                  inputMode="numeric" 
+                  onChange={e => setTempCalories(e.target.value.replace(/[^0-9]/g, ''))} 
+                  className="h-14 md:h-16 font-black border-4 border-muted rounded-[1.25rem] md:rounded-[1.5rem] text-center text-xl md:text-xl uppercase focus-visible:ring-primary shadow-inner text-base md:text-xl pr-12" 
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground/30 italic">KCAL</span>
+              </div>
+            </div>
           </div>
+
           <div className="flex flex-col gap-3 md:gap-4">
-            <Button className="h-16 md:h-20 font-black uppercase italic rounded-[1.5rem] md:rounded-[1.8rem] shadow-2xl bg-primary text-base md:text-lg" onClick={() => { onMark('taken', tempAmount); setOpen(false); }}><CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 mr-2 md:mr-3" /> LOG PORTION</Button>
-            <Button variant="destructive" className="h-16 md:h-20 font-black uppercase italic rounded-[1.5rem] md:rounded-[1.8rem] shadow-2xl text-base md:text-lg" onClick={() => { onMark('skipped', ""); setOpen(false); }}><XCircle className="h-5 w-5 md:h-6 md:w-6 mr-2 md:mr-3" /> SKIP DAY</Button>
+            <Button className="h-16 md:h-20 font-black uppercase italic rounded-[1.5rem] md:rounded-[1.8rem] shadow-2xl bg-primary text-base md:text-lg" onClick={() => { onMark('taken', tempAmount, tempCalories); setOpen(false); }}><CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 mr-2 md:mr-3" /> LOG PORTION</Button>
+            <Button variant="destructive" className="h-16 md:h-20 font-black uppercase italic rounded-[1.5rem] md:rounded-[1.8rem] shadow-2xl text-base md:text-lg" onClick={() => { onMark('skipped', "", ""); setOpen(false); }}><XCircle className="h-5 w-5 md:h-6 md:w-6 mr-2 md:mr-3" /> SKIP DAY</Button>
             <Button variant="ghost" className="h-10 md:h-12 font-black text-[9px] md:text-[10px] uppercase opacity-40 tracking-widest" onClick={() => { onClear(); setOpen(false); }}>RESET DATA</Button>
           </div>
         </div>
