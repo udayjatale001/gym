@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Dumbbell, Scale, Utensils } from 'lucide-react';
+import { Home, Dumbbell, Scale, Utensils, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
 
@@ -21,6 +22,7 @@ export function BottomNav() {
   const navItems = [
     { label: t.home, icon: Home, href: '/dashboard' },
     { label: t.workout, icon: Dumbbell, href: '/dashboard/workout' },
+    { label: t.progress, icon: TrendingUp, href: '/dashboard/progress' },
     { label: t.diet, icon: Utensils, href: '/dashboard/diet' },
     { label: t.weight, icon: Scale, href: '/dashboard/weight' },
   ];
@@ -28,7 +30,7 @@ export function BottomNav() {
   return (
     <nav className="sticky bottom-0 left-0 right-0 w-full bg-card/80 backdrop-blur-xl border-t border-border/40 flex items-center justify-around py-3 md:py-4 px-2 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
       {navItems.map((item) => {
-        const isActive = pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard');
+        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
         return (
           <Link
             key={item.href}
@@ -40,7 +42,7 @@ export function BottomNav() {
           >
             <item.icon className={cn("h-5 w-5 md:h-6 md:w-6 transition-all", isActive && "fill-primary/20")} />
             <span className={cn(
-              "text-[8px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all",
+              "text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all text-center",
               isActive ? "opacity-100" : "opacity-60"
             )}>
               {item.label}

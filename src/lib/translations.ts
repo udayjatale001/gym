@@ -8,6 +8,7 @@ export const translations = {
     workout: "WORKOUT",
     diet: "DIET",
     weight: "WEIGHT",
+    progress: "PROGRESS",
     settings: "SETTINGS",
 
     // Header
@@ -84,6 +85,19 @@ export const translations = {
     recallPrevious: "RECALL PREVIOUS",
     cloneSuccess: "TEMPLATE APPLIED",
 
+    // Progress Page
+    performanceAI: "PERFORMANCE AI",
+    aiPrediction: "AI PREDICTION",
+    timeToGoal: "TIME TO GOAL",
+    weeklyChange: "WEEKLY CHANGE",
+    marketTrend: "MARKET TREND",
+    weightAnalysis: "WEIGHT ANALYSIS",
+    consistencyGrid: "CONSISTENCY GRID",
+    activeAdvice: "ACTIVE ADVICE",
+    dietProtocol: "DIET PROTOCOL",
+    trainingProtocol: "TRAINING PROTOCOL",
+    analyzingData: "ANALYZING PERFORMANCE...",
+
     // Settings
     account: "ACCOUNT",
     darkMode: "DARK MODE",
@@ -116,6 +130,7 @@ export const translations = {
     workout: "वर्कआउट",
     diet: "आहार",
     weight: "वजन",
+    progress: "प्रगति",
     settings: "सेटिंग्स",
 
     // Header
@@ -191,6 +206,19 @@ export const translations = {
     completed: "पूरा हुआ",
     recallPrevious: "पिछला रिकॉल",
     cloneSuccess: "टेम्पलेट लागू",
+
+    // Progress Page
+    performanceAI: "परफॉरमेंस AI",
+    aiPrediction: "AI भविष्यवाणी",
+    timeToGoal: "लक्ष्य तक समय",
+    weeklyChange: "साप्ताहिक परिवर्तन",
+    marketTrend: "मार्केट ट्रेंड",
+    weightAnalysis: "वजन विश्लेषण",
+    consistencyGrid: "निरंतरता ग्रिड",
+    activeAdvice: "सक्रिय सलाह",
+    dietProtocol: "आहार प्रोटोकॉल",
+    trainingProtocol: "प्रशिक्षण प्रोटोकॉल",
+    analyzingData: "डेटा का विश्लेषण कर रहे हैं...",
 
     // Settings
     account: "खाता",
