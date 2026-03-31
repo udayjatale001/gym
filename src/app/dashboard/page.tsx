@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw, TrendingDown, Info, Activity, Heart, Copy, Check, ExternalLink } from "lucide-react";
+import { Droplet, CheckCircle2, Calendar, Scale, TrendingUp, Loader2, Quote, Plus, RotateCcw, Moon, Footprints, Flame, Timer, RefreshCw, TrendingDown, Info, Activity, Heart, Copy, Check, ExternalLink, ShieldCheck, Sparkles } from "lucide-react";
 import { format, isSameDay, differenceInMinutes, parse, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Language, translations } from '@/lib/translations';
@@ -51,13 +50,11 @@ export default function DashboardPage() {
   const [lang, setLang] = useState<Language>('en');
   const [isEditingSleep, setIsEditingSleep] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [hasCopied, setHasCopied] = useState(false);
 
   const WATER_GOAL = 4000;
   const STEP_GOAL = 1000;
   const SLEEP_GOAL = 480; // 8 hours in minutes
   const UPI_ID = "7247089447@ybl";
-  const MASKED_UPI = "7247••••@ybl";
   const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&cu=INR`;
 
   useEffect(() => {
@@ -147,16 +144,6 @@ export default function DashboardPage() {
     setIsEditingSleep(false);
   };
 
-  const handleCopyUpi = () => {
-    navigator.clipboard.writeText(UPI_ID);
-    setHasCopied(true);
-    toast({
-      title: t.idCopied,
-      description: "Protocol ID Archived.",
-    });
-    setTimeout(() => setHasCopied(false), 2000);
-  };
-
   const handleAddNap = () => updateDailyTracker({ sleep: currentData.sleep + 60 });
   const handleResetSleep = () => setIsEditingSleep(true);
   const handleAddWater = () => updateDailyTracker({ water: Math.min(WATER_GOAL, currentData.water + 250) });
@@ -222,7 +209,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* STRIDE PROGRESS TRACKERS (Finance-Style) */}
+      {/* STRIDE PROGRESS TRACKERS */}
       <div className="grid grid-cols-1 gap-6">
         {/* Sleep Stride (🌙) */}
         <Card 
@@ -309,7 +296,6 @@ export default function DashboardPage() {
                     style={{ width: `${sleepProgress}%` }}
                   />
                 </div>
-                <div className="absolute top-0 left-[100%] h-6 w-0.5 bg-white/20 -translate-x-full" />
                 <div className="flex justify-between items-center mt-2 px-1">
                   <p className="text-[8px] font-black uppercase tracking-widest text-white/20">RECOVERY PROGRESS</p>
                   <p className="text-[8px] font-black uppercase tracking-widest text-primary italic">{Math.round(sleepProgress)}%</p>
@@ -480,7 +466,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* SUPPORT DEVELOPER SECTION */}
+      {/* FUEL THE EVOLUTION SECTION */}
       <div className="pt-6">
         <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
           <SheetTrigger asChild>
@@ -494,68 +480,54 @@ export default function DashboardPage() {
               </div>
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[85svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
-            <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
+          <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[80svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
+            <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-12 pb-32">
               <SheetHeader>
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="h-20 w-20 rounded-[2rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_30px_rgba(57,255,20,0.1)]">
-                    <Heart className="h-10 w-10 text-primary fill-primary" />
+                  <div className="h-20 w-20 rounded-[2.5rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_40px_rgba(57,255,20,0.1)]">
+                    <Sparkles className="h-10 w-10 text-primary animate-spin-slow" />
                   </div>
                   <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">
                     {t.supportTitle}
                   </SheetTitle>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">DISCIPLINE PROTOCOL</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">ELITE UPGRADE PROTOCOL</p>
                 </div>
               </SheetHeader>
 
-              <div className="space-y-8">
-                <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 shadow-inner">
-                  <p className="text-sm font-medium text-white/70 leading-relaxed italic text-center">
+              <div className="space-y-10">
+                <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 shadow-inner relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-3xl opacity-50" />
+                  <p className="text-sm font-medium text-white/70 leading-relaxed italic text-center relative z-10">
                     "{t.supportMessage}"
                   </p>
                 </Card>
 
-                <div className="space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 text-center italic">
-                    {t.upiIdLabel}
-                  </p>
-                  
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-primary/5 blur-xl group-hover:bg-primary/10 transition-colors" />
-                    <div className="relative flex items-center justify-between bg-white/5 border-2 border-white/10 rounded-[2rem] p-6 backdrop-blur-md">
-                      <span className="text-xl font-black text-white italic tracking-tight">{MASKED_UPI}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={handleCopyUpi}
-                        className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-black transition-all active:scale-90"
-                      >
-                        {hasCopied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6 pt-2">
+                <div className="space-y-8">
                   <Button 
-                    className="w-full h-24 rounded-[2.5rem] bg-primary text-black font-black uppercase italic tracking-widest text-xl shadow-[0_0_30px_rgba(57,255,20,0.3)] active:scale-95 transition-all flex flex-col gap-1"
+                    className="w-full h-28 rounded-[2.5rem] bg-primary text-black font-black uppercase italic tracking-widest text-2xl shadow-[0_0_40px_rgba(57,255,20,0.4)] active:scale-95 transition-all flex flex-col gap-1 hover:bg-primary/90"
                     onClick={() => window.open(PAYMENT_LINK, '_blank')}
                   >
-                    <span className="flex items-center gap-3">
-                      <ExternalLink className="h-6 w-6" />
+                    <span className="flex items-center gap-4">
+                      <ExternalLink className="h-8 w-8" />
                       {t.payNow}
                     </span>
-                    <span className="text-[9px] opacity-40 font-bold tracking-[0.2em] italic">via UPI SECURE PROTOCOL</span>
+                    <span className="text-[10px] opacity-40 font-bold tracking-[0.2em] italic">SECURE DISCIPLINE GATEWAY</span>
                   </Button>
 
-                  <div className="flex flex-col items-center gap-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 text-center">
-                      {t.anyAmount} 🙏
-                    </p>
-                    <div className="h-px w-20 bg-white/10" />
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 text-center italic">
-                      {t.trustNote}
-                    </p>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="h-px flex-1 bg-white/5" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic">
+                        {t.anyAmount} 🙏
+                      </p>
+                      <div className="h-px flex-1 bg-white/5" />
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                      <ShieldCheck className="h-3.5 w-3.5 text-primary/60" />
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 italic">
+                        {t.trustNote}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

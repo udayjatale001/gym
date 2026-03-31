@@ -1,4 +1,3 @@
-
 export type Language = 'en' | 'hi';
 
 export const translations = {
@@ -34,13 +33,10 @@ export const translations = {
     // Support
     supportDeveloper: "FUEL THE EVOLUTION",
     supportTitle: "FUEL THE EVOLUTION",
-    supportMessage: "Building Gym Buddy is a journey of discipline and dedication. If this command center helps you stay consistent, consider fueling its evolution. Your support directly powers new features, bug fixes, and performance updates to keep your training elite.",
-    upiIdLabel: "UPI PROTOCOL ID",
-    copyId: "COPY ID",
-    idCopied: "ID ARCHIVED TO CLIPBOARD",
+    supportMessage: "Building Gym Buddy is a journey of discipline and dedication. If this command center helps you stay consistent, consider fueling its evolution. Your contribution directly powers new features and elite performance updates.",
     payNow: "INITIALIZE CONTRIBUTION",
     anyAmount: "ANY CONTRIBUTION IS APPRECIATED",
-    trustNote: "YOUR SUPPORT KEEPS THIS MISSION IMPROVING",
+    trustNote: "ENCRYPTED PROTOCOL PROTECTION",
 
     // Trackers
     deepRest: "DEEP REST",
@@ -167,13 +163,10 @@ export const translations = {
     // Support
     supportDeveloper: "विकास को गति दें",
     supportTitle: "विकास को गति दें",
-    supportMessage: "जिम बडी का निर्माण अनुशासन और समर्पण की यात्रा है। यदि यह कमांड सेंटर आपको सुसंगत रहने में मदद करता है, तो इसके विकास में सहयोग करने पर विचार करें। आपका समर्थन सीधे नई सुविधाओं, बग फिक्स और प्रदर्शन अपडेट को संचालित करता है।",
-    upiIdLabel: "UPI प्रोटोकॉल आईडी",
-    copyId: "आईडी कॉपी करें",
-    idCopied: "आईडी क्लिपबोर्ड पर सहेजी गई",
-    payNow: "भुगतान शुरू करें",
+    supportMessage: "जिम बडी का निर्माण अनुशासन और समर्पण की यात्रा है। यदि यह कमांड सेंटर आपको सुसंगत रहने में मदद करता है, तो इसके विकास में सहयोग करने पर विचार करें। आपका योगदान सीधे नई सुविधाओं और बेहतर परफॉरमेंस अपडेट को शक्ति प्रदान करता है।",
+    payNow: "योगदान शुरू करें",
     anyAmount: "किसी भी राशि की सराहना की जाती है",
-    trustNote: "आपका समर्थन इस मिशन को बेहतर बनाने में मदद करता है",
+    trustNote: "एन्क्रिप्टेड प्रोटोकॉल सुरक्षा",
 
     // Trackers
     deepRest: "गहरी नींद",
