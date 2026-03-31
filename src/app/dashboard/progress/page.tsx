@@ -1,12 +1,10 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, TrendingUp, TrendingDown, Target, Zap, Flame, Brain, Calendar, Info, Quote, ArrowUpRight, Scale } from "lucide-react";
-import { format, subDays, isSameDay } from 'date-fns';
+import { Loader2, TrendingUp, Brain, ArrowUpRight } from "lucide-react";
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 import { Language, translations } from '@/lib/translations';
@@ -24,7 +22,6 @@ export default function ProgressPage() {
   const [weightLogs, setWeightLogs] = useState<any[]>([]);
   const [targetWeight, setTargetWeight] = useState(0);
   const [dailyTrackers, setDailyTrackers] = useState<any[]>([]);
-  const [workoutSplits, setWorkoutSplits] = useState<any[]>([]);
 
   const t = translations[lang];
 
@@ -32,16 +29,14 @@ export default function ProgressPage() {
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang) setLang(savedLang);
 
-    // Load All Data for Analysis
+    // Load All Data
     const savedWeight = localStorage.getItem('fitstride_weight_logs_v2');
     const savedTarget = localStorage.getItem('fitstride_weight_target');
     const savedTrackers = localStorage.getItem('fitstride_daily_trackers');
-    const savedSplits = localStorage.getItem('fitstride_splits');
 
     if (savedWeight) setWeightLogs(JSON.parse(savedWeight));
     if (savedTarget) setTargetWeight(parseFloat(savedTarget) || 0);
     if (savedTrackers) setDailyTrackers(JSON.parse(savedTrackers));
-    if (savedSplits) setWorkoutSplits(JSON.parse(savedSplits));
 
     setIsLoaded(true);
   }, []);
@@ -64,17 +59,15 @@ export default function ProgressPage() {
     setIsAnalyzing(true);
     
     try {
-      const mockUser = JSON.parse(localStorage.getItem('gymbuddy_user') || '{}');
-      
       const input = {
         currentWeight,
         targetWeight,
-        height: 175, // Default/Mock
-        age: 25, // Default/Mock
+        height: 175,
+        age: 25,
         gender: 'male' as const,
         activityLevel: 'moderately active' as const,
         weeklyWeightLogs: weightLogs.slice(0, 7).map(l => ({ date: l.timestamp.split('T')[0], weight: l.weight })),
-        dailyCalorieIntakeLogs: [], // Could pull from diet if implemented with calories
+        dailyCalorieIntakeLogs: [],
         workoutLogs: dailyTrackers.slice(0, 7).map(d => ({
           date: d.date,
           description: "General Session",
@@ -86,20 +79,13 @@ export default function ProgressPage() {
 
       const result = await predictFitnessProgressAndAdvice(input);
       setAiData(result);
-      toast({ title: "Analysis Complete", description: "Your performance roadmap is ready." });
+      toast({ title: "Analysis Complete", description: "Market data updated." });
     } catch (e) {
       toast({ variant: "destructive", title: "AI Sync Failed", description: "Try again later." });
     } finally {
       setIsAnalyzing(false);
     }
   };
-
-  // Auto-run analysis if data exists and not already analyzed
-  useEffect(() => {
-    if (isLoaded && weightLogs.length > 0 && !aiData && !isAnalyzing) {
-      runAnalysis();
-    }
-  }, [isLoaded, weightLogs, aiData]);
 
   if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
@@ -127,38 +113,7 @@ export default function ProgressPage() {
         </Button>
       </div>
 
-      {/* AI Overview Cards */}
       <div className="grid grid-cols-1 gap-6">
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-8 space-y-8 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
-          
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{t.aiPrediction}</p>
-              <h4 className="text-4xl font-black italic tracking-tighter text-primary">
-                {aiData ? `${aiData.predictedTimeToGoalWeeks} WEEKS` : '--'}
-              </h4>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic">{t.timeToGoal}</p>
-            </div>
-            <div className="text-right space-y-2">
-               <p className="text-2xl font-black italic text-white flex items-center justify-end gap-2">
-                 {aiData ? (aiData.predictedWeightChangeWeekly > 0 ? <TrendingUp className="h-5 w-5 text-primary" /> : <TrendingDown className="h-5 w-5 text-destructive" />) : null}
-                 {aiData ? `${aiData.predictedWeightChangeWeekly}KG` : '--'}
-               </p>
-               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic">{t.weeklyChange}</p>
-            </div>
-          </div>
-
-          <div className="p-4 bg-black/40 rounded-[1.5rem] border border-white/5">
-             <p className="text-[10px] font-black uppercase text-primary/60 tracking-widest mb-2 flex items-center gap-2">
-               <Quote className="h-3 w-3" /> AI INSIGHT
-             </p>
-             <p className="text-[11px] font-black uppercase italic tracking-wide leading-relaxed text-white/80">
-               {aiData ? aiData.overallProgressSummary : t.analyzingData}
-             </p>
-          </div>
-        </Card>
-
         {/* Share Market Trend Chart */}
         <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-center mb-2">
@@ -169,7 +124,7 @@ export default function ProgressPage() {
              <ArrowUpRight className="h-6 w-6 text-primary opacity-40" />
           </div>
 
-          <div className="h-60 w-full mt-4">
+          <div className="h-64 w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -205,56 +160,6 @@ export default function ProgressPage() {
             </ResponsiveContainer>
           </div>
         </Card>
-
-        {/* Consistency Grid */}
-        <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-xl">
-           <div className="flex items-center gap-3">
-             <Calendar className="h-5 w-5 text-primary" />
-             <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40 italic">{t.consistencyGrid}</p>
-           </div>
-           
-           <div className="grid grid-cols-7 gap-2">
-             {Array.from({ length: 28 }, (_, i) => {
-               const date = subDays(new Date(), 27 - i);
-               const hasWorkout = dailyTrackers.some(d => isSameDay(new Date(d.date), date) && d.steps > 0);
-               return (
-                 <div 
-                   key={i} 
-                   className={cn(
-                     "aspect-square rounded-lg border-2 transition-all duration-500",
-                     hasWorkout ? "bg-primary/20 border-primary shadow-[0_0_10px_rgba(57,255,20,0.2)]" : "bg-white/5 border-white/5"
-                   )}
-                 />
-               );
-             })}
-           </div>
-           <p className="text-[8px] font-black uppercase text-center text-white/20 tracking-[0.4em] pt-2 italic">LAST 28 DAYS ACTIVITY FLOW</p>
-        </Card>
-
-        {/* Advice Sections */}
-        {aiData && (
-          <div className="grid grid-cols-1 gap-6">
-            <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-4">
-               <div className="flex items-center gap-3 text-primary">
-                 <Flame className="h-5 w-5" />
-                 <p className="text-[11px] font-black uppercase tracking-[0.3em] italic">{t.dietProtocol}</p>
-               </div>
-               <p className="text-sm font-medium leading-relaxed text-white/70 italic">
-                 {aiData.advice.dietAdvice}
-               </p>
-            </Card>
-
-            <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-4">
-               <div className="flex items-center gap-3 text-primary">
-                 <Zap className="h-5 w-5" />
-                 <p className="text-[11px] font-black uppercase tracking-[0.3em] italic">{t.trainingProtocol}</p>
-               </div>
-               <p className="text-sm font-medium leading-relaxed text-white/70 italic">
-                 {aiData.advice.workoutAdvice}
-               </p>
-            </Card>
-          </div>
-        )}
       </div>
     </div>
   );
