@@ -503,7 +503,7 @@ export default function DashboardPage() {
                   <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">
                     {t.supportTitle}
                   </SheetTitle>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">FUEL THE EVOLUTION</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">DISCIPLINE PROTOCOL</p>
                 </div>
               </SheetHeader>
 
