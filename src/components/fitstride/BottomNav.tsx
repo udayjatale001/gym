@@ -27,7 +27,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="sticky bottom-0 left-0 right-0 w-full bg-card/80 backdrop-blur-xl border-t border-border/40 flex items-center justify-around py-3 md:py-4 px-2 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
+    <nav className="sticky bottom-0 left-0 right-0 w-full bg-[#000000] border-t border-white/5 flex items-center justify-around py-3 md:py-4 px-2 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       {navItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
         return (
@@ -37,10 +37,10 @@ export function BottomNav() {
             data-guide-id={item.guideId}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300 active:scale-90 group",
-              isActive ? "text-primary scale-105" : "text-muted-foreground hover:text-primary/70"
+              isActive ? "text-white scale-105" : "text-white/30 hover:text-white/70"
             )}
           >
-            <item.icon className={cn("h-5 w-5 md:h-6 md:w-6 transition-all", isActive && "fill-primary/20")} />
+            <item.icon className={cn("h-5 w-5 md:h-6 md:w-6 transition-all", isActive && "fill-white/10")} />
             <span className={cn(
               "text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all text-center",
               isActive ? "opacity-100" : "opacity-60"
