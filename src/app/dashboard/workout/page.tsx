@@ -187,11 +187,11 @@ export default function WorkoutPage() {
         {splits.map((split: any) => {
           const Icon = getIcon(split.name);
           return (
-            <button key={split.id} onClick={(e) => handleCategoryClick(e, `/dashboard/workout/${split.id}`)} className="block w-full text-left">
-              <Card className="overflow-hidden border-none shadow-xl rounded-[2.5rem] bg-card hover:bg-muted/30 transition-all active:scale-[0.98] relative group">
+            <div key={split.id} onClick={(e) => handleCategoryClick(e, `/dashboard/workout/${split.id}`)} className="block w-full text-left cursor-pointer group/split">
+              <Card className="overflow-hidden border-none shadow-xl rounded-[2.5rem] bg-card group-hover/split:bg-muted/30 transition-all active:scale-[0.98] relative">
                 <CardContent className="p-6 md:p-8 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 md:gap-6 min-w-0">
-                    <div className="h-14 w-14 md:h-16 md:w-16 rounded-[1.25rem] md:rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-inner shrink-0">
+                    <div className="h-14 w-14 md:h-16 md:w-16 rounded-[1.25rem] md:rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary group-hover/split:bg-primary group-hover/split:text-primary-foreground transition-all shadow-inner shrink-0">
                       <Icon className="h-7 w-7 md:h-8 md:w-8" />
                     </div>
                     <div className="min-w-0">
@@ -207,7 +207,7 @@ export default function WorkoutPage() {
                   </div>
                 </CardContent>
               </Card>
-            </button>
+            </div>
           );
         })}
       </div>
