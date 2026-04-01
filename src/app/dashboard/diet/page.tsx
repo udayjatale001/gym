@@ -6,8 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
-import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp, TrendingDown, Info, Flame } from "lucide-react";
+import { Utensils, Plus, CheckCircle2, XCircle, ArrowLeft, ChevronRight, Calendar, AlertCircle, Loader2, Trash2, Scale, TrendingUp, TrendingDown, Info, Flame, RotateCcw } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -79,6 +90,11 @@ export default function DietPage() {
     e.preventDefault(); e.stopPropagation();
     setMeals(p => p.filter(m => m.id !== id));
     toast({ title: "Meal Removed", description: "Log history updated." });
+  };
+
+  const handleResetMealProtocol = (mealId: string) => {
+    setMeals(prev => prev.map(m => m.id === mealId ? { ...m, checklist: {}, amounts: {}, calories: {} } : m));
+    toast({ title: "Protocol Reset", description: "30-day grid cleared for this meal." });
   };
 
   if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
@@ -180,6 +196,7 @@ export default function DietPage() {
           onClear={(day: number) => {
             setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) as any, amounts: Object.fromEntries(Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)) as any, calories: Object.fromEntries(Object.entries(m.calories || {}).filter(([d]) => parseInt(d) !== day)) as any } : m));
           }}
+          onReset={() => handleResetMealProtocol(currentViewingMeal.id)}
           onClose={() => setViewingMealId(null)}
           onShowAnalysis={(id: string) => setAnalysisMealId(id)}
         />
@@ -195,25 +212,47 @@ export default function DietPage() {
   );
 }
 
-function ChecklistSheet({ meal, onUpdate, onClear, onClose, onShowAnalysis }: { meal: LocalMeal, onUpdate: any, onClear: any, onClose: any, onShowAnalysis: any }) {
+function ChecklistSheet({ meal, onUpdate, onClear, onReset, onClose, onShowAnalysis }: { meal: LocalMeal, onUpdate: any, onClear: any, onReset: any, onClose: any, onShowAnalysis: any }) {
   return (
     <Sheet open={!!meal} onOpenChange={open => !open && onClose()}>
       <SheetContent side="bottom" className="h-[95svh] p-0 overflow-hidden border-none rounded-t-[3rem] bg-background">
         <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
-          <SheetHeader className="flex flex-row items-center gap-4">
-            <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 rounded-[1.25rem] border-4 active:scale-90 shadow-xl bg-card shrink-0"><ArrowLeft className="h-6 w-6" /></Button>
-            <div className="space-y-1 min-w-0">
-              <SheetTitle className="text-2xl font-black uppercase italic tracking-tighter text-primary leading-none truncate flex items-center gap-2">
-                <button 
-                  onClick={() => onShowAnalysis(meal.id)}
-                  className="text-2xl active:scale-75 transition-transform shrink-0"
-                >
-                  📈
-                </button>
-                <span className="truncate">{meal.mealName}</span>
-              </SheetTitle>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50 truncate">{meal.mealType} • 30-DAY BLOCK</p>
+          <SheetHeader className="flex flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
+              <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 rounded-[1.25rem] border-4 active:scale-90 shadow-xl bg-card shrink-0"><ArrowLeft className="h-6 w-6" /></Button>
+              <div className="space-y-1 min-w-0">
+                <SheetTitle className="text-2xl font-black uppercase italic tracking-tighter text-primary leading-none truncate flex items-center gap-2">
+                  <button 
+                    onClick={() => onShowAnalysis(meal.id)}
+                    className="text-2xl active:scale-75 transition-transform shrink-0"
+                  >
+                    📈
+                  </button>
+                  <span className="truncate">{meal.mealName}</span>
+                </SheetTitle>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50 truncate">{meal.mealType} • 30-DAY BLOCK</p>
+              </div>
             </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all shrink-0">
+                  <RotateCcw className="h-5 w-5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-black border-2 border-destructive/20 rounded-[2.5rem] p-8 max-w-sm w-[92%]">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-destructive font-black uppercase italic tracking-tighter text-2xl">RESET MEAL GRID?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-white/60 text-xs font-bold uppercase tracking-widest italic leading-relaxed">
+                    This will clear all 30-day tracking data for <span className="text-primary">{meal.mealName}</span>.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex flex-col gap-3 mt-6">
+                  <AlertDialogAction onClick={onReset} className="h-14 bg-destructive text-white font-black uppercase italic rounded-2xl shadow-lg">CONFIRM RESET</AlertDialogAction>
+                  <AlertDialogCancel className="h-12 border-white/10 text-white/40 font-black uppercase italic rounded-2xl">ABORT</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </SheetHeader>
           <div className="grid grid-cols-5 gap-2.5" data-guide-id="diet-grid">
             {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (

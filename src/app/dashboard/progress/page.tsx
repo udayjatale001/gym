@@ -6,7 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Loader2, TrendingUp, Flame, Plus, Target, ArrowLeft, Edit2, AlertCircle } from "lucide-react";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+import { Loader2, TrendingUp, Flame, Plus, Target, ArrowLeft, Edit2, AlertCircle, RotateCcw } from "lucide-react";
 import { format, differenceInDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
@@ -122,6 +133,14 @@ export default function ProgressPage() {
     }
     
     toast({ title: "Protocol Updated", description: `Day ${day} fuel logged at ${calories} kcal.` });
+  };
+
+  const handleResetHistoryProtocol = () => {
+    setCalorieHistory({});
+    localStorage.removeItem('fitstride_calorie_history');
+    setDailyCalories(0);
+    localStorage.setItem('fitstride_daily_calories', '0');
+    toast({ title: "History Purged", description: "30-day calorie protocol has been reset." });
   };
 
   const caloriePercentage = Math.min(100, (dailyCalories / calorieGoal) * 100);
@@ -325,9 +344,31 @@ export default function ProgressPage() {
         <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[92svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
           <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
             <SheetHeader>
-              <div className="flex items-center gap-4 mb-4">
-                <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(false)} className="h-12 w-12 rounded-2xl border border-white/10 active:scale-90 shrink-0"><ArrowLeft className="h-6 w-6 text-primary" /></Button>
-                <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">ENERGY PROTOCOL</SheetTitle>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(false)} className="h-12 w-12 rounded-2xl border border-white/10 active:scale-90 shrink-0"><ArrowLeft className="h-6 w-6 text-primary" /></Button>
+                  <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">ENERGY PROTOCOL</SheetTitle>
+                </div>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all shrink-0">
+                      <RotateCcw className="h-5 w-5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-black border-2 border-destructive/20 rounded-[2.5rem] p-8 max-w-sm w-[92%]">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-destructive font-black uppercase italic tracking-tighter text-2xl">PURGE HISTORY?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/60 text-xs font-bold uppercase tracking-widest italic leading-relaxed">
+                        This will clear all 30-day calorie history. This protocol action is permanent.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex flex-col gap-3 mt-6">
+                      <AlertDialogAction onClick={handleResetHistoryProtocol} className="h-14 bg-destructive text-white font-black uppercase italic rounded-2xl shadow-lg">CONFIRM PURGE</AlertDialogAction>
+                      <AlertDialogCancel className="h-12 border-white/10 text-white/40 font-black uppercase italic rounded-2xl">ABORT</AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">30-DAY CALORIE STRIDE</p>
             </SheetHeader>
@@ -394,7 +435,7 @@ function DayCalorieDialog({ day, calories, onSave, isCurrent }: { day: number, c
           </div>
           <Button 
             onClick={() => { onSave(parseInt(input) || 0); setOpen(false); }}
-            className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-[0_0_20px_rgba(57,255,20,0.2)]"
+            className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-2xl active:scale-95 transition-all"
           >
             CONFIRM PROTOCOL
           </Button>

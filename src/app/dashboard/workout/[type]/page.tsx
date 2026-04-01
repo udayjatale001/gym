@@ -4,11 +4,21 @@ import { use, useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowLeft, CheckCircle2, Info, Loader2, Trophy, XCircle, Ban, TrendingUp, TrendingDown, Minus, Dumbbell, ChevronRight } from "lucide-react";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, CheckCircle2, Info, Loader2, Trophy, XCircle, Ban, TrendingUp, TrendingDown, Minus, Dumbbell, ChevronRight, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function WorkoutGridPage({ params }: { params: Promise<{ type: string }> }) {
   const { type } = use(params);
@@ -18,24 +28,38 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
   useEffect(() => {
-    const savedSplits = localStorage.getItem('fitstride_splits');
-    if (savedSplits) {
-      const splits = JSON.parse(savedSplits);
-      const found = splits.find((s: any) => s.id === type);
-      setDisplayName(found ? found.name : type);
-    } else { setDisplayName(type); }
+    const loadData = () => {
+      const savedSplits = localStorage.getItem('fitstride_splits');
+      if (savedSplits) {
+        const splits = JSON.parse(savedSplits);
+        const found = splits.find((s: any) => s.id === type);
+        setDisplayName(found ? found.name : type);
+      } else { setDisplayName(type); }
 
-    const statuses = [];
-    for (let i = 1; i <= 30; i++) {
-      const data = localStorage.getItem(`fitstride_workout_${type}_day_${i}`);
-      if (data) {
-        const parsed = JSON.parse(data);
-        statuses.push({ day: i, status: parsed.status || 'completed', data: parsed });
-      } else { statuses.push({ day: i, status: 'none' }); }
-    }
-    setDayStatuses(statuses);
+      const statuses = [];
+      for (let i = 1; i <= 30; i++) {
+        const data = localStorage.getItem(`fitstride_workout_${type}_day_${i}`);
+        if (data) {
+          const parsed = JSON.parse(data);
+          statuses.push({ day: i, status: parsed.status || 'completed', data: parsed });
+        } else { statuses.push({ day: i, status: 'none' }); }
+      }
+      setDayStatuses(statuses);
+    };
+
+    loadData();
     setIsLoaded(true);
   }, [type]);
+
+  const handleResetProtocol = () => {
+    for (let i = 1; i <= 30; i++) {
+      localStorage.removeItem(`fitstride_workout_${type}_day_${i}`);
+    }
+    const resetStatuses = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: 'none' }));
+    setDayStatuses(resetStatuses);
+    // Trigger a window reload or local state update is enough
+    window.dispatchEvent(new Event('storage')); 
+  };
 
   const exerciseAnalysis = useMemo(() => {
     const analysisMap: Record<string, any[]> = {};
@@ -56,25 +80,47 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
     return analysisMap;
   }, [dayStatuses]);
 
-  if (!isLoaded) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" /></div>;
+  if (!isLoaded) return <div className="flex justify-center py-20 bg-background h-svh items-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" /></div>;
 
   const completedCount = dayStatuses.filter(s => s.status === 'completed').length;
 
   return (
-    <div className="p-4 space-y-6 pb-32 animate-in fade-in duration-500">
-      <div className="flex items-center gap-4 pt-2">
-        <Link href="/dashboard/workout">
-          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl active:scale-90 border-2 border-muted shadow-sm">
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-        </Link>
-        <div className="space-y-0.5">
-          <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3 leading-none">
-            <button className="text-2xl active:scale-75 transition-transform" onClick={() => setIsAnalysisOpen(true)}>📈</button>
-            {displayName}
-          </h2>
-          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.25em] opacity-60">30-DAY BLOCK PROGRESS</p>
+    <div className="p-4 space-y-6 pb-32 animate-in fade-in duration-500 bg-background min-h-svh">
+      <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/workout">
+            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl active:scale-90 border-2 border-muted shadow-sm">
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+          </Link>
+          <div className="space-y-0.5">
+            <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3 leading-none">
+              <button className="text-2xl active:scale-75 transition-transform" onClick={() => setIsAnalysisOpen(true)}>📈</button>
+              {displayName}
+            </h2>
+            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.25em] opacity-60">30-DAY BLOCK PROGRESS</p>
+          </div>
         </div>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all">
+              <RotateCcw className="h-5 w-5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-black border-2 border-destructive/20 rounded-[2.5rem] p-8 max-w-sm w-[92%]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-destructive font-black uppercase italic tracking-tighter text-2xl">RESET PROTOCOL?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/60 text-xs font-bold uppercase tracking-widest italic leading-relaxed">
+                This will purge all 30-day training data for <span className="text-primary">{displayName}</span>. This action is irreversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex flex-col gap-3 mt-6">
+              <AlertDialogAction onClick={handleResetProtocol} className="h-14 bg-destructive text-white font-black uppercase italic rounded-2xl shadow-lg">CONFIRM PURGE</AlertDialogAction>
+              <AlertDialogCancel className="h-12 border-white/10 text-white/40 font-black uppercase italic rounded-2xl">ABORT</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <Card className="bg-primary shadow-2xl border-none text-primary-foreground overflow-hidden rounded-[2.5rem] relative">
