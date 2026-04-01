@@ -1,19 +1,23 @@
+
+'use client';
+
+import { useEffect } from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
-import Script from 'next/script';
-
-export const metadata: Metadata = {
-  title: 'GYMBUDDY! | Discipline Mode',
-  description: 'AI-powered gym and diet tracker for progressive growth.',
-};
+import { initializeAdMob } from '@/lib/admob';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    // Initialize Native AdMob SDK on boot
+    initializeAdMob();
+  }, []);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -40,12 +44,6 @@ export default function RootLayout({
         <meta name="google-adsense-account" content="ca-app-pub-6399399331218914" />
       </head>
       <body className="font-body antialiased bg-background text-foreground">
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-6399399331218914"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
         <FirebaseClientProvider>
           {children}
           <Toaster />
