@@ -68,7 +68,7 @@ const ALL_STEPS: GuideStep[] = [
   {
     id: 'support',
     title: 'FUEL THE EVOLUTION 🔥',
-    description: 'Support the mission by contributing to help improve elite updates.',
+    description: 'Support the mission by contributing any amount you like to help improve elite updates.',
     targetId: 'support-button',
     position: 'top',
     path: '/dashboard'
@@ -244,11 +244,11 @@ export function AppGuide() {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden pointer-events-none">
       {/* Spotlight Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none transition-all duration-500" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] pointer-events-none transition-all duration-500" />
 
       {targetRect && (
         <div 
-          className="absolute z-[101] rounded-[1.5rem] border-2 border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.7),0_0_40px_rgba(57,255,20,0.5)] transition-all duration-300 pointer-events-none"
+          className="absolute z-[101] rounded-[1.5rem] border-2 border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.8),0_0_50px_rgba(57,255,20,0.6)] transition-all duration-300 pointer-events-none"
           style={{
             top: targetRect.top - 8,
             left: targetRect.left - 8,
@@ -262,7 +262,7 @@ export function AppGuide() {
       <div 
         ref={tooltipRef}
         className={cn(
-          "absolute z-[102] w-[280px] bg-card border-2 border-primary/20 rounded-[2rem] p-5 shadow-2xl transition-all duration-300 pointer-events-auto flex flex-col gap-3 animate-in zoom-in-95 fade-in",
+          "absolute z-[102] w-[280px] bg-card border-2 border-primary/40 rounded-[2rem] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.8)] transition-all duration-300 pointer-events-auto flex flex-col gap-3 animate-in zoom-in-95 fade-in",
           currentStep.position === 'center' && "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
         )}
         style={targetRect ? {
@@ -274,46 +274,46 @@ export function AppGuide() {
         {targetRect && (
           <div 
             className={cn(
-              "absolute w-3 h-3 bg-card border-l-2 border-t-2 border-primary/20 rotate-45 transition-all duration-300",
+              "absolute w-3 h-3 bg-card border-l-2 border-t-2 border-primary/40 rotate-45 transition-all duration-300",
               currentStep.position === 'bottom' ? "-top-1.5 left-1/2 -translate-x-1/2" : "-bottom-1.5 left-1/2 -translate-x-1/2 rotate-[225deg]"
             )}
           />
         )}
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-[10px] font-black italic tracking-tighter text-primary uppercase">{currentStep.title}</h4>
-            <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{currentStepIndex + 1}/{pageSteps.length}</span>
+            <h4 className="text-[11px] font-black italic tracking-tighter text-primary uppercase">{currentStep.title}</h4>
+            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{currentStepIndex + 1}/{pageSteps.length}</span>
           </div>
-          <p className="text-[12px] font-semibold text-white/80 leading-relaxed italic">{currentStep.description}</p>
+          <p className="text-[13px] font-bold text-white leading-relaxed italic">{currentStep.description}</p>
         </div>
       </div>
 
       {/* Sticky Navigation Bar */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[103] w-[90%] max-w-sm pointer-events-auto">
-        <div className="bg-card/90 backdrop-blur-2xl border-2 border-primary/20 rounded-full p-2 flex items-center justify-between shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[103] w-[92%] max-w-sm pointer-events-auto">
+        <div className="bg-black/95 backdrop-blur-3xl border-2 border-primary/50 rounded-full p-2.5 flex items-center justify-between shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_20px_rgba(57,255,20,0.1)] animate-in slide-in-from-bottom-10">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white px-6"
+            className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-primary/80 px-6 active:scale-90 transition-all"
             onClick={handleSkip}
           >
             SKIP
           </Button>
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1 mr-2">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5 mr-2">
               {pageSteps.map((_, i) => (
                 <div 
                   key={i} 
                   className={cn(
-                    "h-1 rounded-full transition-all duration-300", 
-                    i === currentStepIndex ? "w-4 bg-primary" : "w-1 bg-white/10"
+                    "h-1.5 rounded-full transition-all duration-300", 
+                    i === currentStepIndex ? "w-5 bg-primary" : "w-1.5 bg-white/10"
                   )} 
                 />
               ))}
             </div>
             <Button 
-              className="h-10 rounded-full px-8 bg-primary text-black font-black uppercase italic tracking-widest text-[10px] shadow-lg active:scale-95 transition-all hover:bg-primary/90"
+              className="h-11 rounded-full px-8 bg-primary text-black font-black uppercase italic tracking-widest text-[11px] shadow-[0_0_15px_rgba(57,255,20,0.4)] active:scale-95 transition-all hover:bg-primary/90"
               onClick={handleNext}
             >
               {currentStepIndex === pageSteps.length - 1 ? 'FINISH' : 'NEXT'}
