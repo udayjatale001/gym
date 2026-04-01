@@ -25,7 +25,7 @@ const DisciplineLogoLarge = () => (
 
 export default function AboutPage() {
   return (
-    <div className="p-4 space-y-10 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700 no-scrollbar">
+    <div className="p-4 space-y-10 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700 no-scrollbar bg-background min-h-svh">
       {/* Header */}
       <div className="flex items-center gap-4 pt-6 px-1">
         <Link href="/dashboard/settings">
@@ -120,9 +120,9 @@ export default function AboutPage() {
             <p className="text-xs font-medium text-muted-foreground opacity-80">
               For updates, suggestions, or improvements, feel free to reach out:
             </p>
-            <Link href="mailto:jataleuday2@gmail.com">
+            <Link href="mailto:gymbuddy009@gmail.com">
               <Button className="w-full h-16 rounded-[1.5rem] font-black uppercase italic tracking-widest text-xs bg-primary shadow-lg active:scale-95 transition-all">
-                jataleuday2@gmail.com
+                gymbuddy009@gmail.com
               </Button>
             </Link>
             <p className="text-[10px] text-center font-black uppercase tracking-[0.3em] opacity-40">

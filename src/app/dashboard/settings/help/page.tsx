@@ -135,9 +135,9 @@ export default function HelpPage() {
             <p className="text-xs font-black uppercase italic tracking-tight leading-relaxed">
               Facing issues or want new features? We respond as soon as possible.
             </p>
-            <Link href="mailto:jataleuday2@gmail.com">
+            <Link href="mailto:gymbuddy009@gmail.com">
               <Button className="w-full h-16 rounded-[1.5rem] font-black uppercase italic tracking-widest text-xs bg-black/20 hover:bg-black/30 border border-white/10 shadow-lg active:scale-95 transition-all">
-                jataleuday2@gmail.com
+                gymbuddy009@gmail.com
               </Button>
             </Link>
           </CardContent>
