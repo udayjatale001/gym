@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { RefreshCcw, Calendar, History, LogOut, User, Moon, Sun, Languages, Info, ChevronRight, ShieldCheck, HelpCircle, Dumbbell } from "lucide-react";
+import { RefreshCcw, Calendar, History, LogOut, User, Languages, Info, ChevronRight, ShieldCheck, HelpCircle, Dumbbell } from "lucide-react";
 import { useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Language, translations } from '@/lib/translations';
@@ -20,7 +19,6 @@ export default function SettingsPage() {
   
   const [isCycling, setIsCycling] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [lang, setLang] = useState<Language>('en');
   const [mockUser, setMockUser] = useState<any>(null);
 
@@ -28,11 +26,6 @@ export default function SettingsPage() {
     // Check initial language
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang) setLang(savedLang);
-
-    // Check initial theme
-    const savedTheme = localStorage.getItem('theme');
-    const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setIsDarkMode(isDark);
 
     // Load mock user
     const user = localStorage.getItem('gymbuddy_user');
@@ -66,23 +59,12 @@ export default function SettingsPage() {
     }, 600);
   };
 
-  const handleThemeToggle = (checked: boolean) => {
-    const newTheme = checked ? 'dark' : 'light';
-    setIsDarkMode(checked);
-    localStorage.setItem('theme', newTheme);
-    if (checked) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
   const handleResetCycle = async () => {
-    if (!mockUser || !db) return;
     setIsCycling(true);
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     
     try {
+      localStorage.setItem('fitstride_cycle_start', todayStr);
       toast({
         title: lang === 'hi' ? "वर्कआउट चक्र रीसेट" : "Workout Cycle Reset",
         description: lang === 'hi' ? "आपका PPL चक्र आज से फिर से शुरू हो गया है।" : "Your PPL cycle has been restarted from today.",
@@ -121,21 +103,6 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-white/5 border border-white/10 transition-all">
-            <div className="flex items-center gap-3">
-              {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
-              <div className="space-y-0.5">
-                <p className="text-sm font-black uppercase italic tracking-tight text-white">{t.darkMode}</p>
-                <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">DISCIPLINE AESTHETIC</p>
-              </div>
-            </div>
-            <Switch 
-              checked={isDarkMode} 
-              onCheckedChange={handleThemeToggle}
-              className="data-[state=checked]:bg-primary" 
-            />
-          </div>
-
           <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-white/5 border border-white/10 transition-all">
             <div className="flex items-center gap-3">
               <Languages className="h-5 w-5 text-primary" />
