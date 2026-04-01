@@ -44,7 +44,7 @@ export default function SettingsPage() {
       localStorage.removeItem('gymbuddy_user');
       localStorage.removeItem('fitstride_is_logged_in');
       
-      // Reset Guide States for next login session
+      // Reset Guide States for next login session (Full Purge Protocol)
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
         if (key.startsWith('fitstride_has_seen_guide_')) {

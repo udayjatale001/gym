@@ -39,16 +39,16 @@ export function BottomNav() {
               "flex flex-col items-center gap-1 transition-all duration-300 active:scale-90 group",
               isActive 
                 ? "text-primary scale-105" 
-                : "text-white/30 hover:text-primary/70"
+                : "text-white/30 hover:text-primary"
             )}
           >
             <item.icon className={cn(
               "h-5 w-5 md:h-6 md:w-6 transition-all", 
-              isActive ? "text-primary fill-primary/10" : "text-white/30 group-hover:text-primary/70"
+              isActive ? "text-primary fill-primary/10" : "text-white/30 group-hover:text-primary"
             )} />
             <span className={cn(
               "text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all text-center",
-              isActive ? "opacity-100" : "opacity-60"
+              isActive ? "text-primary opacity-100" : "text-white/30 opacity-60 group-hover:text-primary group-hover:opacity-100"
             )}>
               {item.label}
             </span>

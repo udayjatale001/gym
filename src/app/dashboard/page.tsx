@@ -54,7 +54,8 @@ export default function DashboardPage() {
   const WATER_GOAL = 4000;
   const STEP_GOAL = 1000;
   const SLEEP_GOAL = 480; 
-  const UPI_ID = "7247089447@ybl";
+  // SECURE PROTOCOL: UPI ID is archived in constant, never displayed in UI
+  const UPI_ID = "7247084947@ybl";
   const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&cu=INR`;
 
   useEffect(() => {
@@ -505,9 +506,9 @@ export default function DashboardPage() {
                   >
                     <span className="flex items-center gap-4">
                       <ExternalLink className="h-7 w-7" />
-                      {t.payNow}
+                      INITIALIZE CONTRIBUTION
                     </span>
-                    <span className="text-[10px] opacity-40 font-bold tracking-[0.2em] italic">SECURE DISCIPLINE GATEWAY</span>
+                    <span className="text-[10px] opacity-40 font-bold tracking-[0.2em] italic uppercase">SECURE DISCIPLINE GATEWAY</span>
                   </Button>
 
                   <div className="flex flex-col items-center gap-4">
