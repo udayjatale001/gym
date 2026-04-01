@@ -55,9 +55,7 @@ export default function DashboardPage() {
   const STEP_GOAL = 1000;
   const SLEEP_GOAL = 480; 
   
-  // SECURE PROTOCOL: UPI ID is archived in constant, never displayed in UI
   const UPI_ID = "7247089447@ybl";
-  // UPDATED: Standardized UPI deep link with proper encoding and am/cu parameters
   const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&am=1&cu=INR`;
 
   useEffect(() => {
@@ -172,10 +170,10 @@ export default function DashboardPage() {
   const stepProgress = Math.min(100, (currentData.steps / STEP_GOAL) * 100);
   const caloriesFromSteps = Math.round(currentData.steps * 0.04);
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
-    <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
+    <div className="p-4 space-y-6 pb-32 bg-[#000000] min-h-full">
       <Card 
         data-guide-id="training-card"
         className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative active:scale-[0.98] transition-transform"
@@ -466,8 +464,8 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="pt-6" data-guide-id="support-button">
-        <Sheet open={isSupportOpen} onOpenChange={isSupportOpen => setIsSupportOpen(isSupportOpen)}>
+      <div className="pt-6 pb-20" data-guide-id="support-button">
+        <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
           <SheetTrigger asChild>
             <Button 
               className="w-full h-20 rounded-[2.5rem] bg-white/5 border-2 border-primary/20 hover:border-primary/50 text-white font-black uppercase italic tracking-widest text-xs shadow-2xl transition-all active:scale-[0.98] relative overflow-hidden group"
@@ -480,7 +478,7 @@ export default function DashboardPage() {
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[80svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
-            <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-12 pb-32">
+            <div className="h-full momentum-scroll p-8 space-y-12 pb-32">
               <SheetHeader>
                 <div className="flex flex-col items-center text-center space-y-4">
                   <div className="h-16 w-16 rounded-[2rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_40px_rgba(57,255,20,0.1)]">

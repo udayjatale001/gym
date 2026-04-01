@@ -4,29 +4,6 @@
 
 @layer base {
   :root {
-    --background: 148 44% 96%;
-    --foreground: 146 50% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 146 50% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 146 50% 10%;
-    --primary: 146 60% 41%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 180 52% 59%;
-    --secondary-foreground: 146 50% 10%;
-    --muted: 148 20% 90%;
-    --muted-foreground: 146 20% 40%;
-    --accent: 180 52% 59%;
-    --accent-foreground: 146 50% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 146 20% 88%;
-    --input: 146 20% 88%;
-    --ring: 146 60% 41%;
-    --radius: 1.5rem;
-  }
-
-  .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
     --card: 146 40% 8%;
@@ -46,6 +23,7 @@
     --border: 146 30% 18%;
     --input: 146 30% 18%;
     --ring: 146 70% 50%;
+    --radius: 1.5rem;
   }
 }
 
@@ -56,17 +34,21 @@
   }
   
   html, body {
+    height: 100dvh;
     height: 100svh;
     overflow: hidden;
-    position: fixed;
     width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    @apply bg-background text-foreground font-body;
+    overscroll-behavior: none;
+    touch-action: none;
   }
 
   body {
-    @apply bg-background text-foreground font-body;
-    overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
-    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -78,14 +60,16 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .min-h-svh {
-    min-height: 100svh;
+  .h-dvh {
+    height: 100dvh;
   }
   .h-svh {
     height: 100svh;
   }
   .momentum-scroll {
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 }
