@@ -72,10 +72,10 @@ export default function WeightPage() {
     return Math.min(100, Math.max(0, (covered / totalDist) * 100));
   })();
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-svh"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
 
   return (
-    <div className="p-4 space-y-10 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-4 duration-500 no-scrollbar">
+    <div className="p-4 space-y-10 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-4 duration-500 no-scrollbar bg-background">
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 rounded-[1.5rem] bg-primary flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/30 border-b-4 border-black/20">

@@ -29,6 +29,11 @@ export default function SettingsPage() {
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang) setLang(savedLang);
 
+    // Check initial theme
+    const savedTheme = localStorage.getItem('theme');
+    const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setIsDarkMode(isDark);
+
     // Load mock user
     const user = localStorage.getItem('gymbuddy_user');
     if (user) {
@@ -61,6 +66,17 @@ export default function SettingsPage() {
     }, 600);
   };
 
+  const handleThemeToggle = (checked: boolean) => {
+    const newTheme = checked ? 'dark' : 'light';
+    setIsDarkMode(checked);
+    localStorage.setItem('theme', newTheme);
+    if (checked) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   const handleResetCycle = async () => {
     if (!mockUser || !db) return;
     setIsCycling(true);
@@ -83,7 +99,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500 no-scrollbar bg-[#000000] min-h-svh">
+    <div className="p-4 space-y-6 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500 no-scrollbar bg-background min-h-svh">
       <div className="flex items-center gap-4 pt-6 px-1">
         <div className="h-12 w-12 rounded-[1.25rem] bg-primary flex items-center justify-center text-black shadow-lg rotate-3 border-b-4 border-black/20">
           <User className="h-6 w-6" />
@@ -107,13 +123,17 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-white/5 border border-white/10 transition-all">
             <div className="flex items-center gap-3">
-              <Sun className="h-5 w-5 text-primary" />
+              {isDarkMode ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
               <div className="space-y-0.5">
                 <p className="text-sm font-black uppercase italic tracking-tight text-white">{t.darkMode}</p>
-                <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">LOCKED FOR PERFORMANCE</p>
+                <p className="text-[9px] text-white/40 uppercase tracking-widest font-black">DISCIPLINE AESTHETIC</p>
               </div>
             </div>
-            <Switch checked={true} disabled className="data-[state=checked]:bg-primary" />
+            <Switch 
+              checked={isDarkMode} 
+              onCheckedChange={handleThemeToggle}
+              className="data-[state=checked]:bg-primary" 
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-[1.5rem] bg-white/5 border border-white/10 transition-all">
