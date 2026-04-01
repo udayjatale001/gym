@@ -37,10 +37,15 @@ export function BottomNav() {
             data-guide-id={item.guideId}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300 active:scale-90 group",
-              isActive ? "text-white scale-105" : "text-white/30 hover:text-white/70"
+              isActive 
+                ? "text-primary scale-105" 
+                : "text-white/30 hover:text-primary/70"
             )}
           >
-            <item.icon className={cn("h-5 w-5 md:h-6 md:w-6 transition-all", isActive && "fill-white/10")} />
+            <item.icon className={cn(
+              "h-5 w-5 md:h-6 md:w-6 transition-all", 
+              isActive ? "text-primary fill-primary/10" : "text-white/30 group-hover:text-primary/70"
+            )} />
             <span className={cn(
               "text-[7px] md:text-[9px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] transition-all text-center",
               isActive ? "opacity-100" : "opacity-60"
