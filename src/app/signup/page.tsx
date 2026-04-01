@@ -37,8 +37,8 @@ export default function SignupPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const user = localStorage.getItem('gymbuddy_user');
-    if (user) router.push('/dashboard');
+    const isLoggedIn = localStorage.getItem('fitstride_is_logged_in') === 'true';
+    if (isLoggedIn) router.replace('/dashboard');
   }, [router]);
 
   const handleSignup = (e: React.FormEvent) => {
@@ -58,7 +58,11 @@ export default function SignupPage() {
         email: email.toLowerCase(),
         joined: new Date().toISOString()
       };
+      
+      // Save identity and engagement status
       localStorage.setItem('gymbuddy_user', JSON.stringify(mockUser));
+      localStorage.setItem('fitstride_is_logged_in', 'true');
+      
       toast({ title: "Discipline Initiated!", description: `Welcome to the squad, ${mockUser.name}` });
       router.push('/dashboard');
       setIsLoading(false);
