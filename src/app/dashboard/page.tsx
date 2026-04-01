@@ -170,15 +170,11 @@ export default function DashboardPage() {
   const stepProgress = Math.min(100, (currentData.steps / STEP_GOAL) * 100);
   const caloriesFromSteps = Math.round(currentData.steps * 0.04);
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="p-4 space-y-6 pb-32 bg-[#000000] min-h-full">
-      <Card 
-        data-guide-id="training-card"
-        className="bg-primary text-primary-foreground border-none shadow-2xl rounded-[3rem] overflow-hidden relative active:scale-[0.98] transition-transform"
-      >
-        <div className="absolute top-0 right-0 h-32 w-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
+    <div className="p-4 space-y-4 pb-32 bg-[#000000] min-h-full">
+      <Card data-guide-id="training-card" className="bg-primary text-primary-foreground border-none rounded-2xl relative overflow-hidden active:scale-[0.98] transition-transform">
         <CardHeader className="pb-1 pt-6">
           <CardTitle className="text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 opacity-80">
             <Activity className="h-4 w-4" />
@@ -187,346 +183,155 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="space-y-4 pb-8">
           <div className="flex flex-col items-center text-center py-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-2">{t.todaysDiscipline}</p>
-            <h3 className="text-5xl md:text-6xl font-black tracking-tighter uppercase italic leading-none drop-shadow-2xl">
-              {currentWorkout}
-            </h3>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-1">{t.todaysDiscipline}</p>
+            <h3 className="text-4xl font-black tracking-tighter uppercase italic leading-none">{currentWorkout}</h3>
             {quote && (
-              <div className="mt-6 px-4 py-4 bg-black/15 rounded-[2rem] border border-white/5 w-full backdrop-blur-md">
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-2 flex items-center justify-center gap-2">
-                  <Quote className="h-2.5 w-2.5" /> {t.disciplineDirective}
-                </p>
-                <p className="text-[11px] font-black uppercase tracking-widest italic leading-relaxed text-center text-white/90">
-                  "{quote}"
-                </p>
+              <div className="mt-4 px-4 py-3 bg-black/10 rounded-xl border border-white/5 w-full">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 mb-1">"{quote}"</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card 
-          data-guide-id="sleep-stride"
-          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl active:scale-[0.98] transition-transform"
-        >
+      <div className="grid grid-cols-1 gap-4">
+        <Card data-guide-id="sleep-stride" className="bg-white/5 border border-white/10 rounded-2xl p-5 relative active:scale-[0.98] transition-transform">
           {isEditingSleep ? (
-            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Moon className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Moon className="h-4 w-4 text-primary" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase text-white/20">BEDTIME</label>
+                  <Input type="time" value={currentData.bedtime} onChange={(e) => updateDailyTracker({ bedtime: e.target.value })} className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-black text-center text-base" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase text-white/20">WAKE UP</label>
+                  <Input type="time" value={currentData.wakeTime} onChange={(e) => updateDailyTracker({ wakeTime: e.target.value })} className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-black text-center text-base" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-white/20 px-1">BEDTIME</label>
-                  <Input 
-                    type="time" 
-                    value={currentData.bedtime} 
-                    onChange={(e) => updateDailyTracker({ bedtime: e.target.value })}
-                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary text-base" 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-white/20 px-1">WAKE UP</label>
-                  <Input 
-                    type="time" 
-                    value={currentData.wakeTime} 
-                    onChange={(e) => updateDailyTracker({ wakeTime: e.target.value })}
-                    className="bg-white/5 border-white/10 h-14 rounded-2xl text-white font-black text-xl text-center focus:ring-primary text-base" 
-                  />
-                </div>
-              </div>
-              <Button 
-                onClick={handleCalculateSleep} 
-                className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest italic text-xs rounded-2xl shadow-[0_0_20px_rgba(57,255,20,0.2)]"
-                disabled={!currentData.bedtime || !currentData.wakeTime}
-              >
-                CONFIRM RECOVERY
-              </Button>
+              <Button onClick={handleCalculateSleep} className="w-full h-12 bg-primary text-black font-black uppercase text-xs rounded-xl" disabled={!currentData.bedtime || !currentData.wakeTime}>CONFIRM RECOVERY</Button>
             </div>
           ) : (
-            <div className="animate-in slide-in-from-right-4 duration-500">
+            <div>
               <div className="flex justify-between items-start mb-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Moon className="h-4 w-4 text-primary" />
-                    </div>
+                    <Moon className="h-4 w-4 text-primary" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/40">SLEEP STRIDE</p>
                   </div>
-                  <h4 className="text-5xl font-black italic tracking-tighter text-primary leading-none">{formatSleep(currentData.sleep)}</h4>
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 italic mt-2">RECOVERY STATUS: <span className="text-primary">{currentData.sleep >= SLEEP_GOAL ? 'OPTIMAL' : 'ACTIVE'}</span></p>
+                  <h4 className="text-4xl font-black italic text-primary leading-none">{formatSleep(currentData.sleep)}</h4>
                 </div>
-                
                 <div className="flex gap-2">
-                   <Button 
-                    onClick={handleResetSleep} 
-                    size="icon" 
-                    className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white active:scale-90 transition-all"
-                  >
-                    <RefreshCw className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    onClick={handleAddNap} 
-                    size="icon" 
-                    className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 shadow-[0_0_15px_rgba(57,255,20,0.3)] active:scale-90 transition-all"
-                  >
-                    <Plus className="h-5 w-5 text-black" />
-                  </Button>
+                  <Button onClick={handleResetSleep} size="icon" className="h-9 w-9 rounded-lg bg-white/5 border border-white/10 text-white/40 active:scale-90"><RefreshCw className="h-4 w-4" /></Button>
+                  <Button onClick={handleAddNap} size="icon" className="h-9 w-9 rounded-lg bg-primary text-black active:scale-90"><Plus className="h-4 w-4" /></Button>
                 </div>
               </div>
-              
-              <div className="relative pt-4">
-                <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
-                  <div 
-                    className={cn(
-                      "h-full transition-all duration-1000 ease-out rounded-full",
-                      currentData.sleep >= SLEEP_GOAL ? "bg-primary shadow-[0_0_15px_#39FF14]" : "bg-primary/40"
-                    )}
-                    style={{ width: `${sleepProgress}%` }}
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-2 px-1">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-white/20">RECOVERY PROGRESS</p>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-primary italic">{Math.round(sleepProgress)}%</p>
-                </div>
+              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+                <div className={cn("h-full transition-all duration-300", currentData.sleep >= SLEEP_GOAL ? "bg-primary" : "bg-primary/40")} style={{ width: `${sleepProgress}%` }} />
               </div>
             </div>
           )}
         </Card>
 
-        <Card 
-          data-guide-id="step-stride"
-          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 relative overflow-hidden shadow-2xl active:scale-[0.98] transition-transform" 
-          onClick={() => handleAddSteps(50)}
-        >
-          <div className="flex justify-between items-start mb-6">
+        <Card data-guide-id="step-stride" className="bg-white/5 border border-white/10 rounded-2xl p-5 relative active:scale-[0.98] transition-transform" onClick={() => handleAddSteps(50)}>
+          <div className="flex justify-between items-start mb-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-1">
-                <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Footprints className="h-4 w-4 text-white" />
-                </div>
+                <Footprints className="h-4 w-4 text-white" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-white/40">STEP STRIDE</p>
               </div>
               <div className="flex items-baseline gap-2">
-                <h4 className="text-5xl font-black italic tracking-tighter text-white leading-none">{currentData.steps}</h4>
-                <span className="text-lg font-black text-white/10 italic">/ {STEP_GOAL}</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-3">
-                <Flame className="h-4 w-4 text-primary" />
-                <span className="text-sm font-black italic text-primary">{caloriesFromSteps} KCAL</span>
+                <h4 className="text-4xl font-black italic text-white leading-none">{currentData.steps}</h4>
+                <span className="text-sm font-black text-white/10 italic">/ {STEP_GOAL}</span>
               </div>
             </div>
-            {currentData.steps >= STEP_GOAL && (
-              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
-                <CheckCircle2 className="h-7 w-7 text-primary shadow-[0_0_15px_#39FF14]" />
-              </div>
-            )}
+            {currentData.steps >= STEP_GOAL && <CheckCircle2 className="h-6 w-6 text-primary" />}
           </div>
-
-          <div className="relative pt-2">
-            <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
-              <div 
-                className={cn(
-                  "h-full transition-all duration-1000 ease-out rounded-full",
-                  currentData.steps >= STEP_GOAL ? "bg-primary shadow-[0_0_20px_#39FF14] animate-pulse" : "bg-white/40"
-                )}
-                style={{ width: `${stepProgress}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center mt-2 px-1">
-              <p className="text-[8px] font-black uppercase tracking-widest text-white/20">ACTIVE MOBILITY</p>
-              <p className="text-[8px] font-black uppercase tracking-widest text-white/40 italic">{Math.round(stepProgress)}%</p>
-            </div>
+          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+            <div className={cn("h-full transition-all duration-300", currentData.steps >= STEP_GOAL ? "bg-primary" : "bg-white/40")} style={{ width: `${stepProgress}%` }} />
           </div>
         </Card>
       </div>
 
-      <div className="space-y-6" data-guide-id="weight-progress">
-        <div className="flex items-center gap-3 px-2">
-           <Scale className="h-5 w-5 text-primary" />
-           <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/40 italic">{t.bodyMassProgress}</h3>
+      <div className="space-y-4" data-guide-id="weight-progress">
+        <div className="flex items-center gap-2 px-1">
+           <Scale className="h-4 w-4 text-primary" />
+           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 italic">{t.bodyMassProgress}</h3>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg active:scale-95 transition-transform">
-            <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 opacity-60">{t.current}</p>
-            <p className="text-3xl font-black italic text-primary leading-none">{currentWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+            <p className="text-[8px] font-black uppercase text-white/40 mb-1">{t.current}</p>
+            <p className="text-2xl font-black italic text-primary leading-none">{currentWeight || "--"}</p>
           </Card>
-          <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 text-center shadow-lg active:scale-95 transition-transform">
-            <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 opacity-60">{t.target}</p>
-            <p className="text-3xl font-black italic text-accent leading-none">{targetWeight || "--"}<span className="text-xs ml-1 opacity-40 not-italic">KG</span></p>
+          <Card className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+            <p className="text-[8px] font-black uppercase text-white/40 mb-1">{t.target}</p>
+            <p className="text-2xl font-black italic text-accent leading-none">{targetWeight || "--"}</p>
           </Card>
         </div>
-
-        <Card className="p-8 rounded-[3rem] shadow-2xl bg-white/5 border border-white/10 space-y-8 relative overflow-hidden active:scale-[0.98] transition-transform">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 opacity-30" />
+        <Card className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4 relative">
           <div className="flex justify-between items-end">
-            <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-white/40 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> 
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 flex items-center gap-2">
+              <TrendingUp className="h-3 w-3 text-primary" /> 
               {t.transformation}
             </h3>
-            <span className="text-3xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
+            <span className="text-xl font-black text-primary italic leading-none">{Math.round(progress)}%</span>
           </div>
-          
-          <div className="space-y-6">
-            <div className="h-6 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/10 relative">
-               <div 
-                 className="h-full bg-primary transition-all duration-1000 ease-out rounded-full shadow-[0_0_15px_rgba(57,255,20,0.3)]"
-                 style={{ width: `${progress}%` }}
-               />
-            </div>
-            
-            {targetWeight > 0 && weightLogs.length > 0 && (
-              <div className="text-center py-6 bg-white/5 rounded-[2rem] border border-white/10">
-                <p className="text-[10px] font-black uppercase opacity-40 tracking-[0.3em] mb-2">{t.remainingGap}</p>
-                <p className="text-4xl font-black italic tracking-tighter text-white leading-none">
-                  {Math.abs(currentWeight - targetWeight).toFixed(1)} <span className="text-sm opacity-30 not-italic tracking-normal">KG</span>
-                </p>
-              </div>
-            )}
+          <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+             <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
         </Card>
       </div>
 
-      <Card 
-        data-guide-id="water-card"
-        className={cn(
-          "border-none shadow-xl rounded-[2.5rem] transition-all duration-500 overflow-hidden relative active:scale-[0.98]",
-          currentData.water >= WATER_GOAL ? "bg-primary/10" : "bg-white/5 border border-white/10"
-        )}
-      >
-        <CardContent className="p-6 space-y-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={cn(
-                  "h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-inner shrink-0",
-                  currentData.water >= WATER_GOAL ? "bg-primary text-primary-foreground shadow-primary/20" : "bg-white/10 text-white/40"
-                )}>
-                  <Droplet className="h-6 w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40 opacity-60 truncate">{t.waterIntake}</p>
-                  <p className="text-lg font-black italic uppercase tracking-tight text-primary truncate leading-none mt-1">
-                    {(currentData.water / 1000).toFixed(1)} <span className="text-[10px] not-italic opacity-40">/ 4.0 {t.liters}</span>
-                  </p>
-                </div>
+      <Card data-guide-id="water-card" className={cn("border-none rounded-2xl transition-all relative active:scale-[0.98]", currentData.water >= WATER_GOAL ? "bg-primary/5" : "bg-white/5 border border-white/10")}>
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all", currentData.water >= WATER_GOAL ? "bg-primary text-black" : "bg-white/10 text-white/40")}>
+                <Droplet className="h-5 w-5" />
               </div>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                {currentData.water > 0 && (
-                  <Button 
-                    onClick={handleResetWater} 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-10 w-10 rounded-xl border border-white/10 text-white/40 hover:text-destructive active:scale-90 transition-all"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                )}
-                {currentData.water >= WATER_GOAL ? (
-                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center animate-in zoom-in duration-500">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={handleAddWater} 
-                    size="sm" 
-                    className="h-10 px-3 rounded-xl font-black uppercase tracking-tighter text-[9px] italic shadow-lg active:scale-90 whitespace-nowrap bg-primary text-black"
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" /> {t.addWater}
-                  </Button>
-                )}
+              <div>
+                <p className="text-[8px] font-black uppercase text-white/40">{t.waterIntake}</p>
+                <p className="text-base font-black italic text-primary leading-none mt-1">{(currentData.water / 1000).toFixed(1)}L</p>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden shadow-inner border border-white/10">
-                <div 
-                  className={cn(
-                    "h-full transition-all duration-700 ease-out rounded-full",
-                    currentData.water >= WATER_GOAL ? "bg-primary" : "bg-primary/40"
-                  )}
-                  style={{ width: `${(currentData.water / WATER_GOAL) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center px-1">
-                <p className="text-[8px] font-black uppercase tracking-widest text-white/20">{t.dailyGoal}</p>
-                <p className="text-[8px] font-black uppercase tracking-widest text-white/40 italic">{Math.round((currentData.water / WATER_GOAL) * 100)}%</p>
-              </div>
+            <div className="flex items-center gap-1.5">
+              {currentData.water > 0 && <Button onClick={handleResetWater} variant="ghost" size="icon" className="h-9 w-9 rounded-lg border border-white/10 text-white/40"><RotateCcw className="h-4 w-4" /></Button>}
+              <Button onClick={handleAddWater} size="sm" className="h-9 px-3 rounded-lg font-black uppercase text-[8px] bg-primary text-black">{t.addWater}</Button>
             </div>
+          </div>
+          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+            <div className={cn("h-full transition-all duration-300", currentData.water >= WATER_GOAL ? "bg-primary" : "bg-primary/40")} style={{ width: `${(currentData.water / WATER_GOAL) * 100}%` }} />
           </div>
         </CardContent>
       </Card>
 
-      <div className="pt-6 pb-20" data-guide-id="support-button">
+      <div className="pt-4 pb-24" data-guide-id="support-button">
         <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
           <SheetTrigger asChild>
-            <Button 
-              className="w-full h-20 rounded-[2.5rem] bg-white/5 border-2 border-primary/20 hover:border-primary/50 text-white font-black uppercase italic tracking-widest text-xs shadow-2xl transition-all active:scale-[0.98] relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 relative z-10">
-                <Heart className="h-5 w-5 text-primary animate-pulse fill-primary/20" />
-                {t.supportDeveloper}
-              </div>
+            <Button className="w-full h-16 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase italic text-xs active:scale-[0.98]">
+              <Heart className="h-4 w-4 text-primary mr-2" />
+              {t.supportDeveloper}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[80svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
-            <div className="h-full momentum-scroll p-8 space-y-12 pb-32">
+          <SheetContent side="bottom" className="rounded-t-3xl h-[70svh] border-none p-0 bg-black">
+            <div className="h-full momentum-scroll p-8 space-y-8 pb-32">
               <SheetHeader>
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="h-16 w-16 rounded-[2rem] bg-primary/10 flex items-center justify-center border-2 border-primary/30 shadow-[0_0_40px_rgba(57,255,20,0.1)]">
-                    <Sparkles className="h-8 w-8 text-primary animate-spin-slow" />
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <Sparkles className="h-7 w-7 text-primary" />
                   </div>
-                  <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none">
-                    {t.supportTitle}
-                  </SheetTitle>
-                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">ELITE UPGRADE PROTOCOL</p>
+                  <SheetTitle className="text-2xl font-black uppercase italic tracking-tighter text-primary">{t.supportTitle}</SheetTitle>
                 </div>
               </SheetHeader>
-
-              <div className="space-y-10">
-                <Card className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 shadow-inner relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 h-24 w-24 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-3xl opacity-50" />
-                  <p className="text-sm font-medium text-white/70 leading-relaxed italic text-center relative z-10">
-                    "{t.supportMessage}"
-                  </p>
-                </Card>
-
-                <div className="space-y-8">
-                  <Button 
-                    className="w-full h-24 rounded-[2.5rem] bg-primary text-black font-black uppercase italic tracking-widest text-xl shadow-[0_0_40px_rgba(57,255,20,0.4)] active:scale-95 transition-all flex flex-col gap-1 hover:bg-primary/90"
-                    onClick={() => window.open(PAYMENT_LINK, '_blank')}
-                  >
-                    <span className="flex items-center gap-4">
-                      <ExternalLink className="h-7 w-7" />
-                      INITIALIZE CONTRIBUTION
-                    </span>
-                    <span className="text-[10px] opacity-40 font-bold tracking-[0.2em] italic uppercase">SECURE DISCIPLINE GATEWAY</span>
-                  </Button>
-
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-4 w-full">
-                      <div className="h-px flex-1 bg-white/5" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic">
-                        {t.anyAmount} 🙏
-                      </p>
-                      <div className="h-px flex-1 bg-white/5" />
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
-                      <ShieldCheck className="h-3.5 w-3.5 text-primary/60" />
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/60 italic">
-                        {t.trustNote}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-6">
+                <Card className="bg-white/5 border border-white/10 rounded-2xl p-6 text-sm text-white/70 leading-relaxed italic text-center">"{t.supportMessage}"</Card>
+                <Button className="w-full h-16 rounded-2xl bg-primary text-black font-black uppercase italic tracking-widest text-lg" onClick={() => window.open(PAYMENT_LINK, '_blank')}>
+                  INITIALIZE CONTRIBUTION
+                </Button>
+                <p className="text-[9px] text-center font-black uppercase text-white/20">{t.anyAmount} 🙏</p>
               </div>
             </div>
           </SheetContent>

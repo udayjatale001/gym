@@ -55,10 +55,7 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
     for (let i = 1; i <= 30; i++) {
       localStorage.removeItem(`fitstride_workout_${type}_day_${i}`);
     }
-    const resetStatuses = Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: 'none' }));
-    setDayStatuses(resetStatuses);
-    // Trigger a window reload or local state update is enough
-    window.dispatchEvent(new Event('storage')); 
+    setDayStatuses(Array.from({ length: 30 }, (_, i) => ({ day: i + 1, status: 'none' })));
   };
 
   const exerciseAnalysis = useMemo(() => {
@@ -68,137 +65,91 @@ export default function WorkoutGridPage({ params }: { params: Promise<{ type: st
         status.data.exercises.forEach((ex: any) => {
           const name = ex.name.toUpperCase();
           if (!analysisMap[name]) analysisMap[name] = [];
-          let totalVolume = 0, maxWeight = 0, totalReps = 0;
+          let totalVolume = 0;
           ex.sets.forEach((set: any) => {
             const w = parseFloat(set.weight) || 0, r = parseInt(set.reps) || 0;
-            totalVolume += w * r; if (w > maxWeight) maxWeight = w; totalReps += r;
+            totalVolume += w * r;
           });
-          analysisMap[name].push({ day: status.day, volume: totalVolume, weight: maxWeight, reps: totalReps });
+          analysisMap[name].push({ day: status.day, volume: totalVolume });
         });
       }
     });
     return analysisMap;
   }, [dayStatuses]);
 
-  if (!isLoaded) return <div className="flex justify-center py-20 bg-background h-svh items-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-20" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const completedCount = dayStatuses.filter(s => s.status === 'completed').length;
 
   return (
-    <div className="p-4 space-y-6 pb-32 animate-in fade-in duration-500 bg-background min-h-svh">
+    <div className="p-4 space-y-6 pb-32 bg-background min-h-svh">
       <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Link href="/dashboard/workout">
-            <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl active:scale-90 border-2 border-muted shadow-sm">
-              <ArrowLeft className="h-6 w-6" />
-            </Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg border border-white/10 bg-card active:scale-90"><ArrowLeft className="h-5 w-5" /></Button>
           </Link>
-          <div className="space-y-0.5">
-            <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3 leading-none">
-              <button className="text-2xl active:scale-75 transition-transform" onClick={() => setIsAnalysisOpen(true)}>📈</button>
+          <div>
+            <h2 className="text-2xl font-black uppercase italic text-primary flex items-center gap-2 leading-none">
+              <button onClick={() => setIsAnalysisOpen(true)}>📈</button>
               {displayName}
             </h2>
-            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.25em] opacity-60">30-DAY BLOCK PROGRESS</p>
+            <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mt-1">30-DAY BLOCK</p>
           </div>
         </div>
-        
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all">
-              <RotateCcw className="h-5 w-5" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="bg-black border-2 border-destructive/20 rounded-[2.5rem] p-8 max-w-sm w-[92%]">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-destructive font-black uppercase italic tracking-tighter text-2xl">RESET PROTOCOL?</AlertDialogTitle>
-              <AlertDialogDescription className="text-white/60 text-xs font-bold uppercase tracking-widest italic leading-relaxed">
-                This will purge all 30-day training data for <span className="text-primary">{displayName}</span>. This action is irreversible.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex flex-col gap-3 mt-6">
-              <AlertDialogAction onClick={handleResetProtocol} className="h-14 bg-destructive text-white font-black uppercase italic rounded-2xl shadow-lg">CONFIRM PURGE</AlertDialogAction>
-              <AlertDialogCancel className="h-12 border-white/10 text-white/40 font-black uppercase italic rounded-2xl">ABORT</AlertDialogCancel>
+          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-destructive"><RotateCcw className="h-4 w-4" /></Button></AlertDialogTrigger>
+          <AlertDialogContent className="bg-black border border-white/10 rounded-2xl p-6">
+            <AlertDialogHeader><AlertDialogTitle className="text-destructive font-black uppercase italic text-xl text-center">RESET DATA?</AlertDialogTitle></AlertDialogHeader>
+            <AlertDialogFooter className="flex flex-col gap-2 mt-4">
+              <AlertDialogAction onClick={handleResetProtocol} className="h-12 bg-destructive text-white font-black uppercase rounded-xl">RESET</AlertDialogAction>
+              <AlertDialogCancel className="h-10 border-white/10 text-white/40 font-black uppercase rounded-xl">ABORT</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
 
-      <Card className="bg-primary shadow-2xl border-none text-primary-foreground overflow-hidden rounded-[2.5rem] relative">
-        <div className="absolute right-0 top-0 h-full w-32 bg-white/10 -skew-x-12 translate-x-16" />
-        <CardContent className="p-8 flex items-center justify-between relative z-10">
-          <div>
-            <p className="text-6xl font-black leading-none italic tracking-tighter">
-              {completedCount}<span className="text-sm font-bold opacity-40 ml-2 not-italic tracking-normal">/30</span>
-            </p>
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mt-3">SESSIONS LOGGED</p>
-          </div>
-          <div className="bg-black/20 backdrop-blur-md px-6 py-5 rounded-[1.8rem] border border-white/10 text-right shadow-inner">
-            <p className="text-3xl font-black italic leading-none">{Math.round((completedCount / 30) * 100)}%</p>
-            <p className="text-[8px] font-bold uppercase tracking-widest opacity-60 mt-1">SUCCESS</p>
-          </div>
-        </CardContent>
+      <Card className="bg-primary border-none text-black rounded-2xl p-6 flex justify-between items-center">
+        <div>
+          <p className="text-5xl font-black italic leading-none">{completedCount}<span className="text-xs opacity-40 ml-1">/30</span></p>
+          <p className="text-[8px] font-black uppercase opacity-60 mt-2">SESSIONS LOGGED</p>
+        </div>
+        <div className="bg-black/10 px-4 py-3 rounded-xl text-center">
+          <p className="text-2xl font-black italic">{Math.round((completedCount / 30) * 100)}%</p>
+          <p className="text-[7px] font-bold uppercase opacity-60">SUCCESS</p>
+        </div>
       </Card>
 
-      <div className="grid grid-cols-5 gap-3.5 px-0.5">
+      <div className="grid grid-cols-5 gap-2.5">
         {dayStatuses.map((item) => (
           <Link key={item.day} href={`/dashboard/workout/${type}/${item.day}`} className="block">
-            <Button variant="outline" className={cn(
-              "h-20 w-full flex flex-col items-center justify-center p-0 transition-all border-2 active:scale-90 relative overflow-hidden rounded-2xl shadow-sm",
-              item.status === 'completed' && "bg-primary/10 border-primary text-primary shadow-inner",
-              item.status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner",
-              item.status === 'none' && "bg-muted/30 border-muted/50 text-muted-foreground/20"
-            )}>
-              <span className="text-[9px] font-black opacity-40 absolute top-1.5 left-2">{item.day}</span>
-              {item.status === 'completed' && <CheckCircle2 className="h-6 w-6" />}
-              {item.status === 'skipped' && <Ban className="h-6 w-6" />}
-              {item.status === 'none' && <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30 mt-3" />}
+            <Button variant="outline" className={cn("h-16 w-full flex flex-col items-center justify-center p-0 border rounded-lg active:scale-90 relative", item.status === 'completed' && "bg-primary/5 border-primary text-primary", item.status === 'skipped' && "bg-destructive/5 border-destructive text-destructive", item.status === 'none' && "bg-white/5 border-white/10 text-white/10")}>
+              <span className="text-[7px] font-black absolute top-1 left-1 opacity-20">{item.day}</span>
+              {item.status === 'completed' ? <CheckCircle2 className="h-5 w-5" /> : item.status === 'skipped' ? <Ban className="h-5 w-5" /> : <div className="h-1 w-1 rounded-full bg-current opacity-20 mt-1" />}
             </Button>
           </Link>
         ))}
       </div>
 
       <Sheet open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
-        <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[92svh] border-none p-0 overflow-hidden bg-background">
-          <div className="h-full overflow-y-auto no-scrollbar p-6 space-y-10 pb-28">
-            <SheetHeader>
-              <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center leading-none">PERFORMANCE MARKET</SheetTitle>
-              <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">PROGRESSIVE OVERLOAD ANALYSIS</p>
-            </SheetHeader>
-            <div className="flex flex-col gap-8">
-              {Object.entries(exerciseAnalysis).map(([name, points]: [string, any]) => {
-                const lastPoint = points[points.length - 1];
-                const prevPoint = points.length > 1 ? points[points.length - 2] : null;
-                const volumeChange = prevPoint ? ((lastPoint.volume - prevPoint.volume) / prevPoint.volume) * 100 : 0;
-                const isImproving = volumeChange > 0;
-                return (
-                  <Card key={name} className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card p-6 space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <h4 className="text-2xl font-black uppercase tracking-tighter italic">{name}</h4>
-                        <div className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black", isImproving ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive")}>
-                          {isImproving ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {Math.abs(volumeChange).toFixed(1)}% TREND
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-black text-primary italic leading-none">{lastPoint.volume.toFixed(0)}</p>
-                        <p className="text-[8px] font-bold text-muted-foreground uppercase opacity-60">VOL (KG×REPS)</p>
-                      </div>
-                    </div>
-                    <div className="h-44 w-full mt-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={points}>
-                           <defs><linearGradient id={`grad-${name}`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={isImproving ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0.3}/><stop offset="95%" stopColor={isImproving ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0}/></linearGradient></defs>
-                           <XAxis dataKey="day" hide /><YAxis hide />
-                           <Area type="monotone" dataKey="volume" stroke={isImproving ? "hsl(var(--primary))" : "hsl(var(--destructive))"} strokeWidth={4} fill={`url(#grad-${name})`} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </Card>
-                );
-              })}
+        <SheetContent side="bottom" className="rounded-t-2xl h-[85svh] border-none p-0 bg-background">
+          <div className="h-full momentum-scroll p-6 space-y-8 pb-32">
+            <SheetHeader><SheetTitle className="text-2xl font-black uppercase italic text-primary text-center">PERFORMANCE</SheetTitle></SheetHeader>
+            <div className="flex flex-col gap-6">
+              {Object.entries(exerciseAnalysis).map(([name, points]: [string, any]) => (
+                <Card key={name} className="border border-white/5 rounded-2xl bg-card p-5 space-y-4">
+                  <h4 className="text-xl font-black uppercase italic text-white/80">{name}</h4>
+                  <div className="h-32 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={points}>
+                        <XAxis dataKey="day" hide /><YAxis hide />
+                        <Area type="monotone" dataKey="volume" stroke="hsl(var(--primary))" strokeWidth={3} fill="hsl(var(--primary))" fillOpacity={0.1} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              ))}
             </div>
-            <Button className="w-full h-20 rounded-[1.8rem] font-black uppercase tracking-widest italic text-xl shadow-2xl bg-primary active:scale-95" onClick={() => setIsAnalysisOpen(false)}>CLOSE ANALYSIS</Button>
+            <Button className="w-full h-16 rounded-xl font-black uppercase italic text-lg bg-primary" onClick={() => setIsAnalysisOpen(false)}>CLOSE REPORT</Button>
           </div>
         </SheetContent>
       </Sheet>

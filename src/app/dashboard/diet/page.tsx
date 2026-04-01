@@ -73,7 +73,7 @@ export default function DietPage() {
       setMeals(prev => [newMeal, ...prev]);
       toast({ title: "Meal Tracked!", description: `${newMeal.mealType}: ${newMeal.mealName}` });
       setIsLogOpen(false); setStep(1); setMealName(""); setSelectedType(null); setIsSubmitting(false);
-    }, 300);
+    }, 200);
   };
 
   const currentViewingMeal = meals.find(m => m.id === viewingMealId);
@@ -92,76 +92,70 @@ export default function DietPage() {
     toast({ title: "Meal Removed", description: "Log history updated." });
   };
 
-  const handleResetMealProtocol = (mealId: string) => {
-    setMeals(prev => prev.map(m => m.id === mealId ? { ...m, checklist: {}, amounts: {}, calories: {} } : m));
-    toast({ title: "Protocol Reset", description: "30-day grid cleared for this meal." });
-  };
-
-  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="p-4 space-y-8 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-2 duration-500 no-scrollbar bg-background">
-      <div className="flex items-center justify-between pt-6 px-1">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-[1.5rem] bg-primary flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/30 border-b-4 border-black/20">
-            <Utensils className="h-7 w-7" />
+    <div className="p-4 space-y-6 pb-32 min-h-svh bg-background no-scrollbar">
+      <div className="flex items-center justify-between pt-4 px-1">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-black">
+            <Utensils className="h-6 w-6" />
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">DIET LOG</h2>
-              <button data-guide-id="diet-stats-btn" className="text-2xl active:scale-75 transition-transform" onClick={() => setIsOverallProgressOpen(true)}>📈</button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-black text-primary uppercase italic leading-none">DIET LOG</h2>
+              <button className="text-xl" onClick={() => setIsOverallProgressOpen(true)}>📈</button>
             </div>
-            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-[0.3em] opacity-60">PRECISION TRACKING</p>
+            <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.3em]">PRECISION TRACKING</p>
           </div>
         </div>
-        <Button size="icon" className="h-12 w-12 rounded-xl shadow-xl bg-primary active:scale-90" onClick={() => { setStep(1); setMealName(""); setSelectedType(null); setIsLogOpen(true); }}>
-          <Plus className="h-7 w-7" />
+        <Button size="icon" className="h-10 w-10 rounded-lg bg-primary active:scale-90" onClick={() => { setStep(1); setMealName(""); setSelectedType(null); setIsLogOpen(true); }}>
+          <Plus className="h-6 w-6" />
         </Button>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {meals.map((meal) => (
-          <Card key={meal.id} className="border-none shadow-xl rounded-[2.5rem] bg-card active:scale-[0.98] transition-all overflow-hidden group" onClick={() => setViewingMealId(meal.id)}>
-            <CardContent className="p-6 flex items-center justify-between gap-4">
+          <Card key={meal.id} className="border border-white/5 rounded-2xl bg-card active:scale-[0.98] transition-transform overflow-hidden" onClick={() => setViewingMealId(meal.id)}>
+            <CardContent className="p-5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 min-w-0">
-                <div className="h-14 w-14 rounded-[1.25rem] bg-primary/10 flex items-center justify-center text-primary group-active:bg-primary group-active:text-primary-foreground transition-all shadow-inner shrink-0">
-                  <Utensils className="h-7 w-7" />
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Utensils className="h-6 w-6" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-black text-xl uppercase tracking-tighter italic leading-none truncate">{meal.mealType}: <span className="text-primary">{meal.mealName}</span></h4>
-                  <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest mt-2 opacity-60 flex items-center gap-2 truncate"><Calendar className="h-3 w-3 shrink-0" />{format(new Date(meal.timestamp), 'MMM dd • h:mm a')}</p>
+                  <h4 className="font-black text-lg uppercase italic leading-none truncate">{meal.mealType}: <span className="text-primary">{meal.mealName}</span></h4>
+                  <p className="text-[9px] text-white/40 font-black uppercase mt-1.5 flex items-center gap-2 truncate">{format(new Date(meal.timestamp), 'MMM dd • h:mm a')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-muted-foreground/20 hover:text-destructive active:scale-90" onClick={(e) => handleDeleteMeal(e, meal.id)}>
-                  <Trash2 className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-white/10 hover:text-destructive" onClick={(e) => handleDeleteMeal(e, meal.id)}>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-                <ChevronRight className="h-6 w-6 text-muted-foreground opacity-20" />
+                <ChevronRight className="h-5 w-5 text-white/10" />
               </div>
             </CardContent>
           </Card>
         ))}
-        {meals.length === 0 && <div className="text-center py-20 bg-muted/10 rounded-[3rem] border-4 border-dashed border-border/50 flex flex-col items-center gap-6"><Utensils className="h-10 w-10 text-muted-foreground/20" /><p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 italic text-center">FUEL THE MACHINE...</p></div>}
       </div>
 
       <Dialog open={isLogOpen} onOpenChange={setIsLogOpen}>
-        <DialogContent className="w-[92%] max-w-sm rounded-[3rem] p-8 shadow-2xl border-none bg-card">
-          <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-center text-primary">{step === 1 ? 'CATEGORY' : 'LOG MEAL'}</DialogTitle></DialogHeader>
+        <DialogContent className="w-[92%] max-w-sm rounded-2xl p-6 border-none bg-card">
+          <DialogHeader><DialogTitle className="text-xl font-black uppercase italic text-primary">{step === 1 ? 'CATEGORY' : 'LOG MEAL'}</DialogTitle></DialogHeader>
           {step === 1 ? (
-            <div className="grid grid-cols-2 gap-4 py-6">
+            <div className="grid grid-cols-2 gap-3 py-4">
               {(['Breakfast', 'Snacks', 'Lunch', 'Dinner'] as MealType[]).map(t => (
-                <Button key={t} variant="outline" className="h-28 flex flex-col gap-3 rounded-[1.5rem] border-4 active:scale-95 transition-all shadow-sm group hover:border-primary/40" onClick={() => { setSelectedType(t); setStep(2); }}>
-                  <Utensils className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
-                  <span className="font-black text-[9px] uppercase tracking-widest">{t}</span>
+                <Button key={t} variant="outline" className="h-20 flex flex-col gap-2 rounded-xl border border-white/10 active:scale-95 group" onClick={() => { setSelectedType(t); setStep(2); }}>
+                  <Utensils className="h-4 w-4 text-white/40 group-hover:text-primary" />
+                  <span className="font-black text-[8px] uppercase">{t}</span>
                 </Button>
               ))}
             </div>
           ) : (
-            <div className="py-6 space-y-8 animate-in slide-in-from-right-6">
-              <Input placeholder="E.G. STEAK & EGGS" value={mealName} onChange={e => setMealName(e.target.value)} className="h-16 font-black border-4 border-muted rounded-[1.5rem] text-center uppercase focus-visible:ring-primary shadow-inner text-base" />
-              <div className="flex gap-3">
-                <Button variant="ghost" className="flex-1 h-16 font-black rounded-[1.5rem] tracking-widest uppercase text-[10px]" onClick={() => setStep(1)}>BACK</Button>
-                <Button className="flex-[2] h-16 font-black rounded-[1.5rem] shadow-2xl italic uppercase text-lg" onClick={handleLogMeal} disabled={!mealName.trim() || isSubmitting}>CONFIRM</Button>
+            <div className="py-4 space-y-6">
+              <Input placeholder="E.G. STEAK & EGGS" value={mealName} onChange={e => setMealName(e.target.value)} className="h-14 font-black border border-white/10 rounded-xl text-center uppercase focus:ring-primary text-base" />
+              <div className="flex gap-2">
+                <Button variant="ghost" className="flex-1 h-14 font-black rounded-xl uppercase text-xs" onClick={() => setStep(1)}>BACK</Button>
+                <Button className="flex-1 h-14 font-black rounded-xl uppercase text-base bg-primary" onClick={handleLogMeal} disabled={!mealName.trim() || isSubmitting}>CONFIRM</Button>
               </div>
             </div>
           )}
@@ -169,19 +163,19 @@ export default function DietPage() {
       </Dialog>
 
       <Sheet open={isOverallProgressOpen} onOpenChange={setIsOverallProgressOpen}>
-        <SheetContent side="bottom" className="rounded-t-[3rem] h-[85svh] border-none p-0 bg-background overflow-hidden">
-          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
-            <SheetHeader><SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center">DIET STATS</SheetTitle></SheetHeader>
-            <div className="space-y-8">
+        <SheetContent side="bottom" className="rounded-t-2xl h-[70svh] border-none p-0 bg-background">
+          <div className="h-full momentum-scroll p-6 space-y-8 pb-32">
+            <SheetHeader><SheetTitle className="text-2xl font-black uppercase italic text-primary text-center">DIET STATS</SheetTitle></SheetHeader>
+            <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-card border-none rounded-[2rem] p-6 text-center shadow-2xl"><p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-60">TAKEN</p><p className="text-4xl font-black italic text-primary leading-none">{stats.totalTaken}</p></Card>
-                <Card className="bg-card border-none rounded-[2rem] p-6 text-center shadow-2xl"><p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-60">SKIPPED</p><p className="text-4xl font-black italic text-destructive leading-none">{stats.totalSkipped}</p></Card>
+                <Card className="bg-card border border-white/5 rounded-xl p-6 text-center shadow-sm"><p className="text-[8px] font-black uppercase mb-1 opacity-40">TAKEN</p><p className="text-3xl font-black italic text-primary">{stats.totalTaken}</p></Card>
+                <Card className="bg-card border border-white/5 rounded-xl p-6 text-center shadow-sm"><p className="text-[8px] font-black uppercase mb-1 opacity-40">SKIPPED</p><p className="text-3xl font-black italic text-destructive">{stats.totalSkipped}</p></Card>
               </div>
-              <Card className="p-8 rounded-[2.5rem] shadow-2xl bg-card space-y-6 border-none relative overflow-hidden">
-                <div className="flex justify-between items-end mb-4"><h3 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> SUCCESS</h3><span className="text-2xl font-black text-primary italic leading-none">{Math.round(stats.percentage)}%</span></div>
-                <Progress value={stats.percentage} className="h-6 bg-muted rounded-full shadow-inner" />
+              <Card className="p-6 rounded-2xl bg-card space-y-4 border border-white/5">
+                <div className="flex justify-between items-end mb-2"><h3 className="text-[10px] font-black uppercase opacity-40">SUCCESS</h3><span className="text-xl font-black text-primary italic">{Math.round(stats.percentage)}%</span></div>
+                <Progress value={stats.percentage} className="h-3 bg-white/5" />
               </Card>
-              <Button className="w-full h-20 rounded-[1.5rem] font-black uppercase italic text-xl shadow-2xl bg-primary active:scale-95" onClick={() => setIsOverallProgressOpen(false)}>CLOSE REPORT</Button>
+              <Button className="w-full h-16 rounded-xl font-black uppercase italic text-lg bg-primary" onClick={() => setIsOverallProgressOpen(false)}>CLOSE REPORT</Button>
             </div>
           </div>
         </SheetContent>
@@ -196,7 +190,10 @@ export default function DietPage() {
           onClear={(day: number) => {
             setMeals(p => p.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: Object.fromEntries(Object.entries(m.checklist).filter(([d]) => parseInt(d) !== day)) as any, amounts: Object.fromEntries(Object.entries(m.amounts).filter(([d]) => parseInt(d) !== day)) as any, calories: Object.fromEntries(Object.entries(m.calories || {}).filter(([d]) => parseInt(d) !== day)) as any } : m));
           }}
-          onReset={() => handleResetMealProtocol(currentViewingMeal.id)}
+          onReset={() => {
+            setMeals(prev => prev.map(m => m.id === currentViewingMeal.id ? { ...m, checklist: {}, amounts: {}, calories: {} } : m));
+            toast({ title: "Protocol Reset", description: "30-day grid cleared." });
+          }}
           onClose={() => setViewingMealId(null)}
           onShowAnalysis={(id: string) => setAnalysisMealId(id)}
         />
@@ -215,46 +212,31 @@ export default function DietPage() {
 function ChecklistSheet({ meal, onUpdate, onClear, onReset, onClose, onShowAnalysis }: { meal: LocalMeal, onUpdate: any, onClear: any, onReset: any, onClose: any, onShowAnalysis: any }) {
   return (
     <Sheet open={!!meal} onOpenChange={open => !open && onClose()}>
-      <SheetContent side="bottom" className="h-[95svh] p-0 overflow-hidden border-none rounded-t-[3rem] bg-background">
-        <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
-          <SheetHeader className="flex flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4 min-w-0">
-              <Button variant="outline" size="icon" onClick={onClose} className="h-12 w-12 rounded-[1.25rem] border-4 active:scale-90 shadow-xl bg-card shrink-0"><ArrowLeft className="h-6 w-6" /></Button>
-              <div className="space-y-1 min-w-0">
-                <SheetTitle className="text-2xl font-black uppercase italic tracking-tighter text-primary leading-none truncate flex items-center gap-2">
-                  <button 
-                    onClick={() => onShowAnalysis(meal.id)}
-                    className="text-2xl active:scale-75 transition-transform shrink-0"
-                  >
-                    📈
-                  </button>
-                  <span className="truncate">{meal.mealName}</span>
+      <SheetContent side="bottom" className="h-[92svh] p-0 border-none rounded-t-2xl bg-background">
+        <div className="h-full momentum-scroll p-6 space-y-8 pb-32">
+          <SheetHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" onClick={onClose} className="h-10 w-10 rounded-lg border border-white/10 active:scale-90 bg-card"><ArrowLeft className="h-5 w-5" /></Button>
+              <div>
+                <SheetTitle className="text-xl font-black uppercase italic text-primary leading-none flex items-center gap-2">
+                  <button onClick={() => onShowAnalysis(meal.id)} className="text-xl">📈</button>
+                  {meal.mealName}
                 </SheetTitle>
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50 truncate">{meal.mealType} • 30-DAY BLOCK</p>
+                <p className="text-[8px] font-black uppercase opacity-40">{meal.mealType} • 30-DAY BLOCK</p>
               </div>
             </div>
-
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all shrink-0">
-                  <RotateCcw className="h-5 w-5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-black border-2 border-destructive/20 rounded-[2.5rem] p-8 max-w-sm w-[92%]">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-destructive font-black uppercase italic tracking-tighter text-2xl">RESET MEAL GRID?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-white/60 text-xs font-bold uppercase tracking-widest italic leading-relaxed">
-                    This will clear all 30-day tracking data for <span className="text-primary">{meal.mealName}</span>.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex flex-col gap-3 mt-6">
-                  <AlertDialogAction onClick={onReset} className="h-14 bg-destructive text-white font-black uppercase italic rounded-2xl shadow-lg">CONFIRM RESET</AlertDialogAction>
-                  <AlertDialogCancel className="h-12 border-white/10 text-white/40 font-black uppercase italic rounded-2xl">ABORT</AlertDialogCancel>
+              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-9 w-9 text-white/20 hover:text-destructive"><RotateCcw className="h-4 w-4" /></Button></AlertDialogTrigger>
+              <AlertDialogContent className="bg-black border border-white/10 rounded-2xl p-6">
+                <AlertDialogHeader><AlertDialogTitle className="text-destructive font-black uppercase italic text-xl">RESET GRID?</AlertDialogTitle></AlertDialogHeader>
+                <AlertDialogFooter className="flex flex-col gap-2 mt-4">
+                  <AlertDialogAction onClick={onReset} className="h-12 bg-destructive text-white font-black uppercase rounded-xl">RESET</AlertDialogAction>
+                  <AlertDialogCancel className="h-10 border-white/10 text-white/40 font-black uppercase rounded-xl">ABORT</AlertDialogCancel>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </SheetHeader>
-          <div className="grid grid-cols-5 gap-2.5" data-guide-id="diet-grid">
+          <div className="grid grid-cols-5 gap-2" data-guide-id="diet-grid">
             {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
               <DayDialog key={day} day={day} status={meal.checklist[day]} amount={meal.amounts[day] || ""} calories={meal.calories?.[day] || ""} onMark={(s: string, a: string, c: string) => onUpdate(day, s, a, c)} onClear={() => onClear(day)} />
             ))}
@@ -275,99 +257,25 @@ function MealAnalysisSheet({ meal, onClose }: { meal: LocalMeal, onClose: any })
     }).filter(d => meal.checklist[d.day] === 'taken');
   }, [meal]);
 
-  const trendData = useMemo(() => {
-    if (analysisData.length < 2) return { value: 0, isImproving: true };
-    const last = analysisData[analysisData.length - 1].value;
-    const prev = analysisData[analysisData.length - 2].value;
-    const diff = prev === 0 ? 0 : ((last - prev) / prev) * 100;
-    return { value: Math.abs(diff).toFixed(1), isImproving: diff >= 0 };
-  }, [analysisData]);
-
   return (
     <Sheet open={!!meal} onOpenChange={open => !open && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[85svh] border-none p-0 overflow-hidden bg-background">
-        <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
+      <SheetContent side="bottom" className="rounded-t-2xl h-[75svh] border-none p-0 bg-background">
+        <div className="h-full momentum-scroll p-6 space-y-8 pb-32">
           <SheetHeader>
-            <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary text-center leading-none">DIET MARKET</SheetTitle>
-            <p className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">{meal.mealName} PERFORMANCE</p>
+            <SheetTitle className="text-2xl font-black uppercase italic text-primary text-center">DIET MARKET</SheetTitle>
           </SheetHeader>
-          
-          <div className="space-y-8">
-            <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-card p-6 space-y-6">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2 min-w-0">
-                  <h4 className="text-2xl font-black uppercase tracking-tighter italic truncate">{meal.mealName}</h4>
-                  <div className={cn(
-                    "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black",
-                    trendData.isImproving ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
-                  )}>
-                    {trendData.isImproving ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                    {trendData.value}% PORTION TREND
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-3xl font-black text-primary italic leading-none">
-                    {analysisData.length > 0 ? analysisData[analysisData.length - 1].value : 0}
-                  </p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60 mt-1">LATEST PORTION</p>
-                </div>
-              </div>
-
-              <div className="h-60 w-full mt-6">
+          <div className="space-y-6">
+            <Card className="border border-white/5 rounded-2xl bg-card p-6 space-y-6">
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={analysisData}>
-                    <defs>
-                      <linearGradient id="dietGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="day" hide />
-                    <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
-                    <Tooltip 
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-background/90 backdrop-blur-xl border-2 border-primary/20 p-3 rounded-2xl shadow-2xl">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">DAY {payload[0].payload.day}</p>
-                              <p className="text-xl font-black italic">{payload[0].value}G</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={5} 
-                      fill="url(#dietGradient)" 
-                      animationDuration={1500}
-                    />
+                    <XAxis dataKey="day" hide /><YAxis hide />
+                    <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={3} fill="hsl(var(--primary))" fillOpacity={0.1} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </Card>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-card border-none rounded-[2rem] p-6 text-center shadow-xl">
-                <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-50">ENTRIES</p>
-                <p className="text-4xl font-black italic text-primary leading-none">{analysisData.length}</p>
-              </Card>
-              <Card className="bg-card border-none rounded-[2rem] p-6 text-center shadow-xl">
-                <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-50">AVG PORTION</p>
-                <p className="text-4xl font-black italic text-primary leading-none">
-                  {analysisData.length > 0 
-                    ? Math.round(analysisData.reduce((acc, curr) => acc + curr.value, 0) / analysisData.length)
-                    : 0}
-                </p>
-              </Card>
-            </div>
-
-            <Button className="w-full h-20 rounded-[2rem] font-black uppercase tracking-widest italic text-xl shadow-2xl bg-primary active:scale-95" onClick={onClose}>
-              CLOSE ANALYSIS
-            </Button>
+            <Button className="w-full h-16 rounded-xl font-black uppercase italic text-lg bg-primary" onClick={onClose}>CLOSE ANALYSIS</Button>
           </div>
         </div>
       </SheetContent>
@@ -388,62 +296,20 @@ function DayDialog({ day, status, amount, calories, onMark, onClear }: { day: nu
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className={cn("h-20 w-full p-0 flex flex-col items-center justify-center rounded-[1rem] border-4 active:scale-90 transition-all relative overflow-hidden", status === 'taken' && "bg-primary/10 border-primary text-primary shadow-inner", status === 'skipped' && "bg-destructive/10 border-destructive text-destructive shadow-inner", !status && "bg-muted/30 border-muted/50 opacity-40")}>
-          <span className="text-[8px] font-black absolute top-1 left-1.5 opacity-40 italic">{day}</span>
-          {status === 'taken' ? (
-            <div className="flex flex-col items-center justify-center w-full px-1 gap-0.5">
-              <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-              <div className="flex flex-col items-center w-full">
-                {amount && (
-                  <span className="text-[8px] font-black uppercase leading-none text-center truncate w-full">
-                    {amount}
-                  </span>
-                )}
-                {calories && (
-                  <span className="text-[8px] font-black text-primary uppercase leading-none text-center truncate w-full flex items-center justify-center gap-0.5 mt-0.5">
-                    <Flame className="h-2 w-2" /> {calories}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : status === 'skipped' ? (
-            <XCircle className="h-5 w-5" />
-          ) : (
-            <div className="h-1.5 w-1.5 rounded-full bg-current opacity-30 mt-2" />
-          )}
+        <Button variant="outline" className={cn("h-16 w-full p-0 flex flex-col items-center justify-center rounded-lg border active:scale-90 transition-transform relative", status === 'taken' && "bg-primary/5 border-primary text-primary", status === 'skipped' && "bg-destructive/5 border-destructive text-destructive", !status && "bg-white/5 border-white/10 opacity-40")}>
+          <span className="text-[7px] font-black absolute top-1 left-1 opacity-20 italic">{day}</span>
+          {status === 'taken' ? <CheckCircle2 className="h-4 w-4" /> : status === 'skipped' ? <XCircle className="h-4 w-4" /> : <div className="h-1 w-1 rounded-full bg-current opacity-20 mt-1" />}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[92%] max-w-sm rounded-[2.5rem] p-8 shadow-2xl border-none bg-card">
-        <DialogHeader><DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-center">DAY {day}</DialogTitle></DialogHeader>
-        <div className="py-6 space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em] px-2 opacity-60">PORTION SIZE</p>
-              <Input placeholder="E.G. 200G" value={tempAmount} inputMode="decimal" onChange={e => setTempAmount(e.target.value.toUpperCase())} className="h-14 font-black border-4 border-muted rounded-[1.25rem] text-center uppercase focus-visible:ring-primary shadow-inner text-base" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-2">
-                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-60">CALORIES (KCAL)</p>
-                {tempCalories && <Flame className="h-3 w-3 text-primary animate-pulse" />}
-              </div>
-              <div className="relative">
-                <Input 
-                  placeholder="000" 
-                  value={tempCalories} 
-                  inputMode="numeric" 
-                  onChange={e => setTempCalories(e.target.value.replace(/[^0-9]/g, ''))} 
-                  className="h-14 font-black border-4 border-muted rounded-[1.25rem] text-center uppercase focus-visible:ring-primary shadow-inner text-base pr-12" 
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground/30 italic">KCAL</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <Button className="h-16 font-black uppercase italic rounded-[1.5rem] shadow-2xl bg-primary text-base" onClick={() => { onMark('taken', tempAmount, tempCalories); setOpen(false); }}><CheckCircle2 className="h-5 w-5 mr-2" /> LOG PORTION</Button>
-            <Button variant="destructive" className="h-16 font-black uppercase italic rounded-[1.5rem] shadow-2xl text-base" onClick={() => { onMark('skipped', "", ""); setOpen(false); }}><XCircle className="h-5 w-5 mr-2" /> SKIP DAY</Button>
-            <Button variant="ghost" className="h-10 font-black text-[9px] uppercase opacity-40 tracking-widest" onClick={() => { onClear(); setOpen(false); }}>RESET DATA</Button>
+      <DialogContent className="w-[92%] max-w-sm rounded-2xl p-6 border-none bg-card">
+        <DialogHeader><DialogTitle className="text-xl font-black uppercase italic text-center">DAY {day}</DialogTitle></DialogHeader>
+        <div className="py-4 space-y-4">
+          <Input placeholder="PORTION (E.G. 200G)" value={tempAmount} inputMode="decimal" onChange={e => setTempAmount(e.target.value.toUpperCase())} className="h-12 font-black border border-white/10 rounded-xl text-center uppercase text-base" />
+          <Input placeholder="CALORIES (KCAL)" value={tempCalories} inputMode="numeric" onChange={e => setTempCalories(e.target.value.replace(/[^0-9]/g, ''))} className="h-12 font-black border border-white/10 rounded-xl text-center uppercase text-base" />
+          <div className="flex flex-col gap-2">
+            <Button className="h-14 font-black uppercase rounded-xl bg-primary text-black" onClick={() => { onMark('taken', tempAmount, tempCalories); setOpen(false); }}>LOG PORTION</Button>
+            <Button variant="destructive" className="h-12 font-black uppercase rounded-xl" onClick={() => { onMark('skipped', "", ""); setOpen(false); }}>SKIP DAY</Button>
+            <Button variant="ghost" className="h-9 font-black text-[8px] uppercase opacity-20" onClick={() => { onClear(); setOpen(false); }}>RESET DATA</Button>
           </div>
         </div>
       </DialogContent>

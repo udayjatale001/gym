@@ -81,36 +81,24 @@ export default function ProgressPage() {
   const calorieChartData = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => {
       const day = i + 1;
-      return {
-        day: `DAY ${day}`,
-        calories: calorieHistory[day] || 0,
-        dayNum: day
-      };
+      return { day: `DAY ${day}`, calories: calorieHistory[day] || 0, dayNum: day };
     });
   }, [calorieHistory]);
 
   const handleSaveCalories = () => {
     const val = parseInt(tempCalorieInput);
     if (isNaN(val)) return;
-    
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const newTotal = (dailyCalories || 0) + val;
-    
     setDailyCalories(newTotal);
     localStorage.setItem('fitstride_daily_calories', newTotal.toString());
     localStorage.setItem('fitstride_calorie_date', todayStr);
-    
     const updatedHistory = { ...calorieHistory, [currentCycleDay]: newTotal };
     setCalorieHistory(updatedHistory);
     localStorage.setItem('fitstride_calorie_history', JSON.stringify(updatedHistory));
-    
     setIsCalorieDialogOpen(false);
     setTempCalorieInput("");
-    toast({ 
-      title: newTotal > calorieGoal ? "Overload Alert ⚠️" : "Fuel Logged 🔥", 
-      description: `Added ${val} kcal. Today's total: ${newTotal} kcal.`,
-      variant: newTotal > calorieGoal ? "destructive" : "default"
-    });
+    toast({ title: newTotal > calorieGoal ? "Overload Alert ⚠️" : "Fuel Logged 🔥", description: `Today's total: ${newTotal} kcal.` });
   };
 
   const handleSaveGoal = () => {
@@ -119,329 +107,90 @@ export default function ProgressPage() {
     setCalorieGoal(val);
     localStorage.setItem('fitstride_calorie_goal', val.toString());
     setIsGoalDialogOpen(false);
-    toast({ title: "Target Calibrated", description: `Daily goal set to ${val} kcal.` });
-  };
-
-  const handleUpdateHistory = (day: number, calories: number) => {
-    const updated = { ...calorieHistory, [day]: calories };
-    setCalorieHistory(updated);
-    localStorage.setItem('fitstride_calorie_history', JSON.stringify(updated));
-    
-    if (day === currentCycleDay) {
-      setDailyCalories(calories);
-      localStorage.setItem('fitstride_daily_calories', calories.toString());
-    }
-    
-    toast({ title: "Protocol Updated", description: `Day ${day} fuel logged at ${calories} kcal.` });
-  };
-
-  const handleResetHistoryProtocol = () => {
-    setCalorieHistory({});
-    localStorage.removeItem('fitstride_calorie_history');
-    setDailyCalories(0);
-    localStorage.setItem('fitstride_daily_calories', '0');
-    toast({ title: "History Purged", description: "30-day calorie protocol has been reset." });
+    toast({ title: "Target Set", description: `Goal: ${val} kcal.` });
   };
 
   const caloriePercentage = Math.min(100, (dailyCalories / calorieGoal) * 100);
   const isOverGoal = dailyCalories > calorieGoal;
-  const overagePercentage = isOverGoal ? Math.min(100, ((dailyCalories - calorieGoal) / calorieGoal) * 100) : 0;
 
-  if (!isLoaded) return <div className="flex justify-center items-center h-svh bg-[#000000]"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>;
+  if (!isLoaded) return <div className="flex justify-center items-center h-full bg-black"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="p-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 no-scrollbar bg-[#000000] min-h-svh">
-      <div className="flex items-center justify-between pt-6 px-1">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-[1.5rem] bg-primary flex items-center justify-center text-black shadow-2xl shadow-primary/30 border-b-4 border-black/20">
-            <TrendingUp className="h-7 w-7" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-2xl font-black text-primary uppercase tracking-tighter italic leading-none">ANALYTICS HUB</h2>
-            <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.3em] opacity-60">PRECISION DATA COMMAND</p>
-          </div>
+    <div className="p-4 space-y-6 bg-black min-h-full pb-32">
+      <div className="flex items-center gap-3 pt-4 px-1">
+        <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-black">
+          <TrendingUp className="h-6 w-6" />
+        </div>
+        <div>
+          <h2 className="text-xl font-black text-primary uppercase italic leading-none">ANALYTICS</h2>
+          <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.3em]">PRECISION DATA</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-8 flex flex-col items-center justify-center space-y-8 shadow-2xl relative overflow-hidden group">
-          <div className={cn(
-            "absolute top-0 right-0 h-32 w-32 rounded-full -translate-y-16 translate-x-16 blur-3xl transition-colors duration-500",
-            isOverGoal ? "bg-destructive/10" : "bg-primary/5 group-hover:bg-primary/10"
-          )} />
-          
-          <div className="flex flex-col items-center text-center space-y-2 relative">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setIsHistoryOpen(true)}
-                className={cn(
-                  "h-16 w-16 rounded-[1.8rem] flex items-center justify-center shadow-[0_0_25px_rgba(57,255,20,0.3)] border-2 active:scale-75 transition-all group",
-                  isOverGoal 
-                    ? "bg-destructive/10 border-destructive/30 text-destructive shadow-[0_0_25px_rgba(239,68,68,0.3)]" 
-                    : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 hover:shadow-[0_0_35px_rgba(57,255,20,0.5)]"
-                )}
-              >
-                <span className={cn(
-                  "text-4xl filter transition-transform group-hover:scale-110",
-                  isOverGoal ? "drop-shadow-[0_0_12px_rgba(239,68,68,0.6)]" : "drop-shadow-[0_0_12px_rgba(57,255,20,0.6)]"
-                )}>🗓️</span>
-              </button>
-              <div className="text-left min-w-0">
-                <p className="text-[12px] font-black uppercase tracking-[0.4em] text-white/40 leading-none">CALORIE STRIDE</p>
-                <div className="flex items-center gap-2 mt-1">
-                   <p className={cn(
-                     "text-[9px] font-black uppercase tracking-[0.2em] italic truncate",
-                     isOverGoal ? "text-destructive" : "text-primary"
-                   )}>DAY {currentCycleDay} {isOverGoal ? "OVERLOAD" : "PROTOCOL"}</p>
-                   <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-                    <DialogTrigger asChild>
-                      <button className="text-white/20 hover:text-primary transition-colors active:scale-75 shrink-0" onClick={() => setTempGoalInput(calorieGoal.toString())}>
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.1)]">
-                      <DialogHeader>
-                        <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">SET GOAL</DialogTitle>
-                      </DialogHeader>
-                      <div className="py-8 space-y-6">
-                        <div className="space-y-2">
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">TARGET KCAL</p>
-                          <div className="relative">
-                            <Input 
-                              placeholder="2500" 
-                              value={tempGoalInput} 
-                              inputMode="numeric"
-                              onChange={(e) => setTempGoalInput(e.target.value.replace(/[^0-9]/g, ''))}
-                              className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5 text-base" 
-                            />
-                            <Target className="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/20" />
-                          </div>
-                        </div>
-                        <Button 
-                          onClick={handleSaveGoal}
-                          className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-[0_0_20px_rgba(57,255,20,0.2)]"
-                        >
-                          CALIBRATE
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+      <Card className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center gap-6 relative overflow-hidden">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsHistoryOpen(true)} className={cn("h-14 w-14 rounded-2xl flex items-center justify-center border transition-all active:scale-90", isOverGoal ? "bg-destructive/10 border-destructive text-destructive" : "bg-primary/10 border-primary text-primary")}>
+              <span className="text-2xl">🗓️</span>
+            </button>
+            <div className="text-left">
+              <p className="text-[10px] font-black uppercase text-white/40">CALORIE STRIDE</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className={cn("text-[9px] font-black uppercase italic", isOverGoal ? "text-destructive" : "text-primary")}>DAY {currentCycleDay}</p>
+                <button className="text-white/20 hover:text-primary transition-colors" onClick={() => setIsGoalDialogOpen(true)}><Edit2 className="h-3 w-3" /></button>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="relative h-52 w-52 flex items-center justify-center">
-            <svg className="h-full w-full -rotate-90">
-              <circle cx="104" cy="104" r="92" fill="transparent" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="14" />
-              <circle
-                cx="104" cy="104" r="92" fill="transparent" stroke="#39FF14" strokeWidth="14"
-                strokeDasharray="578" strokeDashoffset={578 - (578 * caloriePercentage) / 100}
-                strokeLinecap="round" className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(57,255,20,0.4)]"
-              />
-              {isOverGoal && (
-                <circle
-                  cx="104" cy="104" r="92" fill="transparent" stroke="#FF3131" strokeWidth="14"
-                  strokeDasharray="578" strokeDashoffset={578 - (578 * overagePercentage) / 100}
-                  strokeLinecap="round" className="transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(255,49,49,0.5)]"
-                />
-              )}
-            </svg>
-            <div className="absolute flex flex-col items-center text-center">
-              {isOverGoal ? (
-                <AlertCircle className="h-8 w-8 mb-2 text-destructive animate-pulse" />
-              ) : (
-                <Flame className={cn("h-8 w-8 mb-2 transition-all duration-500", dailyCalories > 0 ? "text-primary fill-primary/20 scale-110" : "text-white/10")} />
-              )}
-              <span className={cn(
-                "text-5xl font-black italic tracking-tighter leading-none",
-                isOverGoal ? "text-destructive" : "text-white"
-              )}>{dailyCalories}</span>
-              <span className="text-white/20 text-[10px] font-black uppercase tracking-widest mt-1">/ {calorieGoal} KCAL</span>
+        <div className="relative h-44 w-44 flex items-center justify-center">
+          <svg className="h-full w-full -rotate-90">
+            <circle cx="88" cy="88" r="76" fill="transparent" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="12" />
+            <circle cx="88" cy="88" r="76" fill="transparent" stroke={isOverGoal ? "#FF3131" : "#39FF14"} strokeWidth="12" strokeDasharray="477" strokeDashoffset={477 - (477 * caloriePercentage) / 100} strokeLinecap="round" className="transition-all duration-300" />
+          </svg>
+          <div className="absolute flex flex-col items-center">
+            <span className={cn("text-4xl font-black italic leading-none", isOverGoal ? "text-destructive" : "text-white")}>{dailyCalories}</span>
+            <span className="text-white/20 text-[8px] font-black uppercase mt-1">/ {calorieGoal} KCAL</span>
+          </div>
+        </div>
+
+        <Dialog open={isCalorieDialogOpen} onOpenChange={setIsCalorieDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full h-14 bg-white/5 border border-white/10 rounded-xl font-black uppercase italic text-xs text-white">
+              <Plus className="h-4 w-4 mr-2" /> LOG DAILY FUEL
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-black border border-white/10 rounded-2xl p-6 max-w-sm w-[92%]">
+            <DialogHeader><DialogTitle className="text-primary font-black italic text-xl text-center">LOG CALORIES</DialogTitle></DialogHeader>
+            <div className="py-4 space-y-6">
+              <Input placeholder="0000" value={tempCalorieInput} inputMode="numeric" onChange={(e) => setTempCalorieInput(e.target.value.replace(/[^0-9]/g, ''))} className="h-16 bg-white/5 border border-white/10 rounded-xl text-3xl font-black text-center text-white focus:ring-primary text-base" />
+              <Button onClick={handleSaveCalories} className="w-full h-16 bg-primary text-black font-black uppercase italic text-lg rounded-xl">SAVE FUEL</Button>
             </div>
-          </div>
+          </DialogContent>
+        </Dialog>
+      </Card>
 
-          <Dialog open={isCalorieDialogOpen} onOpenChange={setIsCalorieDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-guide-id="calorie-input" className="w-full h-16 bg-white/5 border border-white/10 rounded-[1.5rem] font-black uppercase italic tracking-widest text-xs text-white hover:bg-primary hover:text-black transition-all group-active:scale-95">
-                <Plus className="h-4 w-4 mr-2" /> LOG DAILY FUEL
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
-              <DialogHeader>
-                <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">LOG CALORIES</DialogTitle>
-              </DialogHeader>
-              <div className="py-8 space-y-6">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2 text-center italic opacity-60">Current Intake: {dailyCalories} kcal</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2">ADD KCAL INTAKE</p>
-                  <div className="relative">
-                    <Input 
-                      placeholder="0000" 
-                      value={tempCalorieInput} 
-                      inputMode="numeric"
-                      onChange={(e) => setTempCalorieInput(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary placeholder:text-white/5 text-base" 
-                    />
-                    <Flame className="absolute right-6 top-1/2 -translate-y-1/2 h-6 w-6 text-primary/20" />
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleSaveCalories}
-                  className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-[0_0_20px_rgba(57,255,20,0.2)]"
-                >
-                  SAVE FUEL
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </Card>
+      <Card className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+        <p className="text-[9px] font-black uppercase text-white/40 italic">ENERGY PROTOCOL TREND</p>
+        <div className="h-44 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={calorieChartData}>
+              <XAxis dataKey="dayNum" hide /><YAxis hide />
+              <Area type="monotone" dataKey="calories" stroke="#39FF14" strokeWidth={3} fill="#39FF14" fillOpacity={0.1} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
 
-        <Card data-guide-id="calorie-chart" className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
-          <div className="flex justify-between items-center px-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 italic">ENERGY PROTOCOL TREND</p>
-            <Flame className="h-4 w-4 text-primary opacity-40" />
+      <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
+        <DialogContent className="bg-black border border-white/10 rounded-2xl p-6 max-w-sm w-[92%]">
+          <DialogHeader><DialogTitle className="text-primary font-black italic text-xl text-center">SET GOAL</DialogTitle></DialogHeader>
+          <div className="py-4 space-y-6">
+            <Input placeholder="2500" value={tempGoalInput} inputMode="numeric" onChange={(e) => setTempGoalInput(e.target.value.replace(/[^0-9]/g, ''))} className="h-16 bg-white/5 border border-white/10 rounded-xl text-3xl font-black text-center text-white focus:ring-primary text-base" />
+            <Button onClick={handleSaveGoal} className="w-full h-16 bg-primary text-black font-black uppercase italic text-lg rounded-xl">CALIBRATE</Button>
           </div>
-          <div className="h-64 w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={calorieChartData}>
-                <defs>
-                  <linearGradient id="calorieTrend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#39FF14" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#39FF14" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="dayNum" hide />
-                <YAxis hide domain={[0, 'dataMax + 500']} />
-                <Tooltip 
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-black/90 backdrop-blur-xl border border-primary/20 p-4 rounded-2xl shadow-2xl">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-primary/60 mb-1">{payload[0].payload.day}</p>
-                          <p className="text-2xl font-black italic text-white">{payload[0].value} KCAL</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="calories" 
-                  stroke="#39FF14" 
-                  strokeWidth={5} 
-                  fill="url(#calorieTrend)" 
-                  animationDuration={2000}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <SheetContent side="bottom" className="rounded-t-[3.5rem] h-[92svh] border-none p-0 overflow-hidden bg-black shadow-[0_-10px_50px_rgba(57,255,20,0.15)]">
-          <div className="h-full overflow-y-auto no-scrollbar p-8 space-y-10 pb-32">
-            <SheetHeader>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" size="icon" onClick={() => setIsHistoryOpen(false)} className="h-12 w-12 rounded-2xl border border-white/10 active:scale-90 shrink-0"><ArrowLeft className="h-6 w-6 text-primary" /></Button>
-                  <SheetTitle className="text-3xl font-black uppercase italic tracking-tighter text-primary leading-none truncate">ENERGY PROTOCOL</SheetTitle>
-                </div>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-white/20 hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all shrink-0">
-                      <RotateCcw className="h-5 w-5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-black border-2 border-destructive/20 rounded-[2.5rem] p-8 max-w-sm w-[92%]">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-destructive font-black uppercase italic tracking-tighter text-2xl">PURGE HISTORY?</AlertDialogTitle>
-                      <AlertDialogDescription className="text-white/60 text-xs font-bold uppercase tracking-widest italic leading-relaxed">
-                        This will clear all 30-day calorie history. This protocol action is permanent.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex flex-col gap-3 mt-6">
-                      <AlertDialogAction onClick={handleResetHistoryProtocol} className="h-14 bg-destructive text-white font-black uppercase italic rounded-2xl shadow-lg">CONFIRM PURGE</AlertDialogAction>
-                      <AlertDialogCancel className="h-12 border-white/10 text-white/40 font-black uppercase italic rounded-2xl">ABORT</AlertDialogCancel>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">30-DAY CALORIE STRIDE</p>
-            </SheetHeader>
-            
-            <div className="grid grid-cols-5 gap-3">
-              {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
-                <DayCalorieDialog 
-                  key={day} 
-                  day={day} 
-                  isCurrent={day === currentCycleDay}
-                  calories={calorieHistory[day] || 0} 
-                  onSave={(val) => handleUpdateHistory(day, val)} 
-                />
-              ))}
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
-}
-
-function DayCalorieDialog({ day, calories, onSave, isCurrent }: { day: number, calories: number, onSave: (val: number) => void, isCurrent: boolean }) {
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState(calories ? calories.toString() : "");
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className={cn(
-          "h-18 w-full flex flex-col items-center justify-center p-0 rounded-2xl border-2 transition-all active:scale-90 relative overflow-hidden",
-          calories > 0 ? "bg-primary/10 border-primary text-primary shadow-[inset_0_0_10px_rgba(57,255,20,0.1)]" : "bg-white/5 border-white/10 text-white/20",
-          isCurrent && "border-primary animate-pulse shadow-[0_0_15px_rgba(57,255,20,0.3)]"
-        )}>
-          <span className="text-[8px] font-black absolute top-1 left-1.5 opacity-40 italic">{day}</span>
-          {calories > 0 ? (
-            <div className="flex flex-col items-center gap-0.5">
-              <Flame className="h-4 w-4 fill-primary" />
-              <span className="text-[10px] font-black">{calories}</span>
-            </div>
-          ) : (
-            <div className="h-1 w-1 rounded-full bg-current opacity-30 mt-2" />
-          )}
-          {isCurrent && <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="bg-black border-none rounded-[3rem] p-8 max-w-sm w-[92%] shadow-[0_0_50px_rgba(57,255,20,0.15)]">
-        <DialogHeader>
-          <DialogTitle className="text-primary font-black italic uppercase tracking-tighter text-3xl text-center">DAY {day} FUEL</DialogTitle>
-        </DialogHeader>
-        <div className="py-8 space-y-6">
-          <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 px-2 text-center">TOTAL CALORIES (KCAL)</p>
-            <div className="relative">
-              <Input 
-                placeholder="0000" 
-                value={input} 
-                inputMode="numeric"
-                onChange={(e) => setInput(e.target.value.replace(/[^0-9]/g, ''))}
-                className="h-20 bg-white/5 border-2 border-white/10 rounded-[1.8rem] text-4xl font-black text-center text-white focus:ring-primary focus:border-primary text-base" 
-              />
-              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20 italic">KCAL</span>
-            </div>
-          </div>
-          <Button 
-            onClick={() => { onSave(parseInt(input) || 0); setOpen(false); }}
-            className="w-full h-18 bg-primary text-black font-black uppercase italic tracking-widest text-lg rounded-[1.8rem] shadow-2xl active:scale-95 transition-all"
-          >
-            CONFIRM PROTOCOL
-          </Button>
-          <Button variant="ghost" className="w-full h-10 text-[10px] font-black uppercase tracking-widest text-white/20" onClick={() => { onSave(0); setInput(""); setOpen(false); }}>RESET DATA</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

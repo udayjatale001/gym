@@ -23,7 +23,7 @@
     --border: 146 30% 18%;
     --input: 146 30% 18%;
     --ring: 146 70% 50%;
-    --radius: 1.5rem;
+    --radius: 1rem;
   }
 }
 
@@ -48,7 +48,7 @@
 
   body {
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    -moz-osx-smoothing: grayscale;
   }
 }
 
