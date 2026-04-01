@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from '@/components/ui/toaster';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'GYMBUDDY! | Discipline Mode',
@@ -35,8 +36,16 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* AdMob/AdSense App ID Verification */}
+        <meta name="google-adsense-account" content="ca-app-pub-6399399331218914" />
       </head>
       <body className="font-body antialiased bg-background text-foreground">
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-6399399331218914"
+          crossOrigin="anonymous"
+          strategy="lazyOnload"
+        />
         <FirebaseClientProvider>
           {children}
           <Toaster />

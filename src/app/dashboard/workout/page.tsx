@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2, TrendingUp } from "lucide-react";
+import { Dumbbell, ChevronRight, Zap, Target, Flame, Plus, Loader2, Trash2, TrendingUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { ToastAction } from "@/components/ui/toast";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,12 +22,17 @@ const defaultSplits = [
 
 export default function WorkoutPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [splits, setSplits] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isProgressOpen, setIsProgressOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: "", focus: "", description: "" });
+  
+  // Interstitial Ad State
+  const [showInterstitial, setShowInterstitial] = useState(false);
+  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('fitstride_splits');
@@ -58,6 +64,20 @@ export default function WorkoutPage() {
     const newSplits = splits.filter(s => s.id !== splitId);
     updateSplits(newSplits);
     toast({ title: "Split Removed", description: `${splitToDelete.name} deleted.`, action: <ToastAction altText="Undo" onClick={() => updateSplits([...newSplits, splitToDelete])}>Undo</ToastAction> });
+  };
+
+  const handleCategoryClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    setPendingRoute(href);
+    // Show Interstitial (Unit: ca-app-pub-6399399331218914/6509075397)
+    setShowInterstitial(true);
+  };
+
+  const closeInterstitial = () => {
+    setShowInterstitial(false);
+    if (pendingRoute) {
+      router.push(pendingRoute);
+    }
   };
 
   const calculateOverallStats = () => {
@@ -93,6 +113,36 @@ export default function WorkoutPage() {
 
   return (
     <div className="p-4 space-y-8 pb-32 min-h-svh animate-in fade-in slide-in-from-bottom-2 duration-500 no-scrollbar bg-background">
+      {/* Interstitial Ad Simulation */}
+      {showInterstitial && (
+        <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+          <button 
+            onClick={closeInterstitial}
+            className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <div className="w-full max-w-sm aspect-square bg-white/5 border border-white/10 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden">
+            <span className="absolute top-4 left-6 text-[8px] font-black text-white/20 uppercase tracking-[0.4em]">INTERSTITIAL PROTOCOL</span>
+            {/* AdMob Interstitial Unit ID: ca-app-pub-6399399331218914/6509075397 */}
+            <div className="text-center space-y-4">
+               <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+                 <Zap className="h-8 w-8 text-primary animate-pulse" />
+               </div>
+               <p className="text-sm font-black uppercase italic tracking-tighter text-white/60">AD LOADING...</p>
+            </div>
+          </div>
+          <p className="mt-8 text-[10px] font-black uppercase tracking-[0.3em] text-white/20 italic">MISSION WILL RESUME IN 3 SECONDS</p>
+          <Button 
+            variant="ghost" 
+            className="mt-4 text-primary font-black uppercase italic tracking-widest text-xs"
+            onClick={closeInterstitial}
+          >
+            SKIP AD
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between pt-6 px-1">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 md:h-16 md:w-16 rounded-[1.5rem] md:rounded-[1.8rem] bg-primary flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/30 border-b-4 border-black/20">
@@ -137,7 +187,7 @@ export default function WorkoutPage() {
         {splits.map((split: any) => {
           const Icon = getIcon(split.name);
           return (
-            <Link key={split.id} href={`/dashboard/workout/${split.id}`} className="block">
+            <button key={split.id} onClick={(e) => handleCategoryClick(e, `/dashboard/workout/${split.id}`)} className="block w-full text-left">
               <Card className="overflow-hidden border-none shadow-xl rounded-[2.5rem] bg-card hover:bg-muted/30 transition-all active:scale-[0.98] relative group">
                 <CardContent className="p-6 md:p-8 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 md:gap-6 min-w-0">
@@ -157,7 +207,7 @@ export default function WorkoutPage() {
                   </div>
                 </CardContent>
               </Card>
-            </Link>
+            </button>
           );
         })}
       </div>
