@@ -54,9 +54,11 @@ export default function DashboardPage() {
   const WATER_GOAL = 4000;
   const STEP_GOAL = 1000;
   const SLEEP_GOAL = 480; 
+  
   // SECURE PROTOCOL: UPI ID is archived in constant, never displayed in UI
-  const UPI_ID = "7247084947@ybl";
-  const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&cu=INR`;
+  const UPI_ID = "7247089447@ybl";
+  // UPDATED: Standardized UPI deep link with proper encoding and am/cu parameters
+  const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&am=1&cu=INR`;
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language') as Language;
@@ -465,7 +467,7 @@ export default function DashboardPage() {
       </Card>
 
       <div className="pt-6" data-guide-id="support-button">
-        <Sheet open={isSupportOpen} onOpenChange={setIsSupportOpen}>
+        <Sheet open={isSupportOpen} onOpenChange={isSupportOpen => setIsSupportOpen(isSupportOpen)}>
           <SheetTrigger asChild>
             <Button 
               className="w-full h-20 rounded-[2.5rem] bg-white/5 border-2 border-primary/20 hover:border-primary/50 text-white font-black uppercase italic tracking-widest text-xs shadow-2xl transition-all active:scale-[0.98] relative overflow-hidden group"
