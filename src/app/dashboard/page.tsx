@@ -56,7 +56,8 @@ export default function DashboardPage() {
   const SLEEP_GOAL = 480; 
   
   const UPI_ID = "7247089447@ybl";
-  const PAYMENT_LINK = `upi://pay?pa=${UPI_ID}&pn=Uday%20Jatale&am=1&cu=INR`;
+  // PhonePe specific targeted deep link
+  const PAYMENT_LINK = `phonepe://pay?pa=${UPI_ID}&pn=Uday%20Jatale&am=1&cu=INR`;
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language') as Language;
