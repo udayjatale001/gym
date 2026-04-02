@@ -8,7 +8,7 @@ export interface WorkoutMetrics {
   totalVolume: number;
   durationMinutes: number;
   caloriesBurned: number;
-  intensity: 'Moderate' | 'Vigorous';
+  intensity: 'Low' | 'Moderate' | 'Vigorous';
 }
 
 /**
@@ -18,8 +18,7 @@ export interface WorkoutMetrics {
 export function calculateWorkoutMetrics(
   exercises: any[],
   userWeightKg: number,
-  startTime?: string,
-  endTime?: string
+  durationMinutes: number
 ): WorkoutMetrics {
   // 1. Calculate Total Volume (Reps x Weight)
   let totalVolume = 0;
@@ -31,29 +30,25 @@ export function calculateWorkoutMetrics(
     });
   });
 
-  // 2. Determine Duration (Default to 45-50 mins as per screenshots if timestamps missing)
-  let durationMinutes = 45;
-  if (startTime && endTime) {
-    const start = new Date(startTime).getTime();
-    const end = new Date(endTime).getTime();
-    durationMinutes = Math.max(1, Math.round((end - start) / (1000 * 60)));
-  }
+  // 2. Assign MET based on Intensity thresholds
+  // < 1000kg -> 3.5
+  // 1000kg - 1500kg -> 4.5
+  // > 1500kg -> 6.0
+  let met = 3.5;
+  let intensity: 'Low' | 'Moderate' | 'Vigorous' = 'Low';
 
-  // 3. Assign MET based on Intensity
-  // Vigorous: > 1500kg volume in 45m
-  // Moderate: < 1000kg volume
-  let met = 4.0;
-  let intensity: 'Moderate' | 'Vigorous' = 'Moderate';
-
-  if (totalVolume >= 1500) {
+  if (totalVolume > 1500) {
     met = 6.0;
     intensity = 'Vigorous';
   } else if (totalVolume >= 1000) {
-    met = 5.0; // Mid-range
+    met = 4.5;
     intensity = 'Moderate';
+  } else {
+    met = 3.5;
+    intensity = 'Low';
   }
 
-  // 4. MET Formula
+  // 3. MET Formula: ((MET * 3.5 * Weight) / 200) * Duration
   const caloriesBurned = Math.round(((met * 3.5 * userWeightKg) / 200) * durationMinutes);
 
   return {

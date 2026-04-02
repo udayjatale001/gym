@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { Language, translations } from "@/lib/translations";
-import { calculateWorkoutMetrics } from "@/lib/fitness-utils";
 import { CaloriesBurnedCard } from "@/components/fitstride/CaloriesBurnedCard";
 
 export default function WorkoutLogPage({ params }: { params: Promise<{ type: string, day: string }> }) {
@@ -26,8 +25,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
   const [previousSession, setPreviousSession] = useState<any>(null);
   const [allExerciseNames, setAllExerciseNames] = useState<string[]>([]);
   
-  // Fitness Logic Stats
-  const [userWeight, setUserWeight] = useState(55); // Default as per requirements
+  // Weights for context
   const [prevWeight, setPrevWeight] = useState<number | undefined>(undefined);
 
   const t = translations[lang];
@@ -38,13 +36,11 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     if (savedLang) setLang(savedLang);
 
     // Load Weight Context
-    const savedTarget = localStorage.getItem('fitstride_weight_target');
     const savedWeightLogs = localStorage.getItem('fitstride_weight_logs_v2');
     if (savedWeightLogs) {
       const logs = JSON.parse(savedWeightLogs);
-      if (logs.length > 0) {
-        setUserWeight(logs[0].weight);
-        if (logs.length > 1) setPrevWeight(logs[1].weight);
+      if (logs.length > 1) {
+        setPrevWeight(logs[1].weight);
       }
     }
 
@@ -83,14 +79,6 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
     setIsLoaded(true);
   }, [type, day, storageKey]);
 
-  const workoutMetrics = useMemo(() => {
-    return calculateWorkoutMetrics(
-      exercises,
-      userWeight,
-      savedWorkout?.timestamp // If existing session
-    );
-  }, [exercises, userWeight, savedWorkout]);
-
   const handleSave = () => {
     const valid = exercises.filter(ex => ex.name.trim() !== "" && ex.sets.some(s => s.reps.trim() !== ""));
     if (valid.length === 0) {
@@ -104,8 +92,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
         day: parseInt(day), 
         exercises: valid, 
         status: 'completed', 
-        timestamp: new Date().toISOString(),
-        metrics: workoutMetrics 
+        timestamp: new Date().toISOString()
       };
       localStorage.setItem(storageKey, JSON.stringify(data));
       setSavedWorkout(data); setIsEditing(false); setIsSubmitting(false);
@@ -176,10 +163,9 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Real-time Calories Burned Card */}
+        {/* Real-time Calories Burned Card - CALC TRIGGERED BY EMOJI CLICK */}
         <CaloriesBurnedCard 
-          metrics={workoutMetrics} 
-          currentWeight={userWeight} 
+          exercises={exercises} 
           previousWeight={prevWeight} 
         />
 
