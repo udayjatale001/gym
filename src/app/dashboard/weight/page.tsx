@@ -113,7 +113,7 @@ export default function WeightPage() {
                     <p className="text-[8px] text-white/40 font-black uppercase mt-1 flex items-center gap-1.5">{format(new Date(log.timestamp), 'MMM dd • h:mm a')}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-white/10 hover:text-destructive" onClick={() => setLogs(p => p.filter(l => l.id !== log.id))}><Trash2 className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10" onClick={() => setLogs(p => p.filter(l => l.id !== log.id))}><Trash2 className="h-4 w-4" /></Button>
               </CardContent>
             </Card>
           ))}

@@ -181,7 +181,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
                     <p className="text-[9px] text-white/40 font-black uppercase tracking-[0.2em] mt-1.5 truncate">{format(new Date(savedWorkout.timestamp), 'MMM dd • h:mm a')}</p>
                   </div>
                </div>
-               <Button variant="ghost" size="icon" className="h-11 w-11 text-white/10 active:scale-95 shrink-0" onClick={handleDeleteSession}>
+               <Button variant="ghost" size="icon" className="h-11 w-11 text-destructive hover:bg-destructive/10 active:scale-95 shrink-0" onClick={handleDeleteSession}>
                  <Trash2 className="h-6 w-6" />
                </Button>
             </Card>
@@ -232,7 +232,7 @@ export default function WorkoutLogPage({ params }: { params: Promise<{ type: str
               <Card key={exIdx} className="border border-white/10 rounded-[2.5rem] bg-white/5 p-6 space-y-6 relative overflow-hidden shadow-none">
                 <div className="flex justify-between items-center">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">MOVEMENT {exIdx + 1}</p>
-                  {exercises.length > 1 && <Button variant="ghost" size="icon" className="h-10 w-10 text-white/10 active:scale-95" onClick={() => setExercises(p => p.filter((_, i) => i !== exIdx))}><Trash2 className="h-4 w-4" /></Button>}
+                  {exercises.length > 1 && <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 active:scale-95" onClick={() => setExercises(p => p.filter((_, i) => i !== exIdx))}><Trash2 className="h-4 w-4" /></Button>}
                 </div>
                 <Input 
                   list="exercise-suggestions"

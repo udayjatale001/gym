@@ -128,7 +128,7 @@ export default function DietPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-white/10 hover:text-destructive" onClick={(e) => handleDeleteMeal(e, meal.id)}>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-destructive hover:bg-destructive/10" onClick={(e) => handleDeleteMeal(e, meal.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
                 <ChevronRight className="h-5 w-5 text-white/10" />
