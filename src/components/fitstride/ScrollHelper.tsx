@@ -1,41 +1,29 @@
 'use client';
 
 import React from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export function ScrollHelper() {
-  const scroll = (direction: 'up' | 'down') => {
+  const scrollToTop = () => {
     const mainContainer = document.querySelector('main');
     if (!mainContainer) return;
-
-    const scrollAmount = direction === 'up' ? 0 : mainContainer.scrollHeight;
     mainContainer.scrollTo({
-      top: scrollAmount,
+      top: 0,
       behavior: 'smooth'
     });
   };
 
   return (
-    <div className="fixed bottom-28 right-4 z-[60] flex flex-col gap-1">
-      <div className="bg-black/80 backdrop-blur-xl border border-primary/30 rounded-full p-1 flex flex-col shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-28 right-4 z-[60]">
+      <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-full p-1 shadow-lg">
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => scroll('up')}
-          className="h-10 w-10 rounded-full text-white/40 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all"
+          onClick={scrollToTop}
+          className="h-7 w-7 rounded-full text-white/40 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all"
         >
-          <ChevronUp className="h-6 w-6" />
-        </Button>
-        <div className="h-px w-6 bg-white/5 mx-auto" />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => scroll('down')}
-          className="h-10 w-10 rounded-full text-white/40 hover:text-primary hover:bg-primary/10 active:scale-90 transition-all"
-        >
-          <ChevronDown className="h-6 w-6" />
+          <ChevronUp className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>
