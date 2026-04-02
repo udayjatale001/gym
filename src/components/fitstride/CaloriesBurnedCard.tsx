@@ -45,6 +45,12 @@ export function CaloriesBurnedCard({
     setMetrics(results);
   };
 
+  const getIntensityColor = (intensity: string) => {
+    if (intensity.includes('HIGH')) return 'text-[#FF3131]'; // Red
+    if (intensity.includes('MEDIUM')) return 'text-[#FF8C00]'; // Orange
+    return 'text-white/40'; // Gray
+  };
+
   const explanation = (metrics && previousWeight) 
     ? getWeightFluctuationExplanation(parseFloat(weight), previousWeight, metrics.caloriesBurned) 
     : null;
@@ -121,7 +127,9 @@ export function CaloriesBurnedCard({
                 </div>
                 <div className="bg-white/5 border border-white/10 p-4 rounded-2xl text-center">
                   <p className="text-[8px] font-black uppercase text-white/20 mb-1">INTENSITY</p>
-                  <p className="text-lg font-black italic text-white leading-none uppercase">{metrics.intensity}</p>
+                  <p className={cn("text-lg font-black italic leading-none uppercase", getIntensityColor(metrics.intensity))}>
+                    {metrics.intensity}
+                  </p>
                 </div>
               </div>
             </div>

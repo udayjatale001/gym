@@ -8,7 +8,7 @@ export interface WorkoutMetrics {
   totalVolume: number;
   durationMinutes: number;
   caloriesBurned: number;
-  intensity: 'Low' | 'Moderate' | 'Vigorous';
+  intensity: 'LOW/RECOVERY ⚪' | 'MEDIUM 🟠' | 'HIGH INTENSITY ⚡';
 }
 
 /**
@@ -35,17 +35,17 @@ export function calculateWorkoutMetrics(
   // 1000kg - 1500kg -> 4.5
   // > 1500kg -> 6.0
   let met = 3.5;
-  let intensity: 'Low' | 'Moderate' | 'Vigorous' = 'Low';
+  let intensity: 'LOW/RECOVERY ⚪' | 'MEDIUM 🟠' | 'HIGH INTENSITY ⚡' = 'LOW/RECOVERY ⚪';
 
   if (totalVolume > 1500) {
     met = 6.0;
-    intensity = 'Vigorous';
+    intensity = 'HIGH INTENSITY ⚡';
   } else if (totalVolume >= 1000) {
     met = 4.5;
-    intensity = 'Moderate';
+    intensity = 'MEDIUM 🟠';
   } else {
     met = 3.5;
-    intensity = 'Low';
+    intensity = 'LOW/RECOVERY ⚪';
   }
 
   // 3. MET Formula: ((MET * 3.5 * Weight) / 200) * Duration
