@@ -9,6 +9,7 @@ export interface WorkoutMetrics {
   durationMinutes: number;
   caloriesBurned: number;
   intensity: 'LOW/RECOVERY ⚪' | 'MEDIUM 🟠' | 'HIGH INTENSITY ⚡';
+  hasBilateral: boolean;
 }
 
 /**
@@ -21,16 +22,23 @@ export function calculateWorkoutMetrics(
   durationMinutes: number
 ): WorkoutMetrics {
   // 1. Calculate Total Volume (Reps x Weight)
+  // Logic: Automatically double weight for Dumbbell/Hand exercises (L+R)
   let totalVolume = 0;
+  let hasBilateral = false;
+
   exercises.forEach((ex) => {
+    const isBilateral = /dumbbell|db|hand/i.test(ex.name);
+    if (isBilateral) hasBilateral = true;
+
     ex.sets.forEach((set: any) => {
       const weight = parseFloat(set.weight) || 0;
       const reps = parseInt(set.reps) || 0;
-      totalVolume += weight * reps;
+      const effectiveWeight = isBilateral ? weight * 2 : weight;
+      totalVolume += effectiveWeight * reps;
     });
   });
 
-  // 2. Assign MET based on Intensity thresholds
+  // 2. Assign MET based on Intensity thresholds (Dynamic Volume thresholds)
   // < 1000kg -> 3.5
   // 1000kg - 1500kg -> 4.5
   // > 1500kg -> 6.0
@@ -56,6 +64,7 @@ export function calculateWorkoutMetrics(
     durationMinutes,
     caloriesBurned,
     intensity,
+    hasBilateral
   };
 }
 

@@ -74,7 +74,7 @@ export function CaloriesBurnedCard({
               variant="ghost" 
               className="text-2xl h-12 w-12 p-0 hover:bg-primary/10 rounded-full transition-all active:scale-90"
             >
-              🥵
+              ❤️‍🔥
             </Button>
           </div>
 
@@ -113,11 +113,19 @@ export function CaloriesBurnedCard({
 
           {metrics && (
             <div className="space-y-6">
+              {metrics.hasBilateral && (
+                <div className="p-2 bg-primary/10 border border-primary/20 rounded-xl text-center animate-pulse">
+                  <p className="text-[8px] font-black uppercase text-primary italic leading-none">
+                    PRO TIP: CALCULATION AUTO-DOUBLED (L + R HANDS) ⚡
+                  </p>
+                </div>
+              )}
+
               <div className="text-center py-2">
                 <h3 className="text-5xl font-black italic text-white tracking-tighter leading-none">
-                  ~{metrics.caloriesBurned} <span className="text-xs text-primary not-italic uppercase">KCAL</span>
+                  {metrics.caloriesBurned} <span className="text-xs text-primary not-italic uppercase">KCAL</span>
                 </h3>
-                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/20 mt-2">ESTIMATED ENERGY BURN</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/20 mt-2">EXACT ENERGY BURN</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -138,7 +146,7 @@ export function CaloriesBurnedCard({
           <div className="flex items-center gap-2 pt-2 border-t border-white/5">
             <Info className="h-3 w-3 text-white/20" />
             <p className="text-[8px] font-medium text-white/20 uppercase tracking-widest leading-relaxed">
-              Tap the emoji to trigger dynamic calculation based on active sets.
+              Tap the ❤️‍🔥 trigger to activate precision calculation based on true bilateral volume.
             </p>
           </div>
         </CardContent>
